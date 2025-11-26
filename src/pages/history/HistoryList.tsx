@@ -2,13 +2,10 @@ import { useEffect, useState } from 'react'
 import { useHistoryStore } from '@/store/useHistoryStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Search, Filter, ArrowLeft, Download, Calendar, MapPin, Truck, DollarSign, MessageSquare, History } from 'lucide-react'
+import { Search, Filter, ArrowLeft, Download, Calendar, History, User } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Badge } from '@/components/ui/badge'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Card } from '@/components/ui/card'
-import { TrendingUp, User, MoreHorizontal } from 'lucide-react'
 
 export default function HistoryList() {
     const navigate = useNavigate()
@@ -167,78 +164,39 @@ export default function HistoryList() {
                                             <Badge className={`${getStatusColor(item.status)} border font-bold shadow-sm`}>
                                                 {item.status}
                                             </Badge>
-                                            <span className="text-xs text-muted-foreground font-medium ml-2 flex items-center gap-1">
-                                                <Button variant="outline" className="border-2 border-border hover:bg-accent hover:text-accent-foreground font-bold uppercase shadow-brutal-sm hover:shadow-brutal transition-all">
-                                                    <Filter className="w-4 h-4 mr-2" />
-                                                    Filtros
-                                                </Button>
-                                                <Button
-                                                    className="bg-primary text-primary-foreground border-2 border-primary hover:bg-primary/90 font-bold uppercase shadow-brutal hover:shadow-brutal-hover transition-all hover:-translate-y-0.5"
-                                                    onClick={handleExport}
-                                                >
-                                                    <Download className="w-4 h-4 mr-2" />
-                                                    Exportar
-                                                </Button>
                                         </div>
                                     </div>
 
-                                    <Card className="border-2 border-border shadow-brutal flex-1 flex flex-col min-h-0 bg-card">
-                                        <div className="overflow-auto">
-                                            <Table>
-                                                <TableHeader className="bg-muted/50 sticky top-0 z-10">
-                                                    <TableRow className="border-b-2 border-border hover:bg-transparent">
-                                                        <TableHead className="font-black text-foreground uppercase text-xs tracking-wider h-12">ID</TableHead>
-                                                        <TableHead className="font-black text-foreground uppercase text-xs tracking-wider h-12">Origem / Destino</TableHead>
-                                                        <TableHead className="font-black text-foreground uppercase text-xs tracking-wider h-12">Motorista</TableHead>
-                                                        <TableHead className="font-black text-foreground uppercase text-xs tracking-wider h-12">Valor</TableHead>
-                                                        <TableHead className="font-black text-foreground uppercase text-xs tracking-wider h-12">Status</TableHead>
-                                                        <TableHead className="font-black text-foreground uppercase text-xs tracking-wider h-12">Data</TableHead>
-                                                        <TableHead className="font-black text-foreground uppercase text-xs tracking-wider h-12 text-right">Ações</TableHead>
-                                                    </TableRow>
-                                                </TableHeader>
-                                                <TableBody>
-                                                    {filteredHistory.map((item) => (
-                                                        <TableRow key={item.id} className="border-b-2 border-border hover:bg-muted/30 transition-colors group">
-                                                            <TableCell className="font-mono font-bold text-xs">{item.loadId}</TableCell>
-                                                            <TableCell>
-                                                                <div className="flex flex-col">
-                                                                    <span className="font-bold text-sm uppercase">{item.origin}</span>
-                                                                    <span className="text-xs text-muted-foreground uppercase">➔ {item.destination}</span>
-                                                                </div>
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className="w-6 h-6 bg-muted border-2 border-border flex items-center justify-center">
-                                                                        <User className="w-3 h-3" />
-                                                                    </div>
-                                                                    <span className="font-medium text-sm uppercase">{item.driver}</span>
-                                                                </div>
-                                                            </TableCell>
-                                                            <TableCell className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                                                                {item.value}
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                <span className={`
-                                            inline-flex items-center px-2 py-1 border-2 text-[10px] font-black uppercase tracking-wider
-                                            ${item.status === 'Finalizada'
-                                                                        ? 'bg-emerald-100 text-emerald-700 border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-400'
-                                                                        : 'bg-red-100 text-red-700 border-red-700 dark:bg-red-900/30 dark:text-red-400 dark:border-red-400'}
-                                        `}>
-                                                                    {item.status}
-                                                                </span>
-                                                            </TableCell>
-                                                            <TableCell className="font-mono text-xs text-muted-foreground">{new Date(item.date).toLocaleDateString('pt-BR')}</TableCell>
-                                                            <TableCell className="text-right">
-                                                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-accent border-2 border-transparent hover:border-border transition-all">
-                                                                    <MoreHorizontal className="w-4 h-4" />
-                                                                </Button>
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    ))}
-                                                </TableBody>
-                                            </Table>
+                                    <div className="grid grid-cols-5 gap-4 items-center">
+                                        <div className="col-span-2">
+                                            <div className="flex flex-col">
+                                                <span className="font-bold text-sm uppercase">{item.origin}</span>
+                                                <span className="text-xs text-muted-foreground uppercase">➔ {item.destination}</span>
+                                            </div>
                                         </div>
-                                    </Card>
-                                </div>
-                            )
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-6 h-6 bg-muted border-2 border-border flex items-center justify-center rounded">
+                                                    <User className="w-3 h-3" />
+                                                </div>
+                                                <span className="font-medium text-sm uppercase">Motorista</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                                                {item.value}
+                                            </span>
+                                        </div>
+                                        <div className="text-right text-xs text-muted-foreground font-mono">
+                                            {new Date(item.date).toLocaleDateString('pt-BR')}
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
+                    </motion.div>
+                )}
+            </div>
+        </motion.div>
+    )
 }

@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/useAuthStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Truck, Loader2, Zap, ArrowRight, ShieldCheck } from 'lucide-react'
+import { Truck, Loader2, Zap, ShieldCheck } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+
 
 export default function Login() {
     const [isLogin, setIsLogin] = useState(true)

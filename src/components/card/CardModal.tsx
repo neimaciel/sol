@@ -406,7 +406,8 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                                     return
                                                                 }
                                                                 try {
-                                                                    const response = await fetch('http://localhost:8000/api/v1/whatsapp/broadcast', {
+                                                                    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+                                                                    const response = await fetch(`${apiUrl}/api/v1/whatsapp/broadcast`, {
                                                                         method: 'POST',
                                                                         headers: {
                                                                             'Content-Type': 'application/json'

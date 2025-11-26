@@ -5,10 +5,11 @@ import { CardFormModal } from '@/components/kanban/CardFormModal'
 import { useKanbanStore } from '@/store/useKanbanStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Bell, Settings, User, Plus, LayoutGrid, Truck, Users as UsersIcon, TrendingUp, Search, ChevronLeft, ChevronRight, Sun, Moon, Bot } from 'lucide-react'
+import { Bell, Settings, User, Plus, LayoutGrid, Truck, Users as UsersIcon, TrendingUp, Search, ChevronLeft, ChevronRight, Bot } from 'lucide-react'
 import { StatsCards } from '@/components/dashboard/StatsCards'
 import { RevenueChart, TripsChart, FunnelChart } from '@/components/dashboard/Charts'
 import { motion, AnimatePresence } from 'framer-motion'
+import { ModeToggle } from '@/components/mode-toggle'
 
 export default function Dashboard() {
     const { selectedCard, setSelectedCard, activeTab, fetchCards } = useKanbanStore()
@@ -16,23 +17,6 @@ export default function Dashboard() {
     const [searchTerm, setSearchTerm] = useState('')
     const [isCollapsed, setIsCollapsed] = useState(true)
     const [isAnalyticsExpanded, setIsAnalyticsExpanded] = useState(true)
-    const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-        if (typeof window !== 'undefined') {
-            return localStorage.getItem('theme') as 'light' | 'dark' || 'light'
-        }
-        return 'light'
-    })
-
-    useEffect(() => {
-        const root = window.document.documentElement
-        root.classList.remove('light', 'dark')
-        root.classList.add(theme)
-        localStorage.setItem('theme', theme)
-    }, [theme])
-
-    const toggleTheme = () => {
-        setTheme(prev => prev === 'light' ? 'dark' : 'light')
-    }
 
     useEffect(() => {
         fetchCards()
@@ -174,14 +158,7 @@ export default function Dashboard() {
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
-                        <Button
-                            size="icon"
-                            variant="ghost"
-                            className="hover:bg-accent text-foreground border-2 border-transparent hover:border-border transition-colors relative"
-                            onClick={toggleTheme}
-                        >
-                            {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-                        </Button>
+                        <ModeToggle />
                         <Button size="icon" variant="ghost" className="hover:bg-accent text-foreground border-2 border-transparent hover:border-border transition-colors relative">
                             <Bell className="w-5 h-5" />
                             <span className="absolute top-2 right-2 w-2 h-2 bg-red-600 border border-border" />
@@ -237,7 +214,7 @@ export default function Dashboard() {
                                     <div className="grid gap-6 md:grid-cols-3">
                                         <motion.div
                                             whileHover={{ y: -5 }}
-                                            className="glass-card p-6"
+                                            className="bg-card border-2 border-border shadow-brutal p-6"
                                         >
                                             <div className="mb-6">
                                                 <h3 className="text-sm font-bold text-foreground">Faturamento Semanal</h3>
@@ -247,7 +224,7 @@ export default function Dashboard() {
                                         </motion.div>
                                         <motion.div
                                             whileHover={{ y: -5 }}
-                                            className="glass-card p-6"
+                                            className="bg-card border-2 border-border shadow-brutal p-6"
                                         >
                                             <div className="mb-6">
                                                 <h3 className="text-sm font-bold text-foreground">Viagens por Período</h3>
@@ -257,7 +234,7 @@ export default function Dashboard() {
                                         </motion.div>
                                         <motion.div
                                             whileHover={{ y: -5 }}
-                                            className="glass-card p-6"
+                                            className="bg-card border-2 border-border shadow-brutal p-6"
                                         >
                                             <div className="mb-6">
                                                 <h3 className="text-sm font-bold text-foreground">Funil de Conversão</h3>
@@ -273,22 +250,22 @@ export default function Dashboard() {
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     exit={{ opacity: 0 }}
-                                    className="glass-card p-4 flex items-center justify-between"
+                                    className="bg-card border-2 border-border shadow-brutal p-4 flex items-center justify-between"
                                 >
                                     <div className="flex items-center gap-12 px-4">
                                         <div>
                                             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Faturamento</p>
-                                            <p className="text-xl font-heading font-bold text-foreground">R$ 45.2k <span className="text-xs text-emerald-500 font-medium ml-1 bg-emerald-50 px-1.5 py-0.5 rounded-full">+20.1%</span></p>
+                                            <p className="text-xl font-heading font-bold text-foreground">R$ 45.2k <span className="text-xs text-emerald-500 font-medium ml-1 bg-emerald-50 px-1.5 py-0.5 border-2 border-emerald-200">+20.1%</span></p>
                                         </div>
-                                        <div className="h-10 w-px bg-gradient-to-b from-transparent via-gray-200 to-transparent" />
+                                        <div className="h-10 w-0.5 bg-border" />
                                         <div>
                                             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Viagens</p>
-                                            <p className="text-xl font-heading font-bold text-foreground">12 <span className="text-xs text-emerald-500 font-medium ml-1 bg-emerald-50 px-1.5 py-0.5 rounded-full">+4</span></p>
+                                            <p className="text-xl font-heading font-bold text-foreground">12 <span className="text-xs text-emerald-500 font-medium ml-1 bg-emerald-50 px-1.5 py-0.5 border-2 border-emerald-200">+4</span></p>
                                         </div>
-                                        <div className="h-10 w-px bg-gradient-to-b from-transparent via-gray-200 to-transparent" />
+                                        <div className="h-10 w-0.5 bg-border" />
                                         <div>
                                             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Motoristas</p>
-                                            <p className="text-xl font-heading font-bold text-foreground">24 <span className="text-xs text-red-500 font-medium ml-1 bg-red-50 px-1.5 py-0.5 rounded-full">-2</span></p>
+                                            <p className="text-xl font-heading font-bold text-foreground">24 <span className="text-xs text-red-500 font-medium ml-1 bg-red-50 px-1.5 py-0.5 border-2 border-red-200">-2</span></p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2 text-xs text-foreground font-bold uppercase bg-muted px-3 py-1.5 border-2 border-border">
@@ -332,7 +309,7 @@ export default function Dashboard() {
                         </div>
 
                         {/* Infinite Width Container */}
-                        <div className="glass-card p-1 overflow-x-auto shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)]">
+                        <div className="bg-muted/10 border-2 border-border p-1 overflow-x-auto shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)]">
                             <div className="min-w-fit p-4">
                                 <KanbanBoard />
                             </div>

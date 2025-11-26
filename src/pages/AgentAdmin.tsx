@@ -58,7 +58,7 @@ export default function AgentAdmin() {
     return (
         <div className="p-8 space-y-8 max-w-5xl mx-auto">
             <div className="flex items-center gap-3 mb-8">
-                <div className="p-3 bg-primary/10 rounded-lg border-2 border-primary">
+                <div className="p-3 bg-primary/10 rounded-none border-2 border-primary shadow-brutal-sm">
                     <Bot className="w-8 h-8 text-primary" />
                 </div>
                 <div>
@@ -84,7 +84,7 @@ export default function AgentAdmin() {
                                     value={config.model}
                                     onValueChange={(val) => setConfig({ ...config, model: val })}
                                 >
-                                    <SelectTrigger>
+                                    <SelectTrigger className="rounded-none border-2 border-border shadow-brutal-sm">
                                         <SelectValue placeholder="Selecione o modelo" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -98,7 +98,7 @@ export default function AgentAdmin() {
                             <div className="space-y-2">
                                 <Label>System Prompt (Personalidade & Regras)</Label>
                                 <Textarea
-                                    className="min-h-[300px] font-mono text-sm"
+                                    className="min-h-[300px] font-mono text-sm rounded-none border-2 border-border shadow-brutal-sm focus:shadow-brutal transition-all"
                                     value={config.system_prompt}
                                     onChange={(e) => setConfig({ ...config, system_prompt: e.target.value })}
                                     placeholder="Defina como o agente deve se comportar..."
@@ -111,7 +111,7 @@ export default function AgentAdmin() {
                             <Button
                                 onClick={handleSave}
                                 disabled={loading}
-                                className="w-full md:w-auto"
+                                className="w-full md:w-auto rounded-none shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all border-2 border-primary font-bold uppercase"
                             >
                                 <Save className="w-4 h-4 mr-2" />
                                 {loading ? 'Salvando...' : 'Salvar Configurações'}
@@ -130,7 +130,7 @@ export default function AgentAdmin() {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-6 space-y-4">
-                            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center hover:bg-muted/10 transition-colors cursor-pointer">
+                            <div className="border-2 border-dashed border-muted-foreground/25 rounded-none p-8 text-center hover:bg-muted/10 transition-colors cursor-pointer">
                                 <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
                                 <p className="text-sm font-medium">Arraste arquivos PDF ou TXT</p>
                                 <p className="text-xs text-muted-foreground mt-1">Manuais, Tabelas de Frete, Regras</p>

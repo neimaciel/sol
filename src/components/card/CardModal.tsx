@@ -219,23 +219,23 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="glass-card max-w-5xl border-white/20 max-h-[90vh] overflow-hidden p-0 gap-0 shadow-2xl shadow-blue-900/20 rounded-3xl">
+            <DialogContent className="bg-background border-2 border-foreground shadow-brutal max-w-5xl max-h-[90vh] overflow-hidden p-0 gap-0 rounded-none">
                 {/* Header */}
-                <div className="px-8 py-6 border-b border-white/10 bg-gradient-to-r from-white/60 to-white/30 backdrop-blur-xl sticky top-0 z-10">
+                <div className="px-8 py-6 border-b-2 border-border bg-background sticky top-0 z-10">
                     <div className="flex items-start justify-between">
                         <div>
                             <div className="flex items-center gap-3 mb-2">
-                                <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-mono tracking-wider">
+                                <Badge variant="outline" className="bg-primary/10 text-primary border-2 border-primary/20 font-mono tracking-wider rounded-none font-bold">
                                     CARGA-{card.id.substring(0, 4)}
                                 </Badge>
-                                <Badge variant="secondary" className="bg-white/50 text-muted-foreground font-medium backdrop-blur-sm">Carga Completa</Badge>
+                                <Badge variant="secondary" className="bg-muted text-muted-foreground font-bold border-2 border-border rounded-none uppercase text-[10px]">Carga Completa</Badge>
                             </div>
-                            <h2 className="text-2xl font-heading font-bold text-foreground flex items-center gap-2 tracking-tight">
+                            <h2 className="text-2xl font-heading font-black text-foreground flex items-center gap-2 tracking-tight uppercase">
                                 {card.origin} <ArrowRight className="w-5 h-5 text-muted-foreground" /> {card.destination}
                             </h2>
                         </div>
                         <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-3 bg-white/40 px-4 py-2 rounded-full border border-white/20 shadow-sm backdrop-blur-md">
+                            <div className="flex items-center gap-3 bg-muted/30 px-4 py-2 border-2 border-border shadow-sm">
                                 <Switch
                                     checked={formData.auto_advance !== false}
                                     onCheckedChange={(checked) => {
@@ -243,13 +243,13 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                         updateCard(card.id, { auto_advance: checked })
                                     }}
                                     id="auto-advance"
-                                    className="data-[state=checked]:bg-primary"
+                                    className="data-[state=checked]:bg-primary border-2 border-transparent data-[state=unchecked]:bg-input"
                                 />
-                                <Label htmlFor="auto-advance" className="text-xs font-semibold text-muted-foreground cursor-pointer uppercase tracking-wide">
+                                <Label htmlFor="auto-advance" className="text-xs font-bold text-muted-foreground cursor-pointer uppercase tracking-wide">
                                     Automação
                                 </Label>
                             </div>
-                            <Button variant="ghost" size="icon" onClick={onClose} className="text-muted-foreground hover:text-foreground hover:bg-white/20 rounded-full w-10 h-10 transition-colors">
+                            <Button variant="ghost" size="icon" onClick={onClose} className="text-muted-foreground hover:text-foreground hover:bg-accent border-2 border-transparent hover:border-border w-10 h-10 transition-all rounded-none">
                                 <X className="w-5 h-5" />
                             </Button>
                         </div>
@@ -259,46 +259,46 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
                 <div className="flex h-[calc(90vh-88px)]">
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-                        <div className="px-8 pt-2 border-b border-white/10 bg-white/20 backdrop-blur-sm">
+                        <div className="px-8 pt-2 border-b-2 border-border bg-muted/10">
                             <TabsList className="bg-transparent w-full justify-start h-14 p-0 space-x-8">
-                                <TabsTrigger value="info" className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-medium text-muted-foreground hover:text-foreground transition-colors text-sm">
+                                <TabsTrigger value="info" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm uppercase tracking-wide">
                                     Informações
                                 </TabsTrigger>
-                                <TabsTrigger value="chat" className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-medium text-muted-foreground hover:text-foreground transition-colors text-sm">
+                                <TabsTrigger value="chat" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm uppercase tracking-wide">
                                     Chat
                                 </TabsTrigger>
-                                <TabsTrigger value="attachments" className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-medium text-muted-foreground hover:text-foreground transition-colors text-sm">
+                                <TabsTrigger value="attachments" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm uppercase tracking-wide">
                                     Anexos
                                 </TabsTrigger>
-                                <TabsTrigger value="timeline" className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-medium text-muted-foreground hover:text-foreground transition-colors text-sm">
+                                <TabsTrigger value="timeline" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm uppercase tracking-wide">
                                     Timeline
                                 </TabsTrigger>
 
                                 {/* Dynamic Tabs */}
                                 {['documentation', 'risk', 'contract', 'loading', 'transit', 'unloading', 'completed'].includes(card.columnId) && (
-                                    <TabsTrigger value="documentation" className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-medium text-muted-foreground hover:text-foreground transition-colors text-sm">
+                                    <TabsTrigger value="documentation" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm uppercase tracking-wide">
                                         Documentação
                                     </TabsTrigger>
                                 )}
                                 {['risk', 'contract', 'loading', 'transit', 'unloading', 'completed'].includes(card.columnId) && (
-                                    <TabsTrigger value="risk" className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-medium text-muted-foreground hover:text-foreground transition-colors text-sm">
+                                    <TabsTrigger value="risk" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm uppercase tracking-wide">
                                         Risco
                                     </TabsTrigger>
                                 )}
                                 {['contract', 'loading', 'transit', 'unloading', 'completed'].includes(card.columnId) && (
-                                    <TabsTrigger value="contracts" className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-medium text-muted-foreground hover:text-foreground transition-colors text-sm">
+                                    <TabsTrigger value="contracts" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm uppercase tracking-wide">
                                         Contratos
                                     </TabsTrigger>
                                 )}
                                 {['loading', 'transit', 'unloading', 'completed'].includes(card.columnId) && (
-                                    <TabsTrigger value="map" className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-medium text-muted-foreground hover:text-foreground transition-colors text-sm">
+                                    <TabsTrigger value="map" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm uppercase tracking-wide">
                                         Rota
                                     </TabsTrigger>
                                 )}
                             </TabsList>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto bg-white/30 backdrop-blur-sm p-8 scrollbar-thin scrollbar-thumb-gray-300/50 scrollbar-track-transparent">
+                        <div className="flex-1 overflow-y-auto bg-background p-8 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                             <AnimatePresence mode="wait">
                                 <motion.div
                                     key={activeTab}
@@ -314,7 +314,7 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                                                     <MapPin className="w-3 h-3" /> Origem
                                                 </p>
-                                                <div className="p-4 rounded-xl bg-white/50 border border-white/40 shadow-sm">
+                                                <div className="p-4 bg-card border-2 border-border shadow-brutal-sm">
                                                     <p className="text-lg font-heading font-bold text-foreground">CD {card.origin}</p>
                                                     <p className="text-sm text-muted-foreground mt-1">Av. Principal, 1000</p>
                                                     <p className="text-sm text-muted-foreground">{card.origin}, SP</p>
@@ -324,7 +324,7 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                                                     <MapPin className="w-3 h-3" /> Destino
                                                 </p>
-                                                <div className="p-4 rounded-xl bg-white/50 border border-white/40 shadow-sm">
+                                                <div className="p-4 bg-card border-2 border-border shadow-brutal-sm">
                                                     <p className="text-lg font-heading font-bold text-foreground">CD {card.destination}</p>
                                                     <p className="text-sm text-muted-foreground mt-1">Av. Central, 500</p>
                                                     <p className="text-sm text-muted-foreground">{card.destination}, SP</p>
@@ -333,14 +333,14 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
                                             <div className="space-y-1">
                                                 <p className="text-xs font-medium text-muted-foreground uppercase">Data de Coleta</p>
-                                                <div className="flex items-center gap-2 text-foreground font-medium bg-white/30 px-3 py-2 rounded-lg border border-white/20">
+                                                <div className="flex items-center gap-2 text-foreground font-bold bg-muted/30 px-3 py-2 border-2 border-border">
                                                     <Calendar className="w-4 h-4 text-primary" />
                                                     {card.date}
                                                 </div>
                                             </div>
                                             <div className="space-y-1">
                                                 <p className="text-xs font-medium text-muted-foreground uppercase">Data de Entrega</p>
-                                                <div className="flex items-center gap-2 text-foreground font-medium bg-white/30 px-3 py-2 rounded-lg border border-white/20">
+                                                <div className="flex items-center gap-2 text-foreground font-bold bg-muted/30 px-3 py-2 border-2 border-border">
                                                     <Calendar className="w-4 h-4 text-primary" />
                                                     20/03/2024
                                                 </div>
@@ -348,7 +348,7 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
                                             <div className="space-y-1">
                                                 <p className="text-xs font-medium text-muted-foreground uppercase">Previsão de Chegada</p>
-                                                <div className="flex items-center gap-2 text-foreground font-medium bg-white/30 px-3 py-2 rounded-lg border border-white/20">
+                                                <div className="flex items-center gap-2 text-foreground font-bold bg-muted/30 px-3 py-2 border-2 border-border">
                                                     <Clock className="w-4 h-4 text-primary" />
                                                     {isEditing ? (
                                                         <Input
@@ -365,14 +365,14 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
                                             <div className="space-y-1">
                                                 <p className="text-xs font-medium text-muted-foreground uppercase">Peso e Volume</p>
-                                                <div className="flex items-center gap-2 text-foreground font-medium bg-white/30 px-3 py-2 rounded-lg border border-white/20">
+                                                <div className="flex items-center gap-2 text-foreground font-bold bg-muted/30 px-3 py-2 border-2 border-border">
                                                     <Box className="w-4 h-4 text-primary" />
                                                     12.645 kg • 38 m³
                                                 </div>
                                             </div>
                                             <div className="space-y-1">
                                                 <p className="text-xs font-medium text-muted-foreground uppercase">Valor do Frete</p>
-                                                <div className="flex items-center gap-2 text-emerald-600 font-heading font-bold text-xl bg-emerald-50/50 px-3 py-2 rounded-lg border border-emerald-100">
+                                                <div className="flex items-center gap-2 text-emerald-600 font-heading font-black text-xl bg-emerald-50 px-3 py-2 border-2 border-emerald-200">
                                                     <DollarSign className="w-5 h-5" />
                                                     {card.value}
                                                 </div>
@@ -385,13 +385,13 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                         {isNegotiationStage ? (
                                             <div className="space-y-6">
                                                 {/* Broadcast Action */}
-                                                <div className="glass-card p-6 border-primary/20 bg-primary/5 space-y-4 rounded-2xl">
+                                                <div className="bg-primary/5 border-2 border-primary/20 p-6 space-y-4 shadow-brutal-sm">
                                                     <div className="flex items-center justify-between">
                                                         <div>
-                                                            <h3 className="text-base font-bold text-primary flex items-center gap-2">
+                                                            <h3 className="text-base font-bold text-primary flex items-center gap-2 uppercase">
                                                                 <Send className="w-4 h-4" /> Divulgação
                                                             </h3>
-                                                            <p className="text-sm text-muted-foreground mt-1">
+                                                            <p className="text-sm text-muted-foreground mt-1 font-medium">
                                                                 {card.broadcast_status === 'sent'
                                                                     ? 'Carga divulgada para motoristas da região.'
                                                                     : 'Divulgue para encontrar motoristas.'}
@@ -399,11 +399,36 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                         </div>
                                                         <Button
                                                             size="sm"
-                                                            className="bg-primary hover:bg-primary-600 text-white shadow-lg shadow-primary/20 transition-all hover:scale-105"
+                                                            className="bg-primary hover:bg-primary/90 text-white shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all rounded-none font-bold uppercase"
                                                             onClick={async () => {
-                                                                await updateCard(card.id, { broadcast_status: 'sent' })
-                                                                await autoAdvanceCard(card.id, 'broadcast_sent')
-                                                                alert('Carga divulgada para 15 motoristas próximos!')
+                                                                if (!card.whatsapp_group_id) {
+                                                                    alert('Por favor, selecione um grupo de WhatsApp primeiro.')
+                                                                    return
+                                                                }
+                                                                try {
+                                                                    const response = await fetch('http://localhost:8000/api/v1/whatsapp/broadcast', {
+                                                                        method: 'POST',
+                                                                        headers: {
+                                                                            'Content-Type': 'application/json'
+                                                                        },
+                                                                        body: JSON.stringify({
+                                                                            load_id: card.id,
+                                                                            group_id: card.whatsapp_group_id
+                                                                        })
+                                                                    })
+
+                                                                    if (!response.ok) {
+                                                                        const errorData = await response.json()
+                                                                        throw new Error(errorData.detail || 'Erro ao enviar mensagem')
+                                                                    }
+
+                                                                    await updateCard(card.id, { broadcast_status: 'sent' })
+                                                                    await autoAdvanceCard(card.id, 'broadcast_sent')
+                                                                    alert('Carga divulgada com sucesso para o grupo selecionado!')
+                                                                } catch (error) {
+                                                                    console.error('Erro na divulgação:', error)
+                                                                    alert(`Erro ao divulgar carga: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
+                                                                }
                                                             }}
                                                             disabled={card.broadcast_status === 'sent'}
                                                         >
@@ -463,7 +488,7 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                                     </Button>
                                                                 </div>
                                                                 {card.whatsapp_group_id && (
-                                                                    <div className="text-xs text-primary bg-primary/5 p-3 rounded-lg border border-primary/10 flex items-center justify-between">
+                                                                    <div className="text-xs text-primary bg-primary/5 p-3 rounded-none border-2 border-primary/20 flex items-center justify-between">
                                                                         <span className="truncate max-w-[200px] font-medium">
                                                                             {groups.find(g => g.id === card.whatsapp_group_id)?.whatsapp_link || 'Sem link cadastrado'}
                                                                         </span>
@@ -493,12 +518,12 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                             <div className="space-y-6">
                                                 {!card.driver ? (
                                                     <div className="space-y-4">
-                                                        <div className="bg-amber-50/50 border border-amber-200/60 rounded-xl p-6 text-center shadow-sm backdrop-blur-sm">
-                                                            <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                                                <Users className="w-6 h-6 text-amber-600" />
+                                                        <div className="bg-amber-50 border-2 border-amber-200 p-6 text-center shadow-brutal-sm">
+                                                            <div className="w-12 h-12 bg-amber-100 border-2 border-amber-200 flex items-center justify-center mx-auto mb-3">
+                                                                <Users className="w-6 h-6 text-amber-700" />
                                                             </div>
-                                                            <p className="text-sm text-amber-900 font-bold mb-1">Nenhum motorista atribuído</p>
-                                                            <p className="text-xs text-amber-700 mb-4">Selecione um candidato abaixo para prosseguir.</p>
+                                                            <p className="text-sm text-amber-900 font-bold mb-1 uppercase">Nenhum motorista atribuído</p>
+                                                            <p className="text-xs text-amber-700 mb-4 font-medium">Selecione um candidato abaixo para prosseguir.</p>
                                                         </div>
                                                         <CandidateList
                                                             loadId={card.id}
@@ -506,31 +531,31 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                         />
                                                     </div>
                                                 ) : (
-                                                    <div className="glass-card p-4 border-white/40 bg-white/60 rounded-xl flex items-center gap-4 shadow-sm">
-                                                        <Avatar className="h-14 w-14 border-2 border-white shadow-md">
+                                                    <div className="bg-card border-2 border-border shadow-brutal p-4 flex items-center gap-4">
+                                                        <Avatar className="h-14 w-14 border-2 border-foreground rounded-none">
                                                             <AvatarImage src="https://i.pravatar.cc/150?u=1" />
-                                                            <AvatarFallback>RS</AvatarFallback>
+                                                            <AvatarFallback className="rounded-none font-bold">RS</AvatarFallback>
                                                         </Avatar>
                                                         <div className="flex-1">
-                                                            <h4 className="text-base font-bold text-foreground">Roberto Santos <span className="text-amber-500 text-xs ml-1 bg-amber-50 px-1.5 py-0.5 rounded-full border border-amber-100">★ 4.7</span></h4>
-                                                            <p className="text-sm text-muted-foreground mt-0.5">345 viagens • Ouro</p>
+                                                            <h4 className="text-base font-bold text-foreground uppercase">Roberto Santos <span className="text-amber-600 text-xs ml-1 bg-amber-50 px-1.5 py-0.5 border border-amber-200 font-mono">★ 4.7</span></h4>
+                                                            <p className="text-sm text-muted-foreground mt-0.5 font-medium">345 viagens • Ouro</p>
                                                         </div>
-                                                        <Button variant="outline" size="sm" className="bg-white/50 hover:bg-white">Ver Perfil</Button>
+                                                        <Button variant="outline" size="sm" className="bg-background border-2 border-foreground hover:bg-accent rounded-none font-bold">Ver Perfil</Button>
                                                     </div>
                                                 )}
 
                                                 {/* Check-in Action */}
                                                 {card.columnId === 'loading' && (
-                                                    <div className="glass-card p-6 border-amber-200/40 bg-amber-50/30 flex items-center justify-between rounded-2xl">
+                                                    <div className="bg-amber-50 border-2 border-amber-200 p-6 flex items-center justify-between shadow-brutal-sm">
                                                         <div>
-                                                            <h3 className="text-base font-bold text-amber-900 flex items-center gap-2">
+                                                            <h3 className="text-base font-bold text-amber-900 flex items-center gap-2 uppercase">
                                                                 <Truck className="w-5 h-5" /> Check-in
                                                             </h3>
-                                                            <p className="text-sm text-amber-700 mt-1">Confirmar chegada para carregamento.</p>
+                                                            <p className="text-sm text-amber-700 mt-1 font-medium">Confirmar chegada para carregamento.</p>
                                                         </div>
                                                         <Button
                                                             size="sm"
-                                                            className="bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-900/20"
+                                                            className="bg-amber-500 hover:bg-amber-600 text-white shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all rounded-none font-bold uppercase"
                                                             onClick={async () => {
                                                                 await updateCard(card.id, { checkin_time: new Date().toISOString() })
                                                                 await autoAdvanceCard(card.id, 'checkin_registered')
@@ -545,16 +570,16 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
                                                 {/* Arrival Confirmation */}
                                                 {card.columnId === 'transit' && (
-                                                    <div className="glass-card p-6 border-blue-200/40 bg-blue-50/30 flex items-center justify-between rounded-2xl">
+                                                    <div className="bg-blue-50 border-2 border-blue-200 p-6 flex items-center justify-between shadow-brutal-sm">
                                                         <div>
-                                                            <h3 className="text-base font-bold text-blue-900 flex items-center gap-2">
+                                                            <h3 className="text-base font-bold text-blue-900 flex items-center gap-2 uppercase">
                                                                 <Truck className="w-5 h-5" /> Chegada no Destino
                                                             </h3>
-                                                            <p className="text-sm text-blue-700 mt-1">Confirmar chegada para descarga.</p>
+                                                            <p className="text-sm text-blue-700 mt-1 font-medium">Confirmar chegada para descarga.</p>
                                                         </div>
                                                         <Button
                                                             size="sm"
-                                                            className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-900/20"
+                                                            className="bg-blue-600 hover:bg-blue-700 text-white shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all rounded-none font-bold uppercase"
                                                             onClick={async () => {
                                                                 await updateCard(card.id, { arrival_time: new Date().toISOString() })
                                                                 await autoAdvanceCard(card.id, 'arrival_registered')
@@ -569,18 +594,18 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
                                                 {/*POD Upload */}
                                                 {['unloading', 'completed'].includes(card.columnId) && (
-                                                    <div className="glass-card p-6 border-emerald-200/40 bg-emerald-50/30 flex items-center justify-between rounded-2xl">
+                                                    <div className="bg-emerald-50 border-2 border-emerald-200 p-6 flex items-center justify-between shadow-brutal-sm">
                                                         <div>
-                                                            <h3 className="text-base font-bold text-emerald-900 flex items-center gap-2">
+                                                            <h3 className="text-base font-bold text-emerald-900 flex items-center gap-2 uppercase">
                                                                 <Upload className="w-5 h-5" /> Comprovante (POD)
                                                             </h3>
-                                                            <p className="text-sm text-emerald-700 mt-1">Upload do canhoto assinado.</p>
+                                                            <p className="text-sm text-emerald-700 mt-1 font-medium">Upload do canhoto assinado.</p>
                                                         </div>
                                                         <div className="relative">
                                                             <Button
                                                                 variant="outline"
                                                                 size="sm"
-                                                                className="border-emerald-200 text-emerald-700 hover:bg-emerald-100 bg-white/50"
+                                                                className="border-2 border-emerald-600 text-emerald-700 hover:bg-emerald-100 bg-white font-bold rounded-none uppercase"
                                                                 disabled={isUploading || !!card.pod_url}
                                                             >
                                                                 {isUploading ? 'Enviando...' : card.pod_url ? 'Ver POD' : 'Enviar'}
@@ -606,7 +631,7 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                         {/* Actions Footer */}
                                         <div className="flex justify-end gap-3 pt-6">
                                             {showDeleteConfirm ? (
-                                                <div className="flex items-center gap-3 animate-fade-in bg-red-50 p-2 rounded-lg border border-red-100">
+                                                <div className="flex items-center gap-3 animate-fade-in bg-red-50 p-2 rounded-none border-2 border-red-100">
                                                     <span className="text-xs text-red-600 font-bold uppercase tracking-wide">Confirmar exclusão?</span>
                                                     <Button size="sm" variant="outline" onClick={() => setShowDeleteConfirm(false)} className="h-8 bg-white border-red-200 text-red-600 hover:bg-red-50">Não</Button>
                                                     <Button size="sm" className="h-8 bg-red-600 text-white hover:bg-red-700 shadow-md shadow-red-900/20" onClick={handleDelete}>Sim</Button>
@@ -624,18 +649,18 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
                                     {/* Chat Tab */}
                                     <TabsContent value="chat" className="mt-0 h-[500px] flex flex-col">
-                                        <div className="flex-1 glass-card p-6 mb-4 overflow-y-auto space-y-6 bg-white/40 rounded-2xl border-white/30">
+                                        <div className="flex-1 bg-muted/10 border-2 border-border p-6 mb-4 overflow-y-auto space-y-6 shadow-inner">
                                             {chatHistory.map((msg, i) => (
                                                 <div key={i} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                                    <div className={`max-w-[80%] rounded-2xl p-4 shadow-sm ${msg.sender === 'user'
-                                                        ? 'bg-primary text-white rounded-tr-none'
+                                                    <div className={`max-w-[80%] p-4 shadow-brutal-sm border-2 border-border ${msg.sender === 'user'
+                                                        ? 'bg-primary text-white rounded-none'
                                                         : msg.sender === 'system'
-                                                            ? 'bg-gray-100/80 text-gray-500 text-xs text-center w-full shadow-none'
-                                                            : 'bg-white border border-gray-100 text-gray-800 rounded-tl-none'
+                                                            ? 'bg-muted text-muted-foreground text-xs text-center w-full shadow-none border-none'
+                                                            : 'bg-card text-foreground rounded-none'
                                                         }`}>
-                                                        <p className="text-sm leading-relaxed">{msg.text}</p>
+                                                        <p className="text-sm leading-relaxed font-medium">{msg.text}</p>
                                                         {msg.sender !== 'system' && (
-                                                            <p className={`text-[10px] mt-2 font-medium ${msg.sender === 'user' ? 'text-blue-100' : 'text-gray-400'}`}>
+                                                            <p className={`text-[10px] mt-2 font-bold uppercase ${msg.sender === 'user' ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
                                                                 {msg.time}
                                                             </p>
                                                         )}
@@ -648,9 +673,9 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                 value={chatMessage}
                                                 onChange={(e) => setChatMessage(e.target.value)}
                                                 placeholder="Digite sua mensagem..."
-                                                className="flex-1 bg-white/60 backdrop-blur-sm border-white/40 focus:bg-white transition-all h-12 rounded-xl shadow-sm"
+                                                className="flex-1 bg-background border-2 border-border focus:shadow-brutal transition-all h-12 rounded-none"
                                             />
-                                            <Button type="submit" className="bg-primary hover:bg-primary-600 text-white h-12 w-12 rounded-xl shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95 px-0">
+                                            <Button type="submit" className="bg-primary hover:bg-primary/90 text-white h-12 w-12 rounded-none shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all px-0 border-2 border-primary">
                                                 <Send className="w-5 h-5" />
                                             </Button>
                                         </form>
@@ -658,44 +683,44 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
                                     {/* Attachments Tab */}
                                     <TabsContent value="attachments" className="mt-0">
-                                        <div className="glass-card p-8 border-dashed border-2 border-gray-300 hover:border-primary hover:bg-primary/5 transition-all duration-300 rounded-2xl flex flex-col items-center justify-center h-[300px] mb-6 cursor-pointer relative bg-white/40 group">
+                                        <div className="bg-muted/10 border-2 border-dashed border-muted-foreground/50 hover:border-primary hover:bg-primary/5 transition-all duration-300 p-8 flex flex-col items-center justify-center h-[300px] mb-6 cursor-pointer relative group">
                                             <input
                                                 type="file"
                                                 className="absolute inset-0 opacity-0 cursor-pointer"
                                                 onChange={(e) => handleFileUpload(e, 'attachment')}
                                             />
-                                            <div className="w-16 h-16 rounded-full bg-white shadow-md flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                                            <div className="w-16 h-16 bg-background border-2 border-border shadow-brutal-sm flex items-center justify-center mb-4 group-hover:translate-x-[2px] group-hover:translate-y-[2px] group-hover:shadow-none transition-all duration-300">
                                                 <Paperclip className="w-8 h-8 text-primary" />
                                             </div>
-                                            <p className="text-lg font-bold text-gray-700 group-hover:text-primary transition-colors">
+                                            <p className="text-lg font-bold text-foreground group-hover:text-primary transition-colors uppercase">
                                                 {isUploading ? 'Enviando...' : 'Clique para fazer upload'}
                                             </p>
-                                            <p className="text-sm text-muted-foreground mt-2">PDF, JPG ou PNG (max 5MB)</p>
+                                            <p className="text-sm text-muted-foreground mt-2 font-medium">PDF, JPG ou PNG (max 5MB)</p>
                                         </div>
                                     </TabsContent>
 
                                     {/* Timeline Tab */}
                                     <TabsContent value="timeline" className="mt-0">
-                                        <div className="glass-card p-8 bg-white/40 rounded-2xl border-white/30">
-                                            <h3 className="text-lg font-bold text-foreground mb-8 flex items-center gap-3">
-                                                <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                                        <div className="bg-card border-2 border-border shadow-brutal p-8">
+                                            <h3 className="text-lg font-black text-foreground mb-8 flex items-center gap-3 uppercase">
+                                                <div className="p-2 bg-primary/10 border-2 border-primary/20 text-primary">
                                                     <History className="w-5 h-5" />
                                                 </div>
                                                 Histórico de Atividades
                                             </h3>
-                                            <div className="relative border-l-2 border-gray-200/60 ml-3 space-y-8">
+                                            <div className="relative border-l-2 border-border ml-3 space-y-8">
                                                 {events.map((event) => (
                                                     <div key={event.id} className="relative pl-8 group">
-                                                        <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-white border-4 border-gray-200 group-hover:border-primary transition-colors shadow-sm"></div>
+                                                        <div className="absolute -left-[9px] top-0 w-4 h-4 bg-background border-4 border-muted-foreground group-hover:border-primary transition-colors"></div>
                                                         <div className="flex flex-col">
-                                                            <span className="text-xs text-muted-foreground font-mono mb-1 bg-gray-50 w-fit px-2 py-0.5 rounded border border-gray-100">
+                                                            <span className="text-xs text-muted-foreground font-mono mb-1 bg-muted w-fit px-2 py-0.5 border-2 border-border font-bold">
                                                                 {new Date(event.createdAt).toLocaleString('pt-BR')}
                                                             </span>
                                                             <span className="text-sm font-bold text-foreground capitalize mt-1">
                                                                 {event.action.replace(/_/g, ' ')}
                                                             </span>
                                                             {event.details && (
-                                                                <div className="text-xs text-muted-foreground mt-2 bg-white/50 p-3 rounded-lg border border-white/40 font-mono">
+                                                                <div className="text-xs text-muted-foreground mt-2 bg-muted/30 p-3 border-2 border-border font-mono">
                                                                     {JSON.stringify(event.details, null, 2)}
                                                                 </div>
                                                             )}
@@ -703,7 +728,7 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                     </div>
                                                 ))}
                                                 {events.length === 0 && (
-                                                    <p className="text-sm text-muted-foreground pl-8 italic">Nenhuma atividade registrada.</p>
+                                                    <p className="text-sm text-muted-foreground pl-8 italic font-medium">Nenhuma atividade registrada.</p>
                                                 )}
                                             </div>
                                         </div>
@@ -711,25 +736,25 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
                                     {/* Documentation Tab */}
                                     <TabsContent value="documentation" className="mt-0 space-y-6">
-                                        <div className="glass-card p-8 bg-white/40 rounded-2xl border-white/30">
-                                            <h3 className="text-lg font-bold text-foreground mb-6 flex items-center gap-3">
-                                                <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                                        <div className="bg-card border-2 border-border shadow-brutal p-8">
+                                            <h3 className="text-lg font-black text-foreground mb-6 flex items-center gap-3 uppercase">
+                                                <div className="p-2 bg-primary/10 border-2 border-primary/20 text-primary">
                                                     <FileCheck className="w-5 h-5" />
                                                 </div>
                                                 Validação de Documentos
                                             </h3>
                                             <div className="space-y-4">
                                                 {['CNH do Motorista', 'CRLV do Veículo', 'Seguro de Carga', 'RNTRC'].map((doc, i) => (
-                                                    <div key={i} className="flex items-center justify-between p-4 bg-white/60 rounded-xl border border-white/40 shadow-sm hover:shadow-md transition-shadow">
+                                                    <div key={i} className="flex items-center justify-between p-4 bg-muted/10 border-2 border-border hover:shadow-brutal-sm transition-all">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center border border-green-100">
+                                                            <div className="w-8 h-8 bg-green-50 flex items-center justify-center border-2 border-green-200">
                                                                 <Check className="w-4 h-4 text-green-600" />
                                                             </div>
-                                                            <span className="text-sm font-bold text-gray-700">{doc}</span>
+                                                            <span className="text-sm font-bold text-foreground uppercase">{doc}</span>
                                                         </div>
                                                         <div className="flex gap-3">
-                                                            <Button size="sm" variant="outline" className="h-9 text-xs bg-white hover:bg-gray-50">Visualizar</Button>
-                                                            <Button size="sm" variant="ghost" className="h-9 w-9 p-0 text-green-600 hover:bg-green-50 rounded-full">
+                                                            <Button size="sm" variant="outline" className="h-9 text-xs bg-background hover:bg-accent border-2 border-border rounded-none font-bold uppercase">Visualizar</Button>
+                                                            <Button size="sm" variant="ghost" className="h-9 w-9 p-0 text-green-600 hover:bg-green-50 rounded-none">
                                                                 <Check className="w-5 h-5" />
                                                             </Button>
                                                         </div>
@@ -738,7 +763,7 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                             </div>
                                             <div className="mt-8 flex justify-end">
                                                 <Button
-                                                    className="bg-primary hover:bg-primary-600 text-white shadow-lg shadow-primary/25 transition-all hover:scale-105 font-medium px-6 h-10"
+                                                    className="bg-primary hover:bg-primary/90 text-white shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all font-bold px-6 h-10 rounded-none uppercase"
                                                     onClick={async () => {
                                                         await updateCard(card.id, { documents_status: 'verified' })
                                                         await autoAdvanceCard(card.id, 'documents_verified')
@@ -758,33 +783,33 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
                                     {/* Risk Tab */}
                                     <TabsContent value="risk" className="mt-0 space-y-6">
-                                        <div className="glass-card p-8 bg-white/40 rounded-2xl border-white/30">
-                                            <h3 className="text-lg font-bold text-foreground mb-6 flex items-center gap-3">
-                                                <div className="p-2 bg-purple-100 rounded-lg text-purple-600">
+                                        <div className="bg-card border-2 border-border shadow-brutal p-8">
+                                            <h3 className="text-lg font-black text-foreground mb-6 flex items-center gap-3 uppercase">
+                                                <div className="p-2 bg-purple-100 border-2 border-purple-200 text-purple-600">
                                                     <Shield className="w-5 h-5" />
                                                 </div>
                                                 Análise de Risco
                                             </h3>
                                             <div className="grid grid-cols-3 gap-6 mb-8">
-                                                <div className="p-6 bg-green-50/80 rounded-2xl border border-green-100 text-center shadow-sm">
+                                                <div className="p-6 bg-green-50 border-2 border-green-200 text-center shadow-brutal-sm">
                                                     <p className="text-xs text-green-600 font-bold uppercase tracking-wider mb-2">Motorista</p>
-                                                    <p className="text-xl font-heading font-bold text-green-700">Baixo Risco</p>
+                                                    <p className="text-xl font-heading font-black text-green-700 uppercase">Baixo Risco</p>
                                                 </div>
-                                                <div className="p-6 bg-green-50/80 rounded-2xl border border-green-100 text-center shadow-sm">
+                                                <div className="p-6 bg-green-50 border-2 border-green-200 text-center shadow-brutal-sm">
                                                     <p className="text-xs text-green-600 font-bold uppercase tracking-wider mb-2">Veículo</p>
-                                                    <p className="text-xl font-heading font-bold text-green-700">Baixo Risco</p>
+                                                    <p className="text-xl font-heading font-black text-green-700 uppercase">Baixo Risco</p>
                                                 </div>
-                                                <div className="p-6 bg-yellow-50/80 rounded-2xl border border-yellow-100 text-center shadow-sm">
+                                                <div className="p-6 bg-yellow-50 border-2 border-yellow-200 text-center shadow-brutal-sm">
                                                     <p className="text-xs text-yellow-600 font-bold uppercase flex items-center justify-center gap-1 tracking-wider mb-2">
                                                         <AlertTriangle className="w-3 h-3" /> Rota
                                                     </p>
-                                                    <p className="text-xl font-heading font-bold text-yellow-700">Médio Risco</p>
+                                                    <p className="text-xl font-heading font-black text-yellow-700 uppercase">Médio Risco</p>
                                                 </div>
                                             </div>
                                             <div className="flex justify-end gap-4">
-                                                <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300">Reprovar</Button>
+                                                <Button variant="outline" className="border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 rounded-none font-bold uppercase">Reprovar</Button>
                                                 <Button
-                                                    className="bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-900/20 transition-all hover:scale-105 font-medium px-6"
+                                                    className="bg-purple-600 hover:bg-purple-700 text-white shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all font-bold px-6 rounded-none uppercase"
                                                     onClick={async () => {
                                                         await updateCard(card.id, { risk_status: 'approved' })
                                                         await autoAdvanceCard(card.id, 'risk_approved')
@@ -804,31 +829,31 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
                                     {/* Contracts Tab */}
                                     <TabsContent value="contracts" className="mt-0 space-y-6">
-                                        <div className="glass-card p-10 text-center bg-white/40 rounded-2xl border-white/30">
-                                            <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                                        <div className="bg-card border-2 border-border shadow-brutal p-10 text-center">
+                                            <div className="w-20 h-20 bg-primary/10 border-2 border-primary/20 flex items-center justify-center mx-auto mb-6">
                                                 <FileSignature className="w-10 h-10 text-primary" />
                                             </div>
-                                            <h3 className="text-xl font-bold text-foreground mb-2">Contrato de Transporte</h3>
-                                            <p className="text-sm text-muted-foreground mb-8 max-w-md mx-auto">Gere o contrato digital automaticamente ou selecione um modelo pré-aprovado para esta operação.</p>
+                                            <h3 className="text-xl font-black text-foreground mb-2 uppercase">Contrato de Transporte</h3>
+                                            <p className="text-sm text-muted-foreground mb-8 max-w-md mx-auto font-medium">Gere o contrato digital automaticamente ou selecione um modelo pré-aprovado para esta operação.</p>
 
                                             {/* Contract Templates */}
                                             {!card.contract_url && (
-                                                <div className="mb-8 max-w-sm mx-auto text-left bg-white/50 p-6 rounded-xl border border-white/40 shadow-sm">
+                                                <div className="mb-8 max-w-sm mx-auto text-left bg-muted/10 p-6 border-2 border-border shadow-brutal-sm">
                                                     <Label className="text-xs font-bold text-muted-foreground mb-3 block uppercase tracking-wider">Usar Modelo</Label>
                                                     <div className="flex gap-3">
                                                         <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
-                                                            <SelectTrigger className="h-10 bg-white border-gray-200">
+                                                            <SelectTrigger className="h-10 bg-background border-2 border-border rounded-none focus:ring-0 focus:border-primary font-medium">
                                                                 <SelectValue placeholder="Selecione um modelo..." />
                                                             </SelectTrigger>
-                                                            <SelectContent>
+                                                            <SelectContent className="rounded-none border-2 border-border shadow-brutal">
                                                                 {contractTemplates.map(t => (
-                                                                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                                                                    <SelectItem key={t.id} value={t.id} className="focus:bg-primary/10 focus:text-primary font-medium">{t.name}</SelectItem>
                                                                 ))}
                                                             </SelectContent>
                                                         </Select>
                                                         <Button
                                                             size="sm"
-                                                            className="bg-primary text-white h-10 px-4"
+                                                            className="bg-primary text-white h-10 px-4 rounded-none border-2 border-primary shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all font-bold uppercase"
                                                             disabled={!selectedTemplateId}
                                                             onClick={() => {
                                                                 const template = contractTemplates.find(t => t.id === selectedTemplateId)
@@ -845,22 +870,22 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
                                             {card.contract_url ? (
                                                 <div className="flex flex-col items-center gap-4 animate-fade-in">
-                                                    <div className="flex items-center gap-2 text-green-700 bg-green-100 px-6 py-3 rounded-full border border-green-200 shadow-sm">
+                                                    <div className="flex items-center gap-2 text-green-700 bg-green-100 px-6 py-3 border-2 border-green-200 shadow-brutal-sm">
                                                         <Check className="w-5 h-5" />
-                                                        <span className="text-sm font-bold">Contrato Gerado</span>
+                                                        <span className="text-sm font-bold uppercase">Contrato Gerado</span>
                                                     </div>
                                                     <div className="flex gap-3 mt-2">
-                                                        <Button variant="outline" onClick={() => window.open(card.contract_url, '_blank')} className="bg-white hover:bg-gray-50">
+                                                        <Button variant="outline" onClick={() => window.open(card.contract_url, '_blank')} className="bg-background hover:bg-accent border-2 border-foreground rounded-none font-bold uppercase">
                                                             <FileText className="w-4 h-4 mr-2" /> Baixar PDF
                                                         </Button>
-                                                        <Button variant="outline" onClick={handleSaveContractTemplate} className="bg-white hover:bg-gray-50">
+                                                        <Button variant="outline" onClick={handleSaveContractTemplate} className="bg-background hover:bg-accent border-2 border-foreground rounded-none font-bold uppercase">
                                                             Salvar como Modelo
                                                         </Button>
                                                     </div>
                                                 </div>
                                             ) : (
                                                 <Button
-                                                    className="bg-primary hover:bg-primary-600 text-white shadow-lg shadow-primary/25 transition-all hover:scale-105 h-12 px-8 text-base font-medium rounded-xl"
+                                                    className="bg-primary hover:bg-primary/90 text-white shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all h-12 px-8 text-base font-bold rounded-none uppercase"
                                                     onClick={async () => {
                                                         await updateCard(card.id, { contract_url: 'https://example.com/contract.pdf' })
                                                         await autoAdvanceCard(card.id, 'contract_generated')
@@ -875,32 +900,32 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
                                     {/* Map Tab */}
                                     <TabsContent value="map" className="mt-0">
-                                        <div className="glass-card p-4 bg-white/40 rounded-2xl border-white/30 h-[500px] relative overflow-hidden group">
-                                            <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
+                                        <div className="bg-card border-2 border-border shadow-brutal p-4 h-[500px] relative overflow-hidden group">
+                                            <div className="absolute inset-0 bg-muted flex items-center justify-center">
                                                 <div className="text-center space-y-4 z-10">
-                                                    <div className="w-16 h-16 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto shadow-lg animate-pulse">
+                                                    <div className="w-16 h-16 bg-background border-2 border-border flex items-center justify-center mx-auto shadow-brutal animate-pulse">
                                                         <MapPin className="w-8 h-8 text-primary" />
                                                     </div>
-                                                    <p className="text-gray-500 font-medium">Mapa em tempo real</p>
+                                                    <p className="text-muted-foreground font-bold uppercase">Mapa em tempo real</p>
                                                 </div>
                                                 {/* Decorative map pattern */}
-                                                <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#6B8CAE_1px,transparent_1px)] [background-size:16px_16px]"></div>
+                                                <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]"></div>
                                             </div>
 
                                             {/* Floating Info Card */}
-                                            <div className="absolute bottom-6 left-6 right-6 glass-card p-4 bg-white/90 backdrop-blur-md border-white/50 shadow-lg rounded-xl flex items-center justify-between">
+                                            <div className="absolute bottom-6 left-6 right-6 bg-background border-2 border-border shadow-brutal p-4 flex items-center justify-between">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="p-3 bg-primary/10 rounded-lg">
+                                                    <div className="p-3 bg-primary/10 border-2 border-primary/20">
                                                         <Truck className="w-6 h-6 text-primary" />
                                                     </div>
                                                     <div>
                                                         <p className="text-xs text-muted-foreground font-bold uppercase">Status Atual</p>
-                                                        <p className="text-sm font-bold text-foreground">Em trânsito - 80km/h</p>
+                                                        <p className="text-sm font-bold text-foreground uppercase">Em trânsito - 80km/h</p>
                                                     </div>
                                                 </div>
                                                 <div className="text-right">
                                                     <p className="text-xs text-muted-foreground font-bold uppercase">Previsão</p>
-                                                    <p className="text-sm font-bold text-foreground">14:30 - Hoje</p>
+                                                    <p className="text-sm font-bold text-foreground uppercase">14:30 - Hoje</p>
                                                 </div>
                                             </div>
                                         </div>

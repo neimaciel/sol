@@ -17,4 +17,8 @@ class Load(Base):
     destination_lat = Column(Float, nullable=True)
     destination_lon = Column(Float, nullable=True)
 
+    # Phase 5 Fields
+    whatsapp_group_id = Column(String, nullable=True)
+    broadcast_status = Column(String, nullable=True)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())

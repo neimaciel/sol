@@ -74,7 +74,7 @@ export default function HistoryList() {
                             variant="ghost"
                             size="icon"
                             onClick={() => navigate('/')}
-                            className="glass-card hover:bg-white/60 text-muted-foreground hover:text-foreground transition-colors"
+                            className="bg-background border-2 border-muted-foreground/20 hover:border-foreground hover:bg-accent text-muted-foreground hover:text-foreground transition-all rounded-none h-10 w-10"
                         >
                             <ArrowLeft className="w-5 h-5" />
                         </Button>
@@ -92,7 +92,7 @@ export default function HistoryList() {
                     </div>
 
                     <Button
-                        className="bg-primary hover:bg-primary-600 text-white rounded-xl shadow-lg shadow-primary/25 transition-all hover:scale-105 active:scale-95 font-medium px-6 gap-2"
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground border-2 border-foreground shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all rounded-none font-bold px-6 gap-2"
                         onClick={handleExport}
                     >
                         <Download className="w-4 h-4" />
@@ -100,33 +100,33 @@ export default function HistoryList() {
                     </Button>
                 </div>
 
-                <div className="glass-card p-4 rounded-2xl border-white/40 shadow-xl shadow-blue-900/5 flex items-center gap-4 flex-wrap">
+                <div className="bg-background border-2 border-foreground shadow-brutal p-4 flex items-center gap-4 flex-wrap">
                     <div className="relative flex-1 min-w-[300px] group">
                         <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" />
                         <Input
-                            className="input-soft pl-11 h-10 border-gray-200/50 bg-white/50 focus:bg-white/80 transition-all"
+                            className="input-soft pl-11 h-10 border-2 border-muted-foreground/20 bg-muted/10 focus:bg-background focus:border-primary transition-all rounded-none"
                             placeholder="Buscar cargas..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
 
-                    <div className="flex items-center gap-2 bg-white/50 rounded-lg border border-gray-200/50 p-1">
-                        <Button variant="ghost" size="sm" className="text-xs font-bold text-muted-foreground hover:text-foreground h-8">Mais recentes</Button>
+                    <div className="flex items-center gap-2 bg-muted/10 border-2 border-muted-foreground/20 p-1">
+                        <Button variant="ghost" size="sm" className="text-xs font-bold text-muted-foreground hover:text-foreground h-8 rounded-none">Mais recentes</Button>
                     </div>
 
-                    <div className="flex items-center gap-2 bg-white/50 rounded-lg border border-gray-200/50 px-3 py-2 min-w-[200px] h-10">
+                    <div className="flex items-center gap-2 bg-muted/10 border-2 border-muted-foreground/20 px-3 py-2 min-w-[200px] h-10">
                         <Calendar className="w-4 h-4 text-muted-foreground" />
                         <span className="text-xs text-muted-foreground font-medium">Selecione o período</span>
                     </div>
 
-                    <Button variant="outline" size="icon" className="glass-card hover:bg-white/60 h-10 w-10">
-                        <Filter className="w-4 h-4 text-muted-foreground" />
+                    <Button variant="outline" size="icon" className="bg-background border-2 border-muted-foreground/20 hover:border-primary hover:text-primary h-10 w-10 rounded-none shadow-brutal-sm hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all">
+                        <Filter className="w-4 h-4" />
                     </Button>
 
                     <div className="flex items-center gap-2 px-3">
-                        <input type="checkbox" className="rounded border-gray-300 text-primary focus:ring-primary" />
-                        <span className="text-xs text-muted-foreground font-bold">Mostrar Arquivados</span>
+                        <input type="checkbox" className="rounded-none border-2 border-muted-foreground text-primary focus:ring-primary h-4 w-4" />
+                        <span className="text-xs text-muted-foreground font-bold uppercase">Mostrar Arquivados</span>
                     </div>
                 </div>
             </header>
@@ -151,17 +151,17 @@ export default function HistoryList() {
                                     animate={{ opacity: 1, x: 0 }}
                                     exit={{ opacity: 0, x: 20 }}
                                     transition={{ delay: index * 0.05 }}
-                                    className="glass-card p-4 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group rounded-xl border-white/40"
+                                    className="bg-card border-2 border-border shadow-brutal p-4 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all duration-200 group rounded-none"
                                 >
                                     <div className="flex items-center justify-between mb-3">
                                         <div className="flex items-center gap-3">
-                                            <span className="text-sm font-mono font-bold text-foreground bg-secondary/50 px-2 py-1 rounded-md border border-border/50">
+                                            <span className="text-sm font-mono font-bold text-foreground bg-secondary px-2 py-1 border-2 border-border">
                                                 {item.loadId}
                                             </span>
-                                            <Badge variant="secondary" className="bg-secondary text-muted-foreground border-border/50 font-bold text-[10px] uppercase tracking-wider">
+                                            <Badge variant="secondary" className="bg-secondary text-muted-foreground border-2 border-border font-bold text-[10px] uppercase tracking-wider rounded-none">
                                                 {item.type}
                                             </Badge>
-                                            <Badge className={`${getStatusColor(item.status)} border font-bold shadow-sm`}>
+                                            <Badge className={`${getStatusColor(item.status)} border-2 font-bold shadow-sm rounded-none`}>
                                                 {item.status}
                                             </Badge>
                                         </div>
@@ -176,7 +176,7 @@ export default function HistoryList() {
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <div className="w-6 h-6 bg-muted border-2 border-border flex items-center justify-center rounded">
+                                                <div className="w-6 h-6 bg-muted border-2 border-border flex items-center justify-center rounded-none">
                                                     <User className="w-3 h-3" />
                                                 </div>
                                                 <span className="font-medium text-sm uppercase">Motorista</span>

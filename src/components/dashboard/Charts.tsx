@@ -22,43 +22,39 @@ export function RevenueChart() {
         <div className="h-[200px] w-full">
             <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={revenueData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" vertical={false} opacity={0.2} />
                     <XAxis
                         dataKey="name"
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: '#9CA3AF', fontSize: 11, fontWeight: 500 }}
+                        tick={{ fill: 'hsl(var(--foreground))', fontSize: 11, fontWeight: 700 }}
                     />
                     <YAxis
                         axisLine={false}
                         tickLine={false}
                         tickFormatter={(value) => `${value / 1000}k`}
-                        tick={{ fill: '#9CA3AF', fontSize: 11, fontWeight: 500 }}
+                        tick={{ fill: 'hsl(var(--foreground))', fontSize: 11, fontWeight: 700 }}
                     />
                     <Tooltip
-                        cursor={{ fill: 'rgba(107, 140, 174, 0.05)' }}
+                        cursor={{ fill: 'hsl(var(--muted))' }}
                         contentStyle={{
-                            borderRadius: '12px',
-                            border: '1px solid #E5E7EB',
-                            boxShadow: '0 4px 12px rgba(107, 140, 174, 0.15)',
-                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                            backdropFilter: 'blur(10px)',
-                            fontSize: 11
+                            borderRadius: '0px',
+                            border: '2px solid hsl(var(--border))',
+                            boxShadow: '4px 4px 0px hsl(var(--foreground))',
+                            backgroundColor: 'hsl(var(--card))',
+                            fontSize: 11,
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            color: 'hsl(var(--foreground))'
                         }}
-                        labelStyle={{ color: '#374151', fontWeight: 600, fontSize: 11 }}
-                        itemStyle={{ color: '#6B8CAE', fontWeight: 500, fontSize: 11 }}
+                        labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 900, fontSize: 11 }}
+                        itemStyle={{ color: 'hsl(var(--foreground))', fontWeight: 700, fontSize: 11 }}
                     />
                     <Bar
                         dataKey="value"
-                        fill="url(#blueGradient)"
-                        radius={[6, 6, 0, 0]}
+                        fill="hsl(var(--foreground))"
+                        radius={[0, 0, 0, 0]}
                     />
-                    <defs>
-                        <linearGradient id="blueGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#6B8CAE" stopOpacity={0.9} />
-                            <stop offset="100%" stopColor="#93C5FD" stopOpacity={0.7} />
-                        </linearGradient>
-                    </defs>
                 </BarChart>
             </ResponsiveContainer>
         </div>
@@ -70,37 +66,39 @@ export function TripsChart() {
         <div className="h-[200px] w-full">
             <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={tripsData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" vertical={false} opacity={0.2} />
                     <XAxis
                         dataKey="name"
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: '#9CA3AF', fontSize: 11, fontWeight: 500 }}
+                        tick={{ fill: 'hsl(var(--foreground))', fontSize: 11, fontWeight: 700 }}
                     />
                     <YAxis
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: '#9CA3AF', fontSize: 11, fontWeight: 500 }}
+                        tick={{ fill: 'hsl(var(--foreground))', fontSize: 11, fontWeight: 700 }}
                     />
                     <Tooltip
                         contentStyle={{
-                            borderRadius: '12px',
-                            border: '1px solid #E5E7EB',
-                            boxShadow: '0 4px 12px rgba(107, 140, 174, 0.15)',
-                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                            backdropFilter: 'blur(10px)',
-                            fontSize: 11
+                            borderRadius: '0px',
+                            border: '2px solid hsl(var(--border))',
+                            boxShadow: '4px 4px 0px hsl(var(--foreground))',
+                            backgroundColor: 'hsl(var(--card))',
+                            fontSize: 11,
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            color: 'hsl(var(--foreground))'
                         }}
-                        labelStyle={{ color: '#374151', fontWeight: 600, fontSize: 11 }}
-                        itemStyle={{ color: '#6B8CAE', fontWeight: 500, fontSize: 11 }}
+                        labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 900, fontSize: 11 }}
+                        itemStyle={{ color: 'hsl(var(--foreground))', fontWeight: 700, fontSize: 11 }}
                     />
                     <Line
-                        type="monotone"
+                        type="linear"
                         dataKey="trips"
-                        stroke="#6B8CAE"
-                        strokeWidth={2.5}
-                        dot={{ fill: '#6B8CAE', r: 4, strokeWidth: 2, stroke: '#fff' }}
-                        activeDot={{ r: 6, strokeWidth: 2 }}
+                        stroke="hsl(var(--foreground))"
+                        strokeWidth={3}
+                        dot={{ fill: 'hsl(var(--foreground))', r: 4, strokeWidth: 0 }}
+                        activeDot={{ r: 6, strokeWidth: 0, fill: 'hsl(var(--foreground))' }}
                     />
                 </LineChart>
             </ResponsiveContainer>
@@ -109,10 +107,10 @@ export function TripsChart() {
 }
 
 const funnelData = [
-    { value: 100, label: 'Ofertas', color: '#6B8CAE', subtext: '100% inicial' },
-    { value: 80, label: 'Negociações', color: '#8B5CF6', subtext: '80% conv.' },
-    { value: 50, label: 'Viagens', color: '#10B981', subtext: '62% conv.' },
-    { value: 40, label: 'Concluídas', color: '#F59E0B', subtext: '80% sucesso' },
+    { value: 100, label: 'Ofertas', color: 'bg-foreground', subtext: '100% inicial' },
+    { value: 80, label: 'Negociações', color: 'bg-foreground/80', subtext: '80% conv.' },
+    { value: 50, label: 'Viagens', color: 'bg-foreground/60', subtext: '62% conv.' },
+    { value: 40, label: 'Concluídas', color: 'bg-foreground/40', subtext: '80% sucesso' },
 ]
 
 export function FunnelChart() {
@@ -120,7 +118,7 @@ export function FunnelChart() {
         <div className="h-[200px] w-full flex flex-col justify-center">
             <div className="relative w-full h-[120px] flex items-center">
                 {/* Background Line */}
-                <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-100 -translate-y-1/2 rounded-full" />
+                <div className="absolute top-1/2 left-0 w-full h-1 bg-muted -translate-y-1/2" />
 
                 {/* Funnel Steps */}
                 <div className="w-full flex justify-between items-center relative z-10 px-4">
@@ -129,32 +127,25 @@ export function FunnelChart() {
                             {/* Connector Line (except for first item) */}
                             {index > 0 && (
                                 <div
-                                    className="absolute top-1/2 -left-[50%] w-full h-1 -translate-y-1/2 -z-10"
-                                    style={{
-                                        background: `linear-gradient(to right, ${funnelData[index - 1].color}40, ${step.color}40)`
-                                    }}
+                                    className="absolute top-1/2 -left-[50%] w-full h-1 -translate-y-1/2 -z-10 bg-gradient-to-r from-transparent to-transparent"
                                 />
                             )}
 
-                            {/* Circle Node */}
+                            {/* Square Node */}
                             <div
-                                className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110 border-2 border-white"
-                                style={{
-                                    backgroundColor: step.color,
-                                    boxShadow: `0 4px 12px ${step.color}40`
-                                }}
+                                className={`w-12 h-12 flex items-center justify-center shadow-brutal dark:shadow-brutal-dark transition-transform duration-300 group-hover:scale-110 border-2 border-border ${step.color}`}
                             >
-                                <span className="text-white font-bold text-sm">{step.value}</span>
+                                <span className="text-background font-black text-sm">{step.value}</span>
                             </div>
 
                             {/* Labels */}
                             <div className="absolute -bottom-10 flex flex-col items-center whitespace-nowrap">
-                                <span className="text-xs font-bold text-gray-700">{step.label}</span>
-                                <span className="text-[10px] text-gray-400 font-medium">{step.subtext}</span>
+                                <span className="text-xs font-black text-foreground uppercase">{step.label}</span>
+                                <span className="text-[10px] text-muted-foreground font-bold uppercase">{step.subtext}</span>
                             </div>
 
                             {/* Tooltip on Hover */}
-                            <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-[10px] py-1 px-2 rounded-lg pointer-events-none whitespace-nowrap">
+                            <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity bg-foreground text-background text-[10px] py-1 px-2 pointer-events-none whitespace-nowrap font-bold uppercase border-2 border-background shadow-brutal-sm">
                                 {step.value} {step.label}
                             </div>
                         </div>

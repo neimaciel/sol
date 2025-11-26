@@ -1,0 +1,244 @@
+import { useEffect, useState } from 'react'
+import { useHistoryStore } from '@/store/useHistoryStore'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Search, Filter, ArrowLeft, Download, Calendar, MapPin, Truck, DollarSign, MessageSquare, History } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Badge } from '@/components/ui/badge'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Card } from '@/components/ui/card'
+import { TrendingUp, User, MoreHorizontal } from 'lucide-react'
+
+export default function HistoryList() {
+    const navigate = useNavigate()
+    const { history, fetchHistory, isLoading } = useHistoryStore()
+    const [searchTerm, setSearchTerm] = useState('')
+
+    useEffect(() => {
+        fetchHistory()
+    }, [fetchHistory])
+
+    const filteredHistory = history.filter(item =>
+        item.loadId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.origin.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.destination.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'Nova oferta': return 'bg-blue-100 text-blue-700 border-blue-200'
+            case 'Atendimento': return 'bg-purple-100 text-purple-700 border-purple-200'
+            case 'Documentação': return 'bg-amber-100 text-amber-700 border-amber-200'
+            case 'Finalizada': return 'bg-emerald-100 text-emerald-700 border-emerald-200'
+            default: return 'bg-gray-100 text-gray-700 border-gray-200'
+        }
+    }
+
+    const handleExport = () => {
+        const headers = ['ID', 'Tipo', 'Status', 'Origem', 'Destino', 'Valor', 'Data']
+        const csvContent = [
+            headers.join(','),
+            ...filteredHistory.map(item => [
+                item.loadId,
+                item.type,
+                item.status,
+                `"${item.origin}"`,
+                `"${item.destination}"`,
+                `"${item.value}"`,
+                new Date(item.date).toLocaleDateString('pt-BR')
+            ].join(','))
+        ].join('\n')
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+        const link = document.createElement('a')
+        const url = URL.createObjectURL(blob)
+        link.setAttribute('href', url)
+        link.setAttribute('download', `historico_cargas_${new Date().toISOString().split('T')[0]}.csv`)
+        link.style.visibility = 'hidden'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+    }
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+            className="h-screen flex flex-col bg-background"
+        >
+            {/* Header */}
+            <header className="m-8 mb-0 shrink-0">
+                <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-4">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => navigate('/')}
+                            className="glass-card hover:bg-white/60 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                            <ArrowLeft className="w-5 h-5" />
+                        </Button>
+                        <div>
+                            <h1 className="text-3xl font-heading font-bold text-foreground tracking-tight flex items-center gap-3">
+                                <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                                    <History className="w-6 h-6" />
+                                </div>
+                                Histórico de Cargas
+                            </h1>
+                            <p className="text-sm text-muted-foreground font-medium mt-1 ml-1">
+                                Registro completo de todas as operações
+                            </p>
+                        </div>
+                    </div>
+
+                    <Button
+                        className="bg-primary hover:bg-primary-600 text-white rounded-xl shadow-lg shadow-primary/25 transition-all hover:scale-105 active:scale-95 font-medium px-6 gap-2"
+                        onClick={handleExport}
+                    >
+                        <Download className="w-4 h-4" />
+                        Exportar
+                    </Button>
+                </div>
+
+                <div className="glass-card p-4 rounded-2xl border-white/40 shadow-xl shadow-blue-900/5 flex items-center gap-4 flex-wrap">
+                    <div className="relative flex-1 min-w-[300px] group">
+                        <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                        <Input
+                            className="input-soft pl-11 h-10 border-gray-200/50 bg-white/50 focus:bg-white/80 transition-all"
+                            placeholder="Buscar cargas..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-white/50 rounded-lg border border-gray-200/50 p-1">
+                        <Button variant="ghost" size="sm" className="text-xs font-bold text-muted-foreground hover:text-foreground h-8">Mais recentes</Button>
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-white/50 rounded-lg border border-gray-200/50 px-3 py-2 min-w-[200px] h-10">
+                        <Calendar className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground font-medium">Selecione o período</span>
+                    </div>
+
+                    <Button variant="outline" size="icon" className="glass-card hover:bg-white/60 h-10 w-10">
+                        <Filter className="w-4 h-4 text-muted-foreground" />
+                    </Button>
+
+                    <div className="flex items-center gap-2 px-3">
+                        <input type="checkbox" className="rounded border-gray-300 text-primary focus:ring-primary" />
+                        <span className="text-xs text-muted-foreground font-bold">Mostrar Arquivados</span>
+                    </div>
+                </div>
+            </header>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-8">
+                {isLoading ? (
+                    <div className="flex items-center justify-center h-full">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    </div>
+                ) : (
+                    <motion.div
+                        layout
+                        className="space-y-3"
+                    >
+                        <AnimatePresence mode="popLayout">
+                            {filteredHistory.map((item, index) => (
+                                <motion.div
+                                    key={item.id}
+                                    layout
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: 20 }}
+                                    transition={{ delay: index * 0.05 }}
+                                    className="glass-card p-4 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group rounded-xl border-white/40"
+                                >
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-sm font-mono font-bold text-foreground bg-secondary/50 px-2 py-1 rounded-md border border-border/50">
+                                                {item.loadId}
+                                            </span>
+                                            <Badge variant="secondary" className="bg-secondary text-muted-foreground border-border/50 font-bold text-[10px] uppercase tracking-wider">
+                                                {item.type}
+                                            </Badge>
+                                            <Badge className={`${getStatusColor(item.status)} border font-bold shadow-sm`}>
+                                                {item.status}
+                                            </Badge>
+                                            <span className="text-xs text-muted-foreground font-medium ml-2 flex items-center gap-1">
+                                                <Button variant="outline" className="border-2 border-border hover:bg-accent hover:text-accent-foreground font-bold uppercase shadow-brutal-sm hover:shadow-brutal transition-all">
+                                                    <Filter className="w-4 h-4 mr-2" />
+                                                    Filtros
+                                                </Button>
+                                                <Button
+                                                    className="bg-primary text-primary-foreground border-2 border-primary hover:bg-primary/90 font-bold uppercase shadow-brutal hover:shadow-brutal-hover transition-all hover:-translate-y-0.5"
+                                                    onClick={handleExport}
+                                                >
+                                                    <Download className="w-4 h-4 mr-2" />
+                                                    Exportar
+                                                </Button>
+                                        </div>
+                                    </div>
+
+                                    <Card className="border-2 border-border shadow-brutal flex-1 flex flex-col min-h-0 bg-card">
+                                        <div className="overflow-auto">
+                                            <Table>
+                                                <TableHeader className="bg-muted/50 sticky top-0 z-10">
+                                                    <TableRow className="border-b-2 border-border hover:bg-transparent">
+                                                        <TableHead className="font-black text-foreground uppercase text-xs tracking-wider h-12">ID</TableHead>
+                                                        <TableHead className="font-black text-foreground uppercase text-xs tracking-wider h-12">Origem / Destino</TableHead>
+                                                        <TableHead className="font-black text-foreground uppercase text-xs tracking-wider h-12">Motorista</TableHead>
+                                                        <TableHead className="font-black text-foreground uppercase text-xs tracking-wider h-12">Valor</TableHead>
+                                                        <TableHead className="font-black text-foreground uppercase text-xs tracking-wider h-12">Status</TableHead>
+                                                        <TableHead className="font-black text-foreground uppercase text-xs tracking-wider h-12">Data</TableHead>
+                                                        <TableHead className="font-black text-foreground uppercase text-xs tracking-wider h-12 text-right">Ações</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {filteredHistory.map((item) => (
+                                                        <TableRow key={item.id} className="border-b-2 border-border hover:bg-muted/30 transition-colors group">
+                                                            <TableCell className="font-mono font-bold text-xs">{item.loadId}</TableCell>
+                                                            <TableCell>
+                                                                <div className="flex flex-col">
+                                                                    <span className="font-bold text-sm uppercase">{item.origin}</span>
+                                                                    <span className="text-xs text-muted-foreground uppercase">➔ {item.destination}</span>
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="w-6 h-6 bg-muted border-2 border-border flex items-center justify-center">
+                                                                        <User className="w-3 h-3" />
+                                                                    </div>
+                                                                    <span className="font-medium text-sm uppercase">{item.driver}</span>
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                                                                {item.value}
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <span className={`
+                                            inline-flex items-center px-2 py-1 border-2 text-[10px] font-black uppercase tracking-wider
+                                            ${item.status === 'Finalizada'
+                                                                        ? 'bg-emerald-100 text-emerald-700 border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-400'
+                                                                        : 'bg-red-100 text-red-700 border-red-700 dark:bg-red-900/30 dark:text-red-400 dark:border-red-400'}
+                                        `}>
+                                                                    {item.status}
+                                                                </span>
+                                                            </TableCell>
+                                                            <TableCell className="font-mono text-xs text-muted-foreground">{new Date(item.date).toLocaleDateString('pt-BR')}</TableCell>
+                                                            <TableCell className="text-right">
+                                                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-accent border-2 border-transparent hover:border-border transition-all">
+                                                                    <MoreHorizontal className="w-4 h-4" />
+                                                                </Button>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
+                                    </Card>
+                                </div>
+                            )
+}

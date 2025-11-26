@@ -1,0 +1,118 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 0%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 0%;
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 0%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 0%;
+    --input: 0 0% 0%;
+    --ring: 0 0% 0%;
+    --radius: 0rem;
+  }
+
+  .dark {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 0%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 0%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 0 0% 10%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 100%;
+    --input: 0 0% 100%;
+    --ring: 0 0% 100%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom Scrollbar - Brutalist */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-muted border-l-2 border-border;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-foreground border-2 border-background;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-foreground/80;
+}
+
+@layer components {
+
+  /* Brutalist Card */
+  .glass-card-hover {
+    @apply transition-all duration-200 hover:-translate-y-1 hover:shadow-brutal-hover dark:hover:shadow-brutal-hover-dark;
+  }
+
+  /* Custom Utilities */
+  .btn-soft-blue {
+    @apply bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100 border-2 border-blue-900 dark:border-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none shadow-brutal dark:shadow-brutal-dark transition-all font-bold uppercase;
+  }
+
+  @apply bg-background border-2 border-border focus:ring-0 focus:shadow-brutal dark:focus:shadow-brutal-dark transition-all placeholder:text-muted-foreground;
+}
+
+.gradient-text-blue {
+  @apply text-blue-700 dark:text-blue-400 font-black;
+}
+
+.icon-3d {
+  @apply relative flex items-center justify-center bg-card text-foreground border-2 border-border shadow-brutal dark:shadow-brutal-dark;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out forwards;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

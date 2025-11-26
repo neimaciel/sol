@@ -41,4 +41,47 @@ class WhatsAppService:
                 print(f"Error sending WhatsApp message: {e}")
                 return None
 
+    async def get_group_jid_from_invite(self, invite_code: str) -> str | None:
+        """
+        Extract Group JID from WhatsApp invite link.
+        
+        Args:
+            invite_code: The invite code from the link (e.g., "XXX" from https://chat.whatsapp.com/XXX)
+        
+        Returns:
+            Group JID (e.g., "120363XXXXX@g.us") or None if failed
+        """
+        if not self.base_url or not self.api_key:
+            print("Warning: Evolution API URL or Key not set.")
+            return None
+
+        # Evolution API endpoint to get group info by invite code
+        url = f"{self.base_url}/group/inviteInfo/{settings.INSTANCE_NAME}"
+        
+        payload = {
+            "inviteCode": invite_code
+        }
+
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.post(url, json=payload, headers=self.headers, timeout=10.0)
+                response.raise_for_status()
+                data = response.json()
+                
+                # Evolution API returns group info with 'id' field containing the JID
+                if isinstance(data, dict) and "id" in data:
+                    group_jid = data["id"]
+                    print(f"✅ Extracted Group JID: {group_jid}")
+                    return group_jid
+                else:
+                    print(f"❌ Unexpected response format: {data}")
+                    return None
+                    
+            except httpx.HTTPStatusError as e:
+                print(f"❌ HTTP Error getting group info: {e.response.status_code} - {e.response.text}")
+                return None
+            except Exception as e:
+                print(f"❌ Error getting group info from invite: {e}")
+                return None
+
 whatsapp_service = WhatsAppService()

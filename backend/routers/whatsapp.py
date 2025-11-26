@@ -53,6 +53,7 @@ from sqlalchemy import select
 from core.database import get_db
 from models.load import Load
 from models.group import Group
+import re
 
 class BroadcastRequest(BaseModel):
     load_id: str
@@ -95,3 +96,55 @@ async def send_broadcast(request: BroadcastRequest):
              raise HTTPException(status_code=500, detail="Failed to send message via WhatsApp Service")
 
         return {"status": "sent", "group": group.name, "message": message}
+
+class ExtractJIDRequest(BaseModel):
+    invite_link: str
+
+@router.post("/extract-group-jid")
+async def extract_group_jid(request: ExtractJIDRequest):
+    """
+    Extract WhatsApp Group JID from invite link.
+    
+    Example:
+    - Input: "https://chat.whatsapp.com/ABC123XYZ"
+    - Output: {"jid": "120363XXXXX@g.us", "invite_code": "ABC123XYZ"}
+    """
+    try:
+        # Extract invite code from link
+        # Supports formats:
+        # - https://chat.whatsapp.com/ABC123
+        # - chat.whatsapp.com/ABC123
+        # - ABC123 (just the code)
+        
+        invite_code = request.invite_link.strip()
+        
+        # Remove protocol and domain if present
+        if "chat.whatsapp.com/" in invite_code:
+            invite_code = invite_code.split("chat.whatsapp.com/")[-1]
+        
+        # Remove any query parameters or fragments
+        invite_code = re.split(r'[?#]', invite_code)[0]
+        
+        if not invite_code:
+            raise HTTPException(status_code=400, detail="Invalid invite link format")
+        
+        # Call WhatsApp service to get group JID
+        jid = await whatsapp_service.get_group_jid_from_invite(invite_code)
+        
+        if not jid:
+            raise HTTPException(
+                status_code=404, 
+                detail="Could not extract Group JID. Make sure the invite link is valid and the bot has access."
+            )
+        
+        return {
+            "jid": jid,
+            "invite_code": invite_code,
+            "success": True
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error extracting group JID: {e}")
+        raise HTTPException(status_code=500, detail=f"Error extracting Group JID: {str(e)}")

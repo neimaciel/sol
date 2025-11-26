@@ -1,18 +1,19 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-
+import { useNavigate } from 'react-router-dom'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import { Save, Upload, Bot, BrainCircuit } from 'lucide-react'
+import { Save, Upload, Bot, BrainCircuit, ArrowLeft } from 'lucide-react'
 
 // Mock API calls - in real app, use axios/fetch to call backend
 const API_URL = 'http://localhost:8000/api/v1/admin'
 
 export default function AgentAdmin() {
+    const navigate = useNavigate()
     const [config, setConfig] = useState({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.0-flash-exp',
         system_prompt: '',
         temperature: 0.7
     })
@@ -57,14 +58,24 @@ export default function AgentAdmin() {
 
     return (
         <div className="p-8 space-y-8 max-w-5xl mx-auto">
-            <div className="flex items-center gap-3 mb-8">
-                <div className="p-3 bg-primary/10 rounded-none border-2 border-primary shadow-brutal-sm">
-                    <Bot className="w-8 h-8 text-primary" />
+            <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-3">
+                    <div className="p-3 bg-primary/10 rounded-none border-2 border-primary shadow-brutal-sm">
+                        <Bot className="w-8 h-8 text-primary" />
+                    </div>
+                    <div>
+                        <h1 className="text-3xl font-black uppercase tracking-tight">Inteligência do Agente</h1>
+                        <p className="text-muted-foreground font-medium">Configure o cérebro e a personalidade do seu assistente logístico.</p>
+                    </div>
                 </div>
-                <div>
-                    <h1 className="text-3xl font-black uppercase tracking-tight">Inteligência do Agente</h1>
-                    <p className="text-muted-foreground font-medium">Configure o cérebro e a personalidade do seu assistente logístico.</p>
-                </div>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => navigate('/')}
+                    className="rounded-none border-2 border-transparent hover:border-border hover:bg-accent transition-all"
+                >
+                    <ArrowLeft className="w-5 h-5" />
+                </Button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -88,8 +99,11 @@ export default function AgentAdmin() {
                                         <SelectValue placeholder="Selecione o modelo" />
                                     </SelectTrigger>
                                     <SelectContent>
+                                        <SelectItem value="gemini-2.0-flash-exp">🔥 Google Gemini 2.0 Flash (Experimental)</SelectItem>
                                         <SelectItem value="gemini-1.5-flash">Google Gemini 1.5 Flash (Rápido)</SelectItem>
-                                        <SelectItem value="gemini-1.5-pro">Google Gemini 1.5 Pro (Complexo)</SelectItem>
+                                        <SelectItem value="gemini-1.5-pro">Google Gemini 1.5 Pro (Avançado)</SelectItem>
+                                        <SelectItem value="gpt-4o">OpenAI GPT-4o (Latest)</SelectItem>
+                                        <SelectItem value="gpt-4o-mini">OpenAI GPT-4o Mini (Econômico)</SelectItem>
                                         <SelectItem value="gpt-4-turbo">OpenAI GPT-4 Turbo</SelectItem>
                                     </SelectContent>
                                 </Select>

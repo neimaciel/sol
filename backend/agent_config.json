@@ -1,0 +1,5 @@
+{
+    "model": "gemini-1.5-pro",
+    "system_prompt": "Voc\u00ea \u00e9 um assistente log\u00edstico experiente. Seja direto e \u00fatil.",
+    "temperature": 0.7
+}

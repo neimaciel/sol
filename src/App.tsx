@@ -10,6 +10,7 @@ import DriversList from '@/pages/drivers/DriversList'
 import GroupsList from '@/pages/groups/GroupsList'
 import ModelsList from '@/pages/models/ModelsList'
 import HistoryList from '@/pages/history/HistoryList'
+import OperatorsList from '@/pages/operators/OperatorsList'
 import AgentAdmin from '@/pages/AgentAdmin'
 import Login from '@/pages/Login'
 
@@ -58,6 +59,14 @@ function AnimatedRoutes() {
           element={
             <ProtectedRoute>
               <HistoryList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/operators"
+          element={
+            <ProtectedRoute>
+              <OperatorsList />
             </ProtectedRoute>
           }
         />

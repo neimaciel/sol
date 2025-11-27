@@ -406,6 +406,22 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                                     return
                                                                 }
                                                                 try {
+                                                                    // First, fetch the group to get the whatsapp_id
+                                                                    const { data: groupData, error: groupError } = await supabase
+                                                                        .from('groups')
+                                                                        .select('whatsapp_id, name')
+                                                                        .eq('id', card.whatsapp_group_id)
+                                                                        .single()
+
+                                                                    if (groupError || !groupData) {
+                                                                        throw new Error('Grupo não encontrado')
+                                                                    }
+
+                                                                    if (!groupData.whatsapp_id) {
+                                                                        throw new Error('Grupo não tem WhatsApp ID configurado. Por favor, recadastre o grupo com o link do WhatsApp.')
+                                                                    }
+
+                                                                    // Send broadcast with all necessary data
                                                                     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
                                                                     const response = await fetch(`${apiUrl}/api/v1/whatsapp/broadcast`, {
                                                                         method: 'POST',
@@ -413,8 +429,11 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                                             'Content-Type': 'application/json'
                                                                         },
                                                                         body: JSON.stringify({
-                                                                            load_id: card.id,
-                                                                            group_id: card.whatsapp_group_id
+                                                                            whatsapp_id: groupData.whatsapp_id,
+                                                                            origin: card.origin,
+                                                                            destination: card.destination,
+                                                                            value: card.value,
+                                                                            vehicle_type: card.vehicle_type || 'Carreta'
                                                                         })
                                                                     })
 
@@ -425,7 +444,7 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
                                                                     await updateCard(card.id, { broadcast_status: 'sent' })
                                                                     await autoAdvanceCard(card.id, 'broadcast_sent')
-                                                                    alert('Carga divulgada com sucesso para o grupo selecionado!')
+                                                                    alert(`Carga divulgada com sucesso para o grupo ${groupData.name}!`)
                                                                 } catch (error) {
                                                                     console.error('Erro na divulgação:', error)
                                                                     alert(`Erro ao divulgar carga: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)

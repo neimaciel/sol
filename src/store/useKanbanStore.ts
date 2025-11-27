@@ -10,6 +10,7 @@ export interface KanbanCard {
     origin: string
     destination: string
     value: string
+    vehicle_type?: string
     date: string
     driver?: string
     status?: string

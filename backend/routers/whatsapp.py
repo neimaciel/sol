@@ -61,7 +61,11 @@ class BroadcastRequest(BaseModel):
 
 @router.post("/broadcast")
 async def send_broadcast(request: BroadcastRequest):
-    async with get_db() as session:
+    # Use async generator properly
+    db_gen = get_db()
+    session = await anext(db_gen)
+    
+    try:
         # Fetch Load
         result = await session.execute(select(Load).where(Load.id == request.load_id))
         load = result.scalars().first()
@@ -82,11 +86,11 @@ async def send_broadcast(request: BroadcastRequest):
             raise HTTPException(status_code=400, detail="Selected group does not have a WhatsApp ID configured.")
 
         # Construct Message
-        message = f"*NOVA CARGA DISPONÍVEL* 🚚\n\n" \
-                  f"*Origem:* {load.origin}\n" \
-                  f"*Destino:* {load.destination}\n" \
-                  f"*Valor:* {load.value}\n" \
-                  f"*Veículo:* {load.vehicle_type if hasattr(load, 'vehicle_type') else 'Carreta'}\n\n" \
+        message = f"*NOVA CARGA DISPONÍVEL* 🚚\\n\\n" \
+                  f"*Origem:* {load.origin}\\n" \
+                  f"*Destino:* {load.destination}\\n" \
+                  f"*Valor:* {load.value}\\n" \
+                  f"*Veículo:* {load.vehicle_type if hasattr(load, 'vehicle_type') else 'Carreta'}\\n\\n" \
                   f"Interessados, favor responder aqui!"
 
         # Send Message
@@ -96,6 +100,9 @@ async def send_broadcast(request: BroadcastRequest):
              raise HTTPException(status_code=500, detail="Failed to send message via WhatsApp Service")
 
         return {"status": "sent", "group": group.name, "message": message}
+    
+    finally:
+        await session.close()
 
 class ExtractJIDRequest(BaseModel):
     invite_link: str

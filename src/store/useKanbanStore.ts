@@ -114,16 +114,33 @@ export const useKanbanStore = create<KanbanState>((set, get) => ({
     },
 
     moveCard: async (cardId, toColumnId) => {
+        // Determine if we need to reset broadcast status
+        const shouldResetBroadcast = toColumnId === 'registration'
+
         // Optimistic update
         set((state) => ({
             cards: state.cards.map((card) =>
-                card.id === cardId ? { ...card, columnId: toColumnId } : card
+                card.id === cardId
+                    ? {
+                        ...card,
+                        columnId: toColumnId,
+                        // Reset broadcast_status if moving to Cadastro
+                        ...(shouldResetBroadcast ? { broadcast_status: 'pending' } : {})
+                    }
+                    : card
             ),
         }))
 
+        const updateData: any = { column_id: toColumnId }
+
+        // Reset broadcast_status in database if moving to Cadastro
+        if (shouldResetBroadcast) {
+            updateData.broadcast_status = 'pending'
+        }
+
         const { error } = await supabase
             .from('loads')
-            .update({ column_id: toColumnId })
+            .update(updateData)
             .eq('id', cardId)
 
         if (error) {

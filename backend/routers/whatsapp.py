@@ -53,10 +53,16 @@ import re
 
 class BroadcastRequest(BaseModel):
     whatsapp_id: str
+    load_id: str
     origin: str
     destination: str
     value: str
-    vehicle_type: str = "Carreta"
+    vehicle_type: str = "TRUCK - RASTREADO"
+    body_type: str = "BAÚ"
+    weight: str = "A definir"
+    material: str = "A definir"
+    pickup_date: str = "A combinar"
+    delivery_date: str = "A combinar"
 
 @router.post("/broadcast")
 async def send_broadcast(request: BroadcastRequest):
@@ -69,13 +75,17 @@ async def send_broadcast(request: BroadcastRequest):
         if not request.whatsapp_id:
             raise HTTPException(status_code=400, detail="WhatsApp ID is required")
 
-        # Construct Message
-        message = f"*NOVA CARGA DISPONÍVEL* 🚚\\n\\n" \
-                  f"*Origem:* {request.origin}\\n" \
-                  f"*Destino:* {request.destination}\\n" \
-                  f"*Valor:* {request.value}\\n" \
-                  f"*Veículo:* {request.vehicle_type}\\n\\n" \
-                  f"Interessados, favor responder aqui!"
+        # Construct Message with new format
+        message = f"FRETE DEDICADO - {request.load_id}\\n\\n" \
+                  f"📍 De: {request.origin}\\n\\n" \
+                  f"📍 Para: {request.destination}\\n\\n" \
+                  f"🚚 Veículo: {request.vehicle_type}\\n\\n" \
+                  f"🚛 Carroceria: {request.body_type}\\n\\n" \
+                  f"⚖️ Peso total: {request.weight}\\n\\n" \
+                  f"📦 Material: {request.material}\\n\\n" \
+                  f"💰 Preço: {request.value}\\n\\n" \
+                  f"📆 Coleta: {request.pickup_date}\\n\\n" \
+                  f"📆 Entrega: {request.delivery_date}"
 
         # Send Message
         response = await whatsapp_service.send_message(request.whatsapp_id, message)

@@ -430,10 +430,16 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                                         },
                                                                         body: JSON.stringify({
                                                                             whatsapp_id: groupData.whatsapp_id,
+                                                                            load_id: card.id,
                                                                             origin: card.origin,
                                                                             destination: card.destination,
                                                                             value: card.value,
-                                                                            vehicle_type: card.vehicle_type || 'Carreta'
+                                                                            vehicle_type: card.vehicle_type || 'TRUCK - RASTREADO',
+                                                                            body_type: 'BAÚ',
+                                                                            weight: 'A definir',
+                                                                            material: 'A definir',
+                                                                            pickup_date: 'A combinar',
+                                                                            delivery_date: 'A combinar'
                                                                         })
                                                                     })
 

@@ -22,14 +22,7 @@ class WhatsAppService:
         
         payload = {
             "number": number,
-            "options": {
-                "delay": 1200,
-                "presence": "composing",
-                "linkPreview": False
-            },
-            "textMessage": {
-                "text": text
-            }
+            "text": text
         }
 
         async with httpx.AsyncClient() as client:

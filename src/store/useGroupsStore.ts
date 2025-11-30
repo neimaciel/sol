@@ -9,6 +9,7 @@ export interface Group {
     membersCount: number
     region: string
     whatsappLink?: string
+    whatsappId?: string
 }
 
 interface GroupsState {
@@ -41,7 +42,8 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
                     description: g.description,
                     membersCount: g.members_count,
                     region: g.region,
-                    whatsappLink: g.whatsapp_link
+                    whatsappLink: g.whatsapp_link,
+                    whatsappId: g.whatsapp_id
                 })),
                 isLoading: false
             })
@@ -53,10 +55,10 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
     addGroup: async (newGroup) => {
         set({ isLoading: true })
         try {
-            let whatsappId = null
+            let whatsappId = newGroup.whatsappId || null
 
-            // If user provided a WhatsApp link, try to extract the JID automatically
-            if (newGroup.whatsappLink) {
+            // If user provided a WhatsApp link AND no ID was passed, try to extract the JID automatically
+            if (newGroup.whatsappLink && !whatsappId) {
                 try {
                     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
                     const response = await fetch(`${apiUrl}/api/v1/whatsapp/extract-group-jid`, {
@@ -105,10 +107,10 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
     updateGroup: async (id, updatedGroup) => {
         set({ isLoading: true })
         try {
-            let whatsappId = undefined
+            let whatsappId = updatedGroup.whatsappId
 
-            // If user updated the WhatsApp link, try to extract the JID automatically
-            if (updatedGroup.whatsappLink) {
+            // If user updated the WhatsApp link AND no ID was passed, try to extract the JID automatically
+            if (updatedGroup.whatsappLink && whatsappId === undefined) {
                 try {
                     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
                     const response = await fetch(`${apiUrl}/api/v1/whatsapp/extract-group-jid`, {
@@ -142,8 +144,8 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
                 members_count: updatedGroup.membersCount
             }
 
-            // Only update whatsapp_id if we extracted one
-            if (whatsappId) {
+            // Only update whatsapp_id if we have a value (either passed or extracted)
+            if (whatsappId !== undefined) {
                 updateData.whatsapp_id = whatsappId
             }
 

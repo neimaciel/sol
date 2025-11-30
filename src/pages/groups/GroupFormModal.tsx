@@ -50,14 +50,51 @@ export function GroupFormModal({ isOpen, onClose, groupToEdit }: GroupFormModalP
         setIsLoading(true)
 
         try {
+            let whatsappId = null
+
+            // Extract JID if link is provided and different from existing (or new group)
+            if (formData.whatsappLink && (!groupToEdit || formData.whatsappLink !== groupToEdit.whatsappLink)) {
+                try {
+                    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+                    const response = await fetch(`${apiUrl}/api/v1/whatsapp/extract-group-jid`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ invite_link: formData.whatsappLink })
+                    })
+
+                    if (response.ok) {
+                        const data = await response.json()
+                        if (data.success && data.jid) {
+                            whatsappId = data.jid
+                        }
+                    } else {
+                        console.warn('Failed to extract WhatsApp ID from link')
+                        alert('Aviso: Não foi possível extrair o ID do grupo do WhatsApp automaticamente. Verifique se o link está correto.')
+                    }
+                } catch (error) {
+                    console.error('Error extracting WhatsApp ID:', error)
+                }
+            } else if (groupToEdit && formData.whatsappLink === groupToEdit.whatsappLink) {
+                // Keep existing ID if link hasn't changed
+                whatsappId = groupToEdit.whatsappId
+            }
+
+            const groupData = {
+                ...formData,
+                whatsappId: whatsappId // Add the extracted ID to the data being saved
+            }
+
             if (groupToEdit) {
-                await updateGroup(groupToEdit.id, formData)
+                await updateGroup(groupToEdit.id, groupData)
             } else {
-                await addGroup(formData)
+                await addGroup(groupData)
             }
             onClose()
         } catch (error) {
             console.error('Error saving group:', error)
+            alert('Erro ao salvar grupo')
         } finally {
             setIsLoading(false)
         }

@@ -77,18 +77,19 @@ async def send_broadcast(request: BroadcastRequest):
 
         # Construct Message with new format
         # Construct Message with new format
-        message = f"FRETE DEDICADO - {request.load_id}\n\n" \
-                  f"📍 De: {request.origin}\n\n" \
-                  f"📍 Para: {request.destination}\n\n" \
-                  f"🚚 Veículo: {request.vehicle_type}\n\n" \
-                  f"🚛 Carroceria: {request.body_type}\n\n" \
-                  f"⚖️ Peso total: {request.weight}\n\n" \
-                  f"📦 Material: {request.material}\n\n" \
-                  f"💰 Preço: {request.value}\n\n" \
-                  f"📆 Coleta: {request.pickup_date}\n\n" \
-                  f"📆 Entrega: {request.delivery_date}\n\n" \
-                  f"👉 QUERO ESSA CARGA: https://sol-logistics-ai.vercel.app/motorista/carga/{request.load_id}\n\n" \
-                  f"Clique no link acima para se candidatar!"
+        # Construct Message with new format
+        message = f"*FRETE DEDICADO - {request.load_id}*\n\n" \
+                  f"📍 *De:* {request.origin}\n\n" \
+                  f"📍 *Para:* {request.destination}\n\n" \
+                  f"🚚 *Veículo:* {request.vehicle_type}\n\n" \
+                  f"🚛 *Carroceria:* {request.body_type}\n\n" \
+                  f"⚖️ *Peso total:* {request.weight}\n\n" \
+                  f"📦 *Material:* {request.material}\n\n" \
+                  f"💰 *Preço:* {request.value}\n\n" \
+                  f"📆 *Coleta:* {request.pickup_date}\n\n" \
+                  f"📆 *Entrega:* {request.delivery_date}\n\n" \
+                  f"👉 *QUERO ESSA CARGA:* https://sol-logistics-ai.vercel.app/motorista/carga/{request.load_id}\n\n" \
+                  f"_Clique no link acima para se candidatar!_"
 
         # Send Message
         response = await whatsapp_service.send_message(request.whatsapp_id, message)

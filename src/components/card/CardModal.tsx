@@ -74,12 +74,43 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
     const handleCreateGroup = async () => {
         if (!newGroupName.trim()) return
+
+        let whatsappId = null
+
+        if (newGroupLink) {
+            try {
+                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+                const response = await fetch(`${apiUrl}/api/v1/whatsapp/extract-group-jid`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ invite_link: newGroupLink })
+                })
+
+                if (response.ok) {
+                    const data = await response.json()
+                    if (data.success && data.jid) {
+                        whatsappId = data.jid
+                    }
+                } else {
+                    console.warn('Failed to extract WhatsApp ID from link')
+                    // Optional: Alert user but allow creation? Or block?
+                    // Let's alert but proceed, user can edit later or it might be a manual group.
+                    // Actually, the error message says "Please recadastre...", so maybe we should warn.
+                }
+            } catch (error) {
+                console.error('Error extracting WhatsApp ID:', error)
+            }
+        }
+
         const { data } = await supabase.from('groups').insert([{
             name: newGroupName,
             type: 'Carreta', // Default
             description: 'Criado via Card',
             region: 'Nacional',
-            whatsapp_link: newGroupLink || null
+            whatsapp_link: newGroupLink || null,
+            whatsapp_id: whatsappId // Save the extracted ID
         }]).select().single()
 
         if (data) {
@@ -89,6 +120,10 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
             setShowNewGroupInput(false)
             setNewGroupName('')
             setNewGroupLink('')
+
+            if (newGroupLink && !whatsappId) {
+                alert('Grupo criado, mas não foi possível extrair o ID do WhatsApp automaticamente. Verifique o link e tente novamente se necessário.')
+            }
         }
     }
 

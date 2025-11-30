@@ -248,32 +248,7 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
         }, 1000)
     }
 
-    const handleSelectCandidate = async (candidateId: string) => {
-        if (!card) return
 
-        try {
-            // We can reuse isUploading or create a new state, but let's use isUploading for now to block UI
-            setIsUploading(true)
-
-            // Accept candidate and get driver ID
-            const driverId = await useCandidatesStore.getState()
-                .acceptCandidate(candidateId, card.id)
-
-            // Assign driver to load and move to Contratação
-            await useKanbanStore.getState()
-                .assignDriver(card.id, driverId)
-
-            alert('Motorista contratado com sucesso!')
-
-            // Close modal or switch tab? Let's keep it open but maybe switch to contract tab
-            // onClose() 
-        } catch (error) {
-            console.error('Error selecting candidate:', error)
-            alert('Erro ao contratar motorista')
-        } finally {
-            setIsUploading(false)
-        }
-    }
 
     const isNegotiationStage = ['registration', 'broadcast'].includes(card.columnId)
 

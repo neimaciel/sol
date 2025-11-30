@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { motion } from 'framer-motion'
-import { MapPin, Truck, Package, DollarSign, Calendar, CheckCircle, AlertCircle } from 'lucide-react'
+import { MapPin, Truck, Package, DollarSign, CheckCircle, AlertCircle } from 'lucide-react'
 
 interface Load {
     id: string

@@ -8,7 +8,7 @@ import { useKanbanStore } from '@/store/useKanbanStore'
 import { supabase } from '@/lib/supabase'
 import { Calendar, DollarSign, X, Paperclip, Send, Check, AlertTriangle, FileCheck, Truck, Upload, Shield, FileSignature, ArrowRight, Box, History, MapPin, Clock, FileText } from 'lucide-react'
 import { useState, useEffect } from 'react'
-import { CandidateList } from './CandidateList'
+import CandidateList from "./CandidateList"
 import { VehicleRequirements } from './VehicleRequirements'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useCardEventsStore } from '@/store/useCardEventsStore'
@@ -28,6 +28,7 @@ interface CardModalProps {
 
 export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardModalProps) {
     const { deleteCard, updateCard, autoAdvanceCard, activeTab, setActiveTab } = useKanbanStore()
+    const { candidates, loading: candidatesLoading, fetchCandidates, selectCandidate } = useCandidatesStore()
     const { events, fetchEvents } = useCardEventsStore()
 
     useEffect(() => {

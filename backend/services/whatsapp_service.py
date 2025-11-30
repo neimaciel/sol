@@ -49,15 +49,17 @@ class WhatsAppService:
             return None
 
         # Evolution API endpoint to get group info by invite code
+        # Evolution API endpoint to get group info by invite code
+        # Usually GET /group/inviteInfo/{instance}?inviteCode=...
         url = f"{self.base_url}/group/inviteInfo/{settings.INSTANCE_NAME}"
         
-        payload = {
+        params = {
             "inviteCode": invite_code
         }
 
         async with httpx.AsyncClient() as client:
             try:
-                response = await client.post(url, json=payload, headers=self.headers, timeout=10.0)
+                response = await client.get(url, params=params, headers=self.headers, timeout=10.0)
                 response.raise_for_status()
                 data = response.json()
                 

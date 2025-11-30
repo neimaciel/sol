@@ -237,33 +237,37 @@ export default function DriverPortal() {
                                         required
                                         value={formData.name}
                                         onChange={handleChange}
-                                        className="w-full bg-zinc-50 border-2 border-zinc-200 p-3 font-medium focus:outline-none focus:border-emerald-500 transition-colors"
+                                        className="w-full bg-white border-2 border-zinc-200 p-4 font-bold text-lg text-zinc-900 focus:outline-none focus:border-emerald-500 rounded-none placeholder:text-zinc-300"
                                         placeholder="Seu nome"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold text-zinc-700 uppercase mb-1">WhatsApp</label>
+                                    <label className="block text-xs font-bold text-zinc-500 uppercase mb-1">
+                                        WhatsApp
+                                    </label>
                                     <input
                                         type="tel"
                                         name="phone"
                                         required
-                                        value={formData.phone}
-                                        onChange={handleChange}
-                                        className="w-full bg-zinc-50 border-2 border-zinc-200 p-3 font-medium focus:outline-none focus:border-emerald-500 transition-colors"
                                         placeholder="(00) 00000-0000"
+                                        className="w-full bg-white border-2 border-zinc-200 p-4 font-bold text-lg text-zinc-900 focus:outline-none focus:border-emerald-500 rounded-none placeholder:text-zinc-300"
+                                        value={formData.phone}
+                                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                     />
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-xs font-bold text-zinc-700 uppercase mb-1">Veículo</label>
+                                        <label className="block text-xs font-bold text-zinc-500 uppercase mb-1">
+                                            Veículo
+                                        </label>
                                         <select
                                             name="vehicle_type"
                                             required
                                             value={formData.vehicle_type}
-                                            onChange={handleChange}
-                                            className="w-full bg-zinc-50 border-2 border-zinc-200 p-3 font-medium focus:outline-none focus:border-emerald-500 transition-colors appearance-none"
+                                            onChange={(e) => setFormData({ ...formData, vehicle_type: e.target.value })}
+                                            className="w-full bg-white border-2 border-zinc-200 p-4 font-bold text-lg text-zinc-900 focus:outline-none focus:border-emerald-500 rounded-none appearance-none"
                                         >
                                             <option value="">Selecione</option>
                                             <option value="Carreta">Carreta</option>

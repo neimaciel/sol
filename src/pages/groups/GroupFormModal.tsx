@@ -70,8 +70,9 @@ export function GroupFormModal({ isOpen, onClose, groupToEdit }: GroupFormModalP
                             whatsappId = data.jid
                         }
                     } else {
-                        console.warn('Failed to extract WhatsApp ID from link')
-                        alert('Aviso: Não foi possível extrair o ID do grupo do WhatsApp automaticamente. Verifique se o link está correto.')
+                        const errorData = await response.json().catch(() => ({}))
+                        console.warn('Failed to extract WhatsApp ID from link', errorData)
+                        alert(`Aviso: Não foi possível extrair o ID do grupo. Erro: ${errorData.detail || 'Erro desconhecido'}. Verifique o link e tente novamente.`)
                     }
                 } catch (error) {
                     console.error('Error extracting WhatsApp ID:', error)

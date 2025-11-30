@@ -12,7 +12,7 @@ import CandidateList from "./CandidateList"
 import { VehicleRequirements } from './VehicleRequirements'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useCardEventsStore } from '@/store/useCardEventsStore'
-import { useCandidatesStore } from '@/store/useCandidatesStore'
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { Users, Plus } from 'lucide-react'

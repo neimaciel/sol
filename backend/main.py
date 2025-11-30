@@ -11,6 +11,7 @@ from contextlib import asynccontextmanager
 async def run_migrations_startup():
     """
     Run migrations automatically on startup.
+    Returns dict with status.
     """
     from core.database import SessionLocal
     from sqlalchemy import text
@@ -109,9 +110,11 @@ async def run_migrations_startup():
                 await db.execute(text(statement))
             await db.commit()
             print("✅ Startup migrations applied successfully!")
+            return {"status": "success", "message": "Migrations applied"}
         except Exception as e:
             await db.rollback()
             print(f"❌ Error running startup migrations: {e}")
+            return {"status": "error", "message": str(e)}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

@@ -71,10 +71,11 @@ class WhatsAppService:
                     return None
                     
             except httpx.HTTPStatusError as e:
-                print(f"❌ HTTP Error getting group info: {e.response.status_code} - {e.response.text}")
-                return None
+                error_msg = f"Evolution API Error: {e.response.status_code} - {e.response.text}"
+                print(f"❌ {error_msg}")
+                raise Exception(error_msg)
             except Exception as e:
                 print(f"❌ Error getting group info from invite: {e}")
-                return None
+                raise Exception(f"Internal Error: {str(e)}")
 
 whatsapp_service = WhatsAppService()

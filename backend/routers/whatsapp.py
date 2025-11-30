@@ -153,4 +153,5 @@ async def extract_group_jid(request: ExtractJIDRequest):
         raise
     except Exception as e:
         print(f"Error extracting group JID: {e}")
-        raise HTTPException(status_code=500, detail=f"Error extracting Group JID: {str(e)}")
+        # Return the actual error message from the service
+        raise HTTPException(status_code=500, detail=str(e))

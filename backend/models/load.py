@@ -10,6 +10,7 @@ class Load(Base):
     destination = Column(String)
     value = Column(String)
     status = Column(String)
+    column_id = Column(String, default='registration')
     
     # Coordinates
     origin_lat = Column(Float, nullable=True)

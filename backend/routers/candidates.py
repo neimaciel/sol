@@ -1,0 +1,164 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, update
+from sqlalchemy.orm import selectinload
+from core.database import get_db
+from models import Candidate, Driver, Load
+from pydantic import BaseModel
+from typing import List, Optional
+import uuid
+
+router = APIRouter()
+
+class DriverInput(BaseModel):
+    name: str
+    phone: str
+    vehicle_type: str
+    vehicle_plate: Optional[str] = None
+    cpf_cnpj: Optional[str] = None
+
+class ApplyRequest(BaseModel):
+    load_id: str
+    driver: DriverInput
+
+class CandidateResponse(BaseModel):
+    id: uuid.UUID
+    load_id: str
+    driver_id: str
+    status: str
+    driver: DriverInput
+    created_at: str
+
+    class Config:
+        orm_mode = True
+
+@router.post("/apply")
+async def apply_for_load(request: ApplyRequest, db: AsyncSession = Depends(get_db)):
+    """
+    Driver applies for a load.
+    Creates/Updates driver and creates candidate record.
+    Moves load to 'atendimento' if it's the first candidate.
+    """
+    # 1. Upsert Driver
+    # Check if driver exists by phone
+    result = await db.execute(select(Driver).where(Driver.phone == request.driver.phone))
+    driver = result.scalars().first()
+
+    if driver:
+        # Update existing driver info
+        driver.name = request.driver.name
+        driver.vehicle_type = request.driver.vehicle_type
+        if request.driver.vehicle_plate:
+            driver.vehicle_plate = request.driver.vehicle_plate
+        if request.driver.cpf_cnpj:
+            driver.cpf_cnpj = request.driver.cpf_cnpj
+    else:
+        # Create new driver
+        # Use phone as ID for simplicity if not provided, or generate one?
+        # The model uses String ID. Let's use phone as ID or a UUID string.
+        # Driver model comment says "WhatsApp ID (remoteJid)".
+        # Ideally we should use the phone number as ID (e.g. 5541999999999@s.whatsapp.net) if we have it formatted.
+        # For now, let's assume phone is the ID or close to it.
+        # Let's generate a UUID for ID if we don't have a whatsapp JID.
+        # But wait, if we want to integrate with WhatsApp later, we might want the JID.
+        # For the portal, we just have the phone number.
+        # Let's use the phone number as the ID for now (sanitized).
+        driver_id = request.driver.phone.replace("+", "").replace(" ", "").replace("-", "")
+        # Append @s.whatsapp.net to make it compatible with Evolution API format if needed?
+        # Or just keep it as phone number. Let's keep as phone number for now.
+        
+        driver = Driver(
+            id=driver_id,
+            name=request.driver.name,
+            phone=request.driver.phone,
+            vehicle_type=request.driver.vehicle_type,
+            vehicle_plate=request.driver.vehicle_plate,
+            cpf_cnpj=request.driver.cpf_cnpj
+        )
+        db.add(driver)
+    
+    await db.flush() # Flush to get driver ID if needed, though we set it manually or it's existing
+
+    # 2. Check if already applied
+    result = await db.execute(
+        select(Candidate).where(
+            Candidate.load_id == request.load_id,
+            Candidate.driver_id == driver.id
+        )
+    )
+    existing_candidate = result.scalars().first()
+
+    if existing_candidate:
+        return {"message": "Already applied", "candidate_id": existing_candidate.id}
+
+    # 3. Create Candidate
+    candidate = Candidate(
+        load_id=request.load_id,
+        driver_id=driver.id,
+        status="pending"
+    )
+    db.add(candidate)
+
+    # 4. Auto-transition Load to 'atendimento' (registration -> atendimento)
+    # Check current load status
+    load_result = await db.execute(select(Load).where(Load.id == request.load_id))
+    load = load_result.scalars().first()
+
+    if load:
+        # If load is in 'registration' (Cadastro), move to 'atendimento'
+        # Also check if it's the first candidate to avoid moving back if it was moved manually?
+        # But requirements say "se eu respondo o card já vai para atendimento".
+        # So we move it if it's in registration.
+        if load.column_id == 'registration':
+            load.column_id = 'atendimento'
+            # Also update broadcast_status if needed? Maybe not.
+            
+    await db.commit()
+    return {"message": "Application successful", "candidate_id": candidate.id}
+
+@router.get("/by-load/{load_id}")
+async def get_candidates_by_load(load_id: str, db: AsyncSession = Depends(get_db)):
+    """
+    List all candidates for a specific load.
+    """
+    result = await db.execute(
+        select(Candidate)
+        .options(selectinload(Candidate.driver)) # Eager load driver
+        .where(Candidate.load_id == load_id)
+    )
+    candidates = result.scalars().all()
+    return candidates
+
+@router.post("/{candidate_id}/select")
+async def select_candidate(candidate_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    """
+    Select a candidate for the load.
+    Moves load to 'documentacao'.
+    """
+    # Get candidate
+    result = await db.execute(select(Candidate).where(Candidate.id == candidate_id))
+    candidate = result.scalars().first()
+    
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+        
+    # Update status
+    candidate.status = "selected"
+    
+    # Reject others
+    await db.execute(
+        update(Candidate)
+        .where(Candidate.load_id == candidate.load_id, Candidate.id != candidate_id)
+        .values(status="rejected")
+    )
+    
+    # Move load to 'documentacao'
+    # First get the load to ensure it exists and update it
+    load_result = await db.execute(select(Load).where(Load.id == candidate.load_id))
+    load = load_result.scalars().first()
+    
+    if load:
+        load.column_id = 'documentacao'
+    
+    await db.commit()
+    return {"message": "Candidate selected"}

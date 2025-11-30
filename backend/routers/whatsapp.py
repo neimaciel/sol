@@ -85,7 +85,9 @@ async def send_broadcast(request: BroadcastRequest):
                   f"📦 Material: {request.material}\\n\\n" \
                   f"💰 Preço: {request.value}\\n\\n" \
                   f"📆 Coleta: {request.pickup_date}\\n\\n" \
-                  f"📆 Entrega: {request.delivery_date}"
+                  f"📆 Entrega: {request.delivery_date}\\n\\n" \
+                  f"👉 QUERO ESSA CARGA: https://sol-logistics-ai.vercel.app/motorista/carga/{request.load_id}\\n\\n" \
+                  f"Clique no link acima para se candidatar!"
 
         # Send Message
         response = await whatsapp_service.send_message(request.whatsapp_id, message)

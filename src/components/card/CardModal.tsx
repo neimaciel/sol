@@ -273,6 +273,9 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                 <TabsTrigger value="timeline" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm uppercase tracking-wide">
                                     Timeline
                                 </TabsTrigger>
+                                <TabsTrigger value="candidates" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm uppercase tracking-wide">
+                                    Candidatos
+                                </TabsTrigger>
 
                                 {/* Dynamic Tabs */}
                                 {['documentation', 'risk', 'contract', 'loading', 'transit', 'unloading', 'completed'].includes(card.columnId) && (
@@ -757,6 +760,19 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                     <p className="text-sm text-muted-foreground pl-8 italic font-medium">Nenhuma atividade registrada.</p>
                                                 )}
                                             </div>
+                                        </div>
+                                    </TabsContent>
+
+                                    {/* Candidates Tab */}
+                                    <TabsContent value="candidates" className="mt-0">
+                                        <div className="bg-card border-2 border-border shadow-brutal p-8">
+                                            <h3 className="text-lg font-black text-foreground mb-6 flex items-center gap-3 uppercase">
+                                                <div className="p-2 bg-primary/10 border-2 border-primary/20 text-primary">
+                                                    <Users className="w-5 h-5" />
+                                                </div>
+                                                Candidatos Interessados
+                                            </h3>
+                                            <CandidateList loadId={card.id} />
                                         </div>
                                     </TabsContent>
 

@@ -27,7 +27,8 @@ async def root():
 async def health_check():
     return {"status": "healthy"}
 
-from routers import whatsapp, admin
+from routers import whatsapp, admin, candidates
 
 app.include_router(whatsapp.router, prefix=f"{settings.API_V1_STR}/whatsapp", tags=["whatsapp"])
 app.include_router(admin.router, prefix=f"{settings.API_V1_STR}/admin", tags=["admin"])
+app.include_router(candidates.router, prefix=f"{settings.API_V1_STR}/candidates", tags=["candidates"])

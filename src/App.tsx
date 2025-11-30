@@ -13,6 +13,7 @@ import HistoryList from '@/pages/history/HistoryList'
 import OperatorsList from '@/pages/operators/OperatorsList'
 import AgentAdmin from '@/pages/AgentAdmin'
 import Login from '@/pages/Login'
+import DriverPortal from '@/pages/driver/DriverPortal'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user: session, loading } = useAuthStore()
@@ -30,6 +31,7 @@ function AnimatedRoutes() {
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route path="/login" element={<Login />} />
+        <Route path="/motorista/carga/:id" element={<DriverPortal />} />
         <Route
           path="/drivers"
           element={

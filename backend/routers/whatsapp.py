@@ -76,17 +76,18 @@ async def send_broadcast(request: BroadcastRequest):
             raise HTTPException(status_code=400, detail="WhatsApp ID is required")
 
         # Construct Message with new format
-        message = f"FRETE DEDICADO - {request.load_id}\\n\\n" \
-                  f"📍 De: {request.origin}\\n\\n" \
-                  f"📍 Para: {request.destination}\\n\\n" \
-                  f"🚚 Veículo: {request.vehicle_type}\\n\\n" \
-                  f"🚛 Carroceria: {request.body_type}\\n\\n" \
-                  f"⚖️ Peso total: {request.weight}\\n\\n" \
-                  f"📦 Material: {request.material}\\n\\n" \
-                  f"💰 Preço: {request.value}\\n\\n" \
-                  f"📆 Coleta: {request.pickup_date}\\n\\n" \
-                  f"📆 Entrega: {request.delivery_date}\\n\\n" \
-                  f"👉 QUERO ESSA CARGA: https://sol-logistics-ai.vercel.app/motorista/carga/{request.load_id}\\n\\n" \
+        # Construct Message with new format
+        message = f"FRETE DEDICADO - {request.load_id}\n\n" \
+                  f"📍 De: {request.origin}\n\n" \
+                  f"📍 Para: {request.destination}\n\n" \
+                  f"🚚 Veículo: {request.vehicle_type}\n\n" \
+                  f"🚛 Carroceria: {request.body_type}\n\n" \
+                  f"⚖️ Peso total: {request.weight}\n\n" \
+                  f"📦 Material: {request.material}\n\n" \
+                  f"💰 Preço: {request.value}\n\n" \
+                  f"📆 Coleta: {request.pickup_date}\n\n" \
+                  f"📆 Entrega: {request.delivery_date}\n\n" \
+                  f"👉 QUERO ESSA CARGA: https://sol-logistics-ai.vercel.app/motorista/carga/{request.load_id}\n\n" \
                   f"Clique no link acima para se candidatar!"
 
         # Send Message

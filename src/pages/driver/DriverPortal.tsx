@@ -115,6 +115,10 @@ export default function DriverPortal() {
     }
 
     if (success) {
+        const systemPhone = import.meta.env.VITE_SYSTEM_PHONE || '5541999999999' // Fallback or ask user to set
+        const message = `Tenho interesse na carga ${load.id}. Meu nome é ${formData.name}. Placa: ${formData.vehicle_plate}.`
+        const whatsappUrl = `https://wa.me/${systemPhone}?text=${encodeURIComponent(message)}`
+
         return (
             <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-4">
                 <motion.div
@@ -125,11 +129,21 @@ export default function DriverPortal() {
                     <CheckCircle className="w-16 h-16 text-emerald-500 mx-auto mb-6" />
                     <h1 className="text-3xl font-bold text-zinc-900 mb-4">Candidatura Enviada!</h1>
                     <p className="text-zinc-600 mb-8">
-                        Recebemos seu interesse nesta carga. A transportadora entrará em contato pelo WhatsApp em breve.
+                        Finalize seu cadastro enviando a mensagem para nosso sistema no WhatsApp.
                     </p>
-                    <div className="p-4 bg-emerald-50 border border-emerald-100 rounded text-sm text-emerald-800">
-                        Fique atento ao seu WhatsApp!
-                    </div>
+
+                    <a
+                        href={whatsappUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block w-full bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-4 border-b-4 border-emerald-700 active:border-b-0 active:translate-y-1 transition-all rounded-none mb-4"
+                    >
+                        ABRIR WHATSAPP AGORA
+                    </a>
+
+                    <p className="text-xs text-zinc-400">
+                        Caso não abra automaticamente, clique no botão acima.
+                    </p>
                 </motion.div>
             </div>
         )

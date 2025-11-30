@@ -47,6 +47,12 @@ class ConversationService:
             
             print(f"[{remote_jid}] State: {session.state} | Message: {message_text}")
 
+            # Check for Load Interest Message
+            # Pattern: "Tenho interesse na carga {LOAD_ID}"
+            if "Tenho interesse na carga" in message_text:
+                await self._handle_load_interest(db, session, remote_jid, message_text)
+                return
+
             if session.state == "IDLE":
                 await self._handle_idle_state(db, session, remote_jid, message_text)
             elif session.state == "REGISTRATION_NAME":
@@ -61,6 +67,74 @@ class ConversationService:
                 await whatsapp_service.send_message(remote_jid, "Ocorreu um erro no fluxo. Vamos recomeçar. Como posso ajudar?")
         finally:
             await db.close()
+
+    async def _handle_load_interest(self, db: AsyncSession, session: Conversation, remote_jid: str, text: str):
+        """
+        Handle message when driver clicks "Tenho interesse" link.
+        """
+        try:
+            # Extract Load ID
+            # Expected format: "Tenho interesse na carga CARGA-123..."
+            import re
+            match = re.search(r"carga (CARGA-\d+)", text, re.IGNORECASE)
+            if not match:
+                # Try finding just the ID if format varies
+                match = re.search(r"(CARGA-\d+)", text, re.IGNORECASE)
+            
+            if match:
+                load_id = match.group(1)
+                print(f"[{remote_jid}] Driver interested in Load: {load_id}")
+                
+                # Find Candidate
+                from models.candidate import Candidate
+                
+                # We need to find the candidate record for this driver and load
+                # The driver_id in candidates table is the remote_jid (phone)
+                result = await db.execute(
+                    select(Candidate).where(
+                        Candidate.load_id == load_id,
+                        Candidate.driver_id == remote_jid
+                    )
+                )
+                candidate = result.scalar_one_or_none()
+                
+                if candidate:
+                    # Append message to chat_messages
+                    current_messages = candidate.chat_messages if isinstance(candidate.chat_messages, list) else []
+                    
+                    new_message = {
+                        "sender": "driver",
+                        "text": text,
+                        "timestamp": "NOW()" # We should use actual timestamp, but for JSON simple string is ok or ISO format
+                    }
+                    
+                    # In Python we can use datetime
+                    from datetime import datetime
+                    new_message["timestamp"] = datetime.now().isoformat()
+                    
+                    current_messages.append(new_message)
+                    candidate.chat_messages = current_messages
+                    
+                    # Force update
+                    from sqlalchemy.orm.attributes import flag_modified
+                    flag_modified(candidate, "chat_messages")
+                    
+                    await db.commit()
+                    print(f"✅ Linked message to candidate {candidate.id}")
+                    
+                    # Send confirmation
+                    await whatsapp_service.send_message(remote_jid, f"Recebemos seu interesse na carga {load_id}! Um de nossos operadores entrará em contato em breve por aqui.")
+                else:
+                    print(f"⚠️ Candidate record not found for {remote_jid} and {load_id}")
+                    # Optionally create candidate if not exists?
+                    # For now, just reply generic
+                    await whatsapp_service.send_message(remote_jid, f"Recebi seu interesse na carga {load_id}. Por favor, certifique-se de ter se candidatado pelo link primeiro.")
+            else:
+                await whatsapp_service.send_message(remote_jid, "Não consegui identificar o número da carga. Poderia repetir?")
+                
+        except Exception as e:
+            print(f"❌ Error handling load interest: {e}")
+            await whatsapp_service.send_message(remote_jid, "Ocorreu um erro ao processar seu interesse. Tente novamente.")
 
     async def _handle_idle_state(self, db: AsyncSession, session: Conversation, remote_jid: str, text: str):
         intent = await ai_service.analyze_intent(text)

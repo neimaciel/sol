@@ -94,6 +94,15 @@ export default function DriverPortal() {
         }))
     }
 
+    // Auto-fill phone from URL (Magic Link)
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search)
+        const phoneParam = params.get('phone')
+        if (phoneParam) {
+            setFormData(prev => ({ ...prev, phone: phoneParam }))
+        }
+    }, [])
+
     if (loading) {
         return (
             <div className="min-h-screen bg-zinc-50 flex items-center justify-center">
@@ -286,7 +295,7 @@ export default function DriverPortal() {
                                             name="vehicle_plate"
                                             value={formData.vehicle_plate}
                                             onChange={handleChange}
-                                            className="w-full bg-zinc-50 border-2 border-zinc-200 p-3 font-medium focus:outline-none focus:border-emerald-500 transition-colors"
+                                            className="w-full bg-white border-2 border-zinc-200 p-4 font-bold text-lg text-zinc-900 focus:outline-none focus:border-emerald-500 rounded-none placeholder:text-zinc-300"
                                             placeholder="ABC-1234"
                                         />
                                     </div>

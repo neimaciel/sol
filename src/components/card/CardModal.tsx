@@ -1,4 +1,4 @@
-import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -255,6 +255,12 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="bg-background border-2 border-foreground shadow-brutal max-w-5xl max-h-[90vh] overflow-hidden p-0 gap-0 rounded-none">
+                <DialogHeader className="sr-only">
+                    <DialogTitle>Detalhes da Carga {card.id}</DialogTitle>
+                    <DialogDescription>
+                        Gerencie detalhes da carga, candidatos, documentos e chat.
+                    </DialogDescription>
+                </DialogHeader>
                 {/* Header */}
                 <div className="px-8 py-6 border-b-2 border-border bg-background sticky top-0 z-10">
                     <div className="flex items-start justify-between">

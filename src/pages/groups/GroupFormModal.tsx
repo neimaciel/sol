@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -107,6 +107,9 @@ export function GroupFormModal({ isOpen, onClose, groupToEdit }: GroupFormModalP
                     <DialogTitle className="text-2xl font-heading font-bold text-foreground">
                         {groupToEdit ? 'Editar Grupo' : 'Novo Grupo de Motoristas'}
                     </DialogTitle>
+                    <DialogDescription className="text-muted-foreground">
+                        Preencha os dados abaixo para {groupToEdit ? 'editar o' : 'criar um novo'} grupo.
+                    </DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-6 py-4">

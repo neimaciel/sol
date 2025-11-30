@@ -45,7 +45,62 @@ async def run_migrations_startup():
         EXCEPTION WHEN duplicate_object THEN NULL;
         END $$;
         """,
-        "GRANT ALL ON candidates TO service_role;"
+        "GRANT ALL ON candidates TO service_role;",
+        
+        # Migration 003: Enable public access
+        "ALTER TABLE loads ENABLE ROW LEVEL SECURITY;",
+        """
+        DO $$ BEGIN
+            CREATE POLICY "Public can view loads"
+                ON loads FOR SELECT
+                USING (true);
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$;
+        """,
+        "ALTER TABLE drivers ENABLE ROW LEVEL SECURITY;",
+        """
+        DO $$ BEGIN
+            CREATE POLICY "Public can insert drivers"
+                ON drivers FOR INSERT
+                WITH CHECK (true);
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$;
+        """,
+        """
+        DO $$ BEGIN
+            CREATE POLICY "Public can update own driver info"
+                ON drivers FOR UPDATE
+                USING (true);
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$;
+        """,
+        """
+        DO $$ BEGIN
+            CREATE POLICY "Public can select drivers"
+                ON drivers FOR SELECT
+                USING (true);
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$;
+        """,
+        """
+        DO $$ BEGIN
+            CREATE POLICY "Public can insert candidates"
+                ON candidates FOR INSERT
+                WITH CHECK (true);
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$;
+        """,
+        """
+        DO $$ BEGIN
+            CREATE POLICY "Public can view own candidacy"
+                ON candidates FOR SELECT
+                USING (true);
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$;
+        """,
+        "GRANT SELECT ON loads TO anon, authenticated;",
+        "GRANT ALL ON drivers TO anon, authenticated;",
+        "GRANT ALL ON candidates TO anon, authenticated;"
     ]
     
     async with SessionLocal() as db:

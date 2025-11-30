@@ -28,8 +28,32 @@ interface CardModalProps {
 
 export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardModalProps) {
     const { deleteCard, updateCard, autoAdvanceCard, activeTab, setActiveTab } = useKanbanStore()
-    const { candidates, loading: candidatesLoading, fetchCandidates, selectCandidate } = useCandidatesStore()
     const { events, fetchEvents } = useCardEventsStore()
+
+    // ... (omitted lines)
+
+    const handleSelectCandidate = async (driverId: string) => {
+        if (!card) return
+
+        try {
+            // We can reuse isUploading or create a new state, but let's use isUploading for now to block UI
+            setIsUploading(true)
+
+            // Assign driver to load and move to Contratação
+            await useKanbanStore.getState()
+                .assignDriver(card.id, driverId)
+
+            alert('Motorista contratado com sucesso!')
+
+            // Close modal or switch tab? Let's keep it open but maybe switch to contract tab
+            // onClose() 
+        } catch (error) {
+            console.error('Error selecting candidate:', error)
+            alert('Erro ao contratar motorista')
+        } finally {
+            setIsUploading(false)
+        }
+    }
 
     useEffect(() => {
         if (isOpen && defaultTab) {

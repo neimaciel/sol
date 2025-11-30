@@ -5,9 +5,10 @@ import { User, Truck, Phone, MessageCircle, CheckCircle } from 'lucide-react'
 
 interface CandidateListProps {
     loadId: string
+    onSelectCandidate?: (driverId: string) => void
 }
 
-export default function CandidateList({ loadId }: CandidateListProps) {
+export default function CandidateList({ loadId, onSelectCandidate }: CandidateListProps) {
     const { candidates, loading, fetchCandidates, selectCandidate } = useCandidatesStore()
 
     useEffect(() => {
@@ -92,7 +93,12 @@ export default function CandidateList({ loadId }: CandidateListProps) {
 
                                 {candidate.status !== 'selected' && (
                                     <button
-                                        onClick={() => selectCandidate(candidate.id)}
+                                        onClick={async () => {
+                                            await selectCandidate(candidate.id)
+                                            if (onSelectCandidate) {
+                                                onSelectCandidate(candidate.driver_id)
+                                            }
+                                        }}
                                         className="p-2 hover:bg-emerald-50 rounded text-zinc-600 hover:text-emerald-600 transition-colors"
                                         title="Selecionar Motorista"
                                     >

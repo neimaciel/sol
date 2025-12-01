@@ -39,82 +39,74 @@ async def apply_for_load(request: ApplyRequest, db: AsyncSession = Depends(get_d
     Creates/Updates driver and creates candidate record.
     Moves load to 'atendimento' if it's the first candidate.
     """
-    # 1. Upsert Driver
-    # Check if driver exists by phone
-    result = await db.execute(select(Driver).where(Driver.phone == request.driver.phone))
-    driver = result.scalars().first()
+    try:
+        # 1. Upsert Driver
+        # Check if driver exists by phone
+        result = await db.execute(select(Driver).where(Driver.phone == request.driver.phone))
+        driver = result.scalars().first()
 
-    if driver:
-        # Update existing driver info
-        driver.name = request.driver.name
-        driver.vehicle_type = request.driver.vehicle_type
-        if request.driver.vehicle_plate:
-            driver.vehicle_plate = request.driver.vehicle_plate
-        if request.driver.cpf_cnpj:
-            driver.cpf_cnpj = request.driver.cpf_cnpj
-    else:
-        # Create new driver
-        # Use phone as ID for simplicity if not provided, or generate one?
-        # The model uses String ID. Let's use phone as ID or a UUID string.
-        # Driver model comment says "WhatsApp ID (remoteJid)".
-        # Ideally we should use the phone number as ID (e.g. 5541999999999@s.whatsapp.net) if we have it formatted.
-        # For now, let's assume phone is the ID or close to it.
-        # Let's generate a UUID for ID if we don't have a whatsapp JID.
-        # But wait, if we want to integrate with WhatsApp later, we might want the JID.
-        # For the portal, we just have the phone number.
-        # Let's use the phone number as the ID for now (sanitized).
-        driver_id = request.driver.phone.replace("+", "").replace(" ", "").replace("-", "")
-        # Append @s.whatsapp.net to make it compatible with Evolution API format if needed?
-        # Or just keep it as phone number. Let's keep as phone number for now.
-        
-        driver = Driver(
-            id=driver_id,
-            name=request.driver.name,
-            phone=request.driver.phone,
-            vehicle_type=request.driver.vehicle_type,
-            vehicle_plate=request.driver.vehicle_plate,
-            cpf_cnpj=request.driver.cpf_cnpj
-        )
-        db.add(driver)
-    
-    await db.flush() # Flush to get driver ID if needed, though we set it manually or it's existing
-
-    # 2. Check if already applied
-    result = await db.execute(
-        select(Candidate).where(
-            Candidate.load_id == request.load_id,
-            Candidate.driver_id == driver.id
-        )
-    )
-    existing_candidate = result.scalars().first()
-
-    if existing_candidate:
-        return {"message": "Already applied", "candidate_id": existing_candidate.id}
-
-    # 3. Create Candidate
-    candidate = Candidate(
-        load_id=request.load_id,
-        driver_id=driver.id,
-        status="pending"
-    )
-    db.add(candidate)
-
-    # 4. Auto-transition Load to 'atendimento' (registration -> atendimento)
-    # Check current load status
-    load_result = await db.execute(select(Load).where(Load.id == request.load_id))
-    load = load_result.scalars().first()
-
-    if load:
-        # If load is in 'registration' (Cadastro), move to 'atendimento'
-        # Also check if it's the first candidate to avoid moving back if it was moved manually?
-        # But requirements say "se eu respondo o card já vai para atendimento".
-        # So we move it if it's in registration.
-        if load.column_id == 'registration':
-            load.column_id = 'atendimento'
-            # Also update broadcast_status if needed? Maybe not.
+        if driver:
+            # Update existing driver info
+            driver.name = request.driver.name
+            driver.vehicle_type = request.driver.vehicle_type
+            if request.driver.vehicle_plate:
+                driver.vehicle_plate = request.driver.vehicle_plate
+            if request.driver.cpf_cnpj:
+                driver.cpf_cnpj = request.driver.cpf_cnpj
+        else:
+            # Create new driver
+            # Use phone as ID (sanitized)
+            driver_id = request.driver.phone.replace("+", "").replace(" ", "").replace("-", "")
             
-    await db.commit()
-    return {"message": "Application successful", "candidate_id": candidate.id}
+            driver = Driver(
+                id=driver_id,
+                name=request.driver.name,
+                phone=request.driver.phone,
+                vehicle_type=request.driver.vehicle_type,
+                vehicle_plate=request.driver.vehicle_plate,
+                cpf_cnpj=request.driver.cpf_cnpj
+            )
+            db.add(driver)
+        
+        await db.flush()
+
+        # 2. Check if already applied
+        result = await db.execute(
+            select(Candidate).where(
+                Candidate.load_id == request.load_id,
+                Candidate.driver_id == driver.id
+            )
+        )
+        existing_candidate = result.scalars().first()
+
+        if existing_candidate:
+            return {"message": "Already applied", "candidate_id": existing_candidate.id}
+
+        # 3. Create Candidate
+        candidate = Candidate(
+            load_id=request.load_id,
+            driver_id=driver.id,
+            status="pending"
+        )
+        db.add(candidate)
+
+        # 4. Auto-transition Load
+        load_result = await db.execute(select(Load).where(Load.id == request.load_id))
+        load = load_result.scalars().first()
+
+        if load:
+            if load.column_id == 'registration':
+                load.column_id = 'atendimento'
+                
+        await db.commit()
+        return {"message": "Application successful", "candidate_id": candidate.id}
+
+    except Exception as e:
+        import traceback
+        print(f"❌ Error applying for load: {e}")
+        traceback.print_exc()
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
 
 @router.get("/by-load/{load_id}")
 async def get_candidates_by_load(load_id: str, db: AsyncSession = Depends(get_db)):

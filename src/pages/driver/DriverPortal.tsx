@@ -26,8 +26,7 @@ export default function DriverPortal() {
         name: '',
         phone: '',
         vehicle_type: '',
-        vehicle_plate: '',
-        cpf_cnpj: ''
+        vehicle_plate: ''
     })
 
     useEffect(() => {
@@ -301,37 +300,28 @@ export default function DriverPortal() {
                                     </div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-xs font-bold text-zinc-700 uppercase mb-1">CPF ou CNPJ</label>
-                                    <input
-                                        type="text"
-                                        name="cpf_cnpj"
-                                        value={formData.cpf_cnpj}
-                                        onChange={handleChange}
-                                        className="w-full bg-zinc-50 border-2 border-zinc-200 p-3 font-medium focus:outline-none focus:border-emerald-500 transition-colors"
-                                        placeholder="000.000.000-00"
-                                    />
-                                </div>
-
-                                {error && (
-                                    <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm font-medium flex items-center gap-2">
-                                        <AlertCircle className="w-4 h-4" />
-                                        {error}
-                                    </div>
-                                )}
-
-                                <button
-                                    type="submit"
-                                    disabled={submitting}
-                                    className="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-4 border-b-4 border-emerald-700 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-4"
-                                >
-                                    {submitting ? 'ENVIANDO...' : 'ENVIAR CANDIDATURA'}
-                                </button>
-                            </form>
                         </div>
-                    </motion.div>
                 </div>
-            </main>
+
+                {error && (
+                    <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm font-medium flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4" />
+                        {error}
+                    </div>
+                )}
+
+                <button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-4 border-b-4 border-emerald-700 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+                >
+                    {submitting ? 'ENVIANDO...' : 'ENVIAR CANDIDATURA'}
+                </button>
+            </form>
         </div>
+                    </motion.div >
+                </div >
+            </main >
+        </div >
     )
 }

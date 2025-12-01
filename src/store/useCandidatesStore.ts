@@ -36,7 +36,16 @@ export const useCandidatesStore = create<CandidatesStore>((set) => ({
         set({ loading: true, error: null })
         try {
             const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-            const response = await fetch(`${apiUrl}/api/v1/candidates/by-load/${loadId}`)
+
+            // Add timeout to prevent infinite loading
+            const controller = new AbortController()
+            const timeoutId = setTimeout(() => controller.abort(), 15000) // 15s timeout
+
+            const response = await fetch(`${apiUrl}/api/v1/candidates/by-load/${loadId}`, {
+                signal: controller.signal
+            })
+
+            clearTimeout(timeoutId)
 
             if (!response.ok) throw new Error('Failed to fetch candidates')
 
@@ -44,7 +53,10 @@ export const useCandidatesStore = create<CandidatesStore>((set) => ({
             set({ candidates: data })
         } catch (err) {
             console.error('Error fetching candidates:', err)
-            set({ error: err instanceof Error ? err.message : 'Failed to fetch candidates' })
+            const errorMessage = err instanceof Error
+                ? (err.name === 'AbortError' ? 'Tempo limite excedido. O servidor pode estar reiniciando.' : err.message)
+                : 'Failed to fetch candidates'
+            set({ error: errorMessage })
         } finally {
             set({ loading: false })
         }

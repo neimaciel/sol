@@ -93,12 +93,14 @@ export default function DriverPortal() {
         }))
     }
 
-    // Auto-fill phone from URL (Magic Link)
+    // Auto-fill phone from URL query parameter
     useEffect(() => {
         const params = new URLSearchParams(window.location.search)
         const phoneParam = params.get('phone')
         if (phoneParam) {
-            setFormData(prev => ({ ...prev, phone: phoneParam }))
+            // Clean and format phone number
+            const cleanPhone = phoneParam.replace(/\D/g, '') // Remove non-digits
+            setFormData(prev => ({ ...prev, phone: cleanPhone }))
         }
     }, [])
 

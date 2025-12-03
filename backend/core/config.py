@@ -31,6 +31,19 @@ class Settings(BaseSettings):
         case_sensitive = True
         extra = "ignore"
 
+    from pydantic import field_validator
+
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def assemble_db_connection(cls, v: str | None) -> str | None:
+        if isinstance(v, str):
+            # Auto-fix for SQLAlchemy asyncpg
+            if v.startswith("postgres://"):
+                return v.replace("postgres://", "postgresql+asyncpg://", 1)
+            if v.startswith("postgresql://") and "asyncpg" not in v:
+                 return v.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return v
+
 @lru_cache()
 def get_settings():
     return Settings()

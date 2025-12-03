@@ -18,6 +18,16 @@ async def run_migrations_startup():
     
     print("🔄 Running startup migrations...")
     
+    # Debug DB Connection
+    try:
+        db_url = settings.DATABASE_URL
+        if db_url:
+            masked_url = db_url.split("@")[-1] if "@" in db_url else "UNKNOWN"
+            print(f"🔌 Attempting to connect to Database at: {masked_url}")
+    except Exception as e:
+        print(f"⚠️ Could not parse DB URL for logging: {e}")
+
+    
     sql_statements = [
         "ALTER TABLE drivers ADD COLUMN IF NOT EXISTS vehicle_type TEXT;",
         "ALTER TABLE drivers ADD COLUMN IF NOT EXISTS vehicle_plate TEXT;",

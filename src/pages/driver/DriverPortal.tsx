@@ -302,25 +302,24 @@ export default function DriverPortal() {
                                     </div>
                                 </div>
 
+
+
+                                {error && (
+                                    <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm font-medium flex items-center gap-2">
+                                        <AlertCircle className="w-4 h-4" />
+                                        {error}
+                                    </div>
+                                )}
+
+                                <button
+                                    type="submit"
+                                    disabled={submitting}
+                                    className="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-4 border-b-4 border-emerald-700 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+                                >
+                                    {submitting ? 'ENVIANDO...' : 'ENVIAR CANDIDATURA'}
+                                </button>
+                            </form>
                         </div>
-                </div>
-
-                {error && (
-                    <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm font-medium flex items-center gap-2">
-                        <AlertCircle className="w-4 h-4" />
-                        {error}
-                    </div>
-                )}
-
-                <button
-                    type="submit"
-                    disabled={submitting}
-                    className="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-4 border-b-4 border-emerald-700 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-4"
-                >
-                    {submitting ? 'ENVIANDO...' : 'ENVIAR CANDIDATURA'}
-                </button>
-            </form>
-        </div>
                     </motion.div >
                 </div >
             </main >

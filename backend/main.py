@@ -177,3 +177,54 @@ async def run_migrations_manual(db: AsyncSession = Depends(get_db)):
     """
     await run_migrations_startup()
     return {"message": "Migration triggered"}
+
+@app.get("/api/v1/system/db-check")
+async def check_db_connection():
+    """
+    Debug endpoint to check DB connection from Render.
+    """
+    import socket
+    import os
+    
+    results = {
+        "database_url_set": bool(settings.DATABASE_URL),
+        "hostname": None,
+        "ip_resolved": None,
+        "connection_test": None,
+        "error": None
+    }
+    
+    try:
+        # Parse Hostname
+        db_url = settings.DATABASE_URL
+        if db_url and "@" in db_url:
+            host_part = db_url.split("@")[-1].split("/")[0]
+            if ":" in host_part:
+                hostname = host_part.split(":")[0]
+                port = int(host_part.split(":")[1])
+            else:
+                hostname = host_part
+                port = 5432
+            
+            results["hostname"] = hostname
+            results["port"] = port
+            
+            # 1. DNS Resolution
+            try:
+                ip = socket.gethostbyname(hostname)
+                results["ip_resolved"] = ip
+            except Exception as e:
+                results["dns_error"] = str(e)
+                
+            # 2. TCP Connection Test
+            try:
+                sock = socket.create_connection((hostname, port), timeout=5)
+                results["tcp_connection"] = "Success"
+                sock.close()
+            except Exception as e:
+                results["tcp_connection"] = f"Failed: {e}"
+                
+    except Exception as e:
+        results["parsing_error"] = str(e)
+        
+    return results

@@ -19,8 +19,7 @@ SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL or "postgresql+asyncpg://user:pa
 # Fix for Supabase Transaction Pooler (pgbouncer)
 # asyncpg tries to use prepared statements which fail in transaction mode
 connect_args = {
-    "statement_cache_size": 0,
-    "prepared_statement_cache_size": 0
+    "statement_cache_size": 0
 }
 
 engine = create_async_engine(

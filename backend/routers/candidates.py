@@ -40,6 +40,19 @@ async def apply_for_load(request: ApplyRequest, db: AsyncSession = Depends(get_d
     Moves load to 'atendimento' if it's the first candidate.
     """
     try:
+        # 0. Validate Load Status
+        # Fetch load first to ensure it exists and is in a valid stage
+        load_result = await db.execute(select(Load).where(Load.id == request.load_id))
+        load = load_result.scalars().first()
+        
+        if not load:
+            raise HTTPException(status_code=404, detail="Load not found")
+            
+        # Rule: Only accept applications in the first 3 stages
+        allowed_columns = ['registration', 'broadcast', 'initial_service']
+        if load.column_id not in allowed_columns:
+             raise HTTPException(status_code=400, detail="Esta carga não está mais recebendo candidaturas.")
+
         # 1. Upsert Driver
         # Check if driver exists by phone
         result = await db.execute(select(Driver).where(Driver.phone == request.driver.phone))
@@ -91,12 +104,9 @@ async def apply_for_load(request: ApplyRequest, db: AsyncSession = Depends(get_d
         db.add(candidate)
 
         # 4. Auto-transition Load
-        load_result = await db.execute(select(Load).where(Load.id == request.load_id))
-        load = load_result.scalars().first()
-
-        if load:
-            if load.column_id == 'registration':
-                load.column_id = 'atendimento'
+        # Use the already fetched load object
+        if load.column_id == 'registration':
+            load.column_id = 'atendimento'
                 
         await db.commit()
         return {"message": "Application successful", "candidate_id": candidate.id}

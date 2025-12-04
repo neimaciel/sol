@@ -24,7 +24,8 @@ connect_args = {
 
 engine = create_async_engine(
     SQLALCHEMY_DATABASE_URL,
-    echo=True, # Set to False in production
+    echo=False, # Disable logging to prevent IO in error handlers
+    pool_pre_ping=True, # Enable connection health checks
     connect_args=connect_args
 )
 

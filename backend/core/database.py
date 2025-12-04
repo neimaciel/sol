@@ -58,12 +58,20 @@ try:
             ssl_context = ssl.create_default_context()
             ssl_context.check_hostname = False
             ssl_context.verify_mode = ssl.CERT_NONE # Trust the server (required for IP connection)
-            connect_args = {"ssl": ssl_context}
-            print("🛡️ SSL Hostname verification disabled for IP connection")
+            
+            # Fix for Supabase Transaction Pooler (pgbouncer)
+            # asyncpg tries to use prepared statements which fail in transaction mode
+            connect_args = {
+                "ssl": ssl_context,
+                "statement_cache_size": 0,
+                "prepared_statement_cache_size": 0
+            }
+            print("🛡️ SSL Hostname verification disabled & Prepared Statements disabled for Pooler")
 
 except Exception as e:
     print(f"⚠️ Failed to force IPv4: {e}")
-    # Fallback to original URL
+    # Fallback to original URL but still disable prepared statements for Pooler compatibility
+    connect_args = {"statement_cache_size": 0, "prepared_statement_cache_size": 0}
     pass
 
 engine = create_async_engine(

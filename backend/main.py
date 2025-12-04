@@ -33,6 +33,13 @@ async def run_migrations_startup():
         "ALTER TABLE drivers ADD COLUMN IF NOT EXISTS vehicle_plate TEXT;",
         "ALTER TABLE drivers ADD COLUMN IF NOT EXISTS cpf_cnpj TEXT;",
         "ALTER TABLE drivers ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();",
+        
+        # Migration 004: Add coordinates to loads
+        "ALTER TABLE loads ADD COLUMN IF NOT EXISTS origin_lat FLOAT;",
+        "ALTER TABLE loads ADD COLUMN IF NOT EXISTS origin_lon FLOAT;",
+        "ALTER TABLE loads ADD COLUMN IF NOT EXISTS destination_lat FLOAT;",
+        "ALTER TABLE loads ADD COLUMN IF NOT EXISTS destination_lon FLOAT;",
+
         """
         CREATE TABLE IF NOT EXISTS candidates (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

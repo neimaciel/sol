@@ -164,3 +164,43 @@ async def select_candidate(candidate_id: uuid.UUID, db: AsyncSession = Depends(g
     
     await db.commit()
     return {"message": "Candidate selected"}
+
+@router.post("/by-load/{load_id}/unassign")
+async def unassign_driver(load_id: str, db: AsyncSession = Depends(get_db)):
+    """
+    Unassign the current driver from the load.
+    Reverts load to 'initial_service' and candidate to 'pending'.
+    """
+    # Get load
+    load_result = await db.execute(select(Load).where(Load.id == load_id))
+    load = load_result.scalars().first()
+    
+    if not load:
+        raise HTTPException(status_code=404, detail="Load not found")
+        
+    if not load.driver_id:
+        raise HTTPException(status_code=400, detail="No driver assigned to this load")
+
+    # Find the selected candidate
+    candidate_result = await db.execute(
+        select(Candidate).where(
+            Candidate.load_id == load_id,
+            Candidate.driver_id == load.driver_id,
+            Candidate.status == 'selected'
+        )
+    )
+    candidate = candidate_result.scalars().first()
+    
+    # Revert candidate status
+    if candidate:
+        candidate.status = 'pending'
+        
+    # Clear driver from load and reset column
+    load.driver_id = None
+    load.column_id = 'initial_service'
+    
+    # Optional: We could also revert other 'rejected' candidates to 'pending' if we wanted,
+    # but keeping them rejected is also fine. Let's stick to just the selected one for now.
+    
+    await db.commit()
+    return {"message": "Driver unassigned successfully"}

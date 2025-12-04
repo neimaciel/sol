@@ -47,6 +47,7 @@ interface KanbanState {
     deleteCard: (id: string) => Promise<void>
     subscribeToCards: () => () => void
     assignDriver: (cardId: string, driverId: string) => Promise<void>
+    unassignDriver: (cardId: string) => Promise<void>
     autoAdvanceCard: (cardId: string, trigger: string) => Promise<void>
     isCompactMode: boolean
     toggleCompactMode: () => void
@@ -296,6 +297,40 @@ export const useKanbanStore = create<KanbanState>((set, get) => ({
             await get().fetchCards()
         } catch (error) {
             console.error('Error assigning driver:', error)
+            throw error
+        }
+    },
+
+    unassignDriver: async (cardId) => {
+        try {
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+            const response = await fetch(`${apiUrl}/api/v1/candidates/by-load/${cardId}/unassign`, {
+                method: 'POST',
+            })
+
+            if (!response.ok) {
+                throw new Error('Failed to unassign driver')
+            }
+
+            // Optimistic update
+            set((state) => ({
+                cards: state.cards.map((card) =>
+                    card.id === cardId
+                        ? { ...card, driver: undefined, columnId: 'initial_service' }
+                        : card
+                ),
+                selectedCard: state.selectedCard?.id === cardId
+                    ? { ...state.selectedCard, driver: undefined, columnId: 'initial_service' }
+                    : state.selectedCard
+            }))
+
+            // Log event
+            useCardEventsStore.getState().logEvent(cardId, 'driver_unassigned')
+
+            // Refresh to ensure sync
+            await get().fetchCards()
+        } catch (error) {
+            console.error('Error unassigning driver:', error)
             throw error
         }
     },

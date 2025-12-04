@@ -318,27 +318,19 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                     Candidatos
                                 </TabsTrigger>
 
-                                {/* Dynamic Tabs */}
-                                {['documentation', 'risk', 'contract', 'loading', 'transit', 'unloading', 'completed'].includes(card.columnId) && (
-                                    <TabsTrigger value="documentation" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm uppercase tracking-wide">
-                                        Documentação
-                                    </TabsTrigger>
-                                )}
-                                {['risk', 'contract', 'loading', 'transit', 'unloading', 'completed'].includes(card.columnId) && (
-                                    <TabsTrigger value="risk" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm uppercase tracking-wide">
-                                        Risco
-                                    </TabsTrigger>
-                                )}
-                                {['contract', 'loading', 'transit', 'unloading', 'completed'].includes(card.columnId) && (
-                                    <TabsTrigger value="contracts" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm uppercase tracking-wide">
-                                        Contratos
-                                    </TabsTrigger>
-                                )}
-                                {['loading', 'transit', 'unloading', 'completed'].includes(card.columnId) && (
-                                    <TabsTrigger value="map" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm uppercase tracking-wide">
-                                        Rota
-                                    </TabsTrigger>
-                                )}
+                                {/* Dynamic Tabs - Enabled for all columns as requested */}
+                                <TabsTrigger value="documentation" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm uppercase tracking-wide">
+                                    Documentação
+                                </TabsTrigger>
+                                <TabsTrigger value="risk" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm uppercase tracking-wide">
+                                    Risco
+                                </TabsTrigger>
+                                <TabsTrigger value="contracts" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm uppercase tracking-wide">
+                                    Contratos
+                                </TabsTrigger>
+                                <TabsTrigger value="map" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm uppercase tracking-wide">
+                                    Rota
+                                </TabsTrigger>
                             </TabsList>
                         </div>
 
@@ -610,7 +602,26 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                             <h4 className="text-base font-bold text-foreground uppercase">Roberto Santos <span className="text-amber-600 text-xs ml-1 bg-amber-50 px-1.5 py-0.5 border border-amber-200 font-mono">★ 4.7</span></h4>
                                                             <p className="text-sm text-muted-foreground mt-0.5 font-medium">345 viagens • Ouro</p>
                                                         </div>
-                                                        <Button variant="outline" size="sm" className="bg-background border-2 border-foreground hover:bg-accent rounded-none font-bold">Ver Perfil</Button>
+                                                        <div className="flex gap-2">
+                                                            <Button variant="outline" size="sm" className="bg-background border-2 border-foreground hover:bg-accent rounded-none font-bold">Ver Perfil</Button>
+                                                            <Button
+                                                                variant="destructive"
+                                                                size="sm"
+                                                                className="rounded-none font-bold"
+                                                                onClick={async () => {
+                                                                    if (confirm('Tem certeza que deseja desvincular este motorista? A carga voltará para a etapa de Atendimento.')) {
+                                                                        try {
+                                                                            await useKanbanStore.getState().unassignDriver(card.id)
+                                                                            alert('Motorista desvinculado com sucesso!')
+                                                                        } catch (error) {
+                                                                            alert('Erro ao desvincular motorista')
+                                                                        }
+                                                                    }
+                                                                }}
+                                                            >
+                                                                Desvincular
+                                                            </Button>
+                                                        </div>
                                                     </div>
                                                 )}
 

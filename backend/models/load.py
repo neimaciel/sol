@@ -21,5 +21,10 @@ class Load(Base):
     # Phase 5 Fields
     whatsapp_group_id = Column(String, nullable=True)
     broadcast_status = Column(String, nullable=True)
+    
+    driver_id = Column(String, nullable=True) # Foreign key to drivers table (implicit or explicit)
+    
+    # Relationships (if needed for joins)
+    # driver = relationship("Driver", backref="loads")
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())

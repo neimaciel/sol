@@ -18,7 +18,11 @@ interface DriverCardProps {
     driver: Driver
 }
 
+import { useNavigate } from 'react-router-dom'
+
 export function DriverCard({ driver }: DriverCardProps) {
+    const navigate = useNavigate()
+
     return (
         <div className="bg-card border-2 border-border shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all group">
             <CardHeader className="p-5 space-y-4">
@@ -77,7 +81,11 @@ export function DriverCard({ driver }: DriverCardProps) {
                         <Phone className="h-4 w-4 mr-2" />
                         Ligar
                     </Button>
-                    <Button className="flex-1 rounded-none border-2 border-primary shadow-brutal-sm hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-bold uppercase" size="sm">
+                    <Button
+                        className="flex-1 rounded-none border-2 border-primary shadow-brutal-sm hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-bold uppercase"
+                        size="sm"
+                        onClick={() => navigate(`/motoristas/${driver.id}`)}
+                    >
                         Ver Perfil
                     </Button>
                 </div>

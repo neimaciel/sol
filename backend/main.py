@@ -164,11 +164,12 @@ async def root():
 async def health_check():
     return {"status": "healthy"}
 
-from routers import whatsapp, admin, candidates
+from routers import whatsapp, admin, candidates, drivers
 
 app.include_router(whatsapp.router, prefix=f"{settings.API_V1_STR}/whatsapp", tags=["whatsapp"])
 app.include_router(admin.router, prefix=f"{settings.API_V1_STR}/admin", tags=["admin"])
 app.include_router(candidates.router, prefix="/api/v1/candidates", tags=["Candidates"])
+app.include_router(drivers.router, prefix="/api/v1/drivers", tags=["Drivers"])
 
 # Keep manual endpoint just in case, reusing the logic?
 # Or remove it to clean up? Let's keep it but make it call the same function if possible, 

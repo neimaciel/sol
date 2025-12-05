@@ -6,15 +6,16 @@ import { useAuthStore } from '@/store/useAuthStore'
 import { AnimatePresence } from 'framer-motion'
 
 import Dashboard from '@/pages/Dashboard'
-import DriversList from '@/pages/drivers/DriversList'
 import GroupsList from '@/pages/groups/GroupsList'
 import ModelsList from '@/pages/models/ModelsList'
 import HistoryList from '@/pages/history/HistoryList'
 import OperatorsList from '@/pages/operators/OperatorsList'
 import AgentAdmin from '@/pages/AgentAdmin'
 import Login from '@/pages/Login'
-import DriverPortal from '@/pages/driver/DriverPortal'
-import WhatsAppSettings from '@/pages/admin/WhatsAppSettings'
+import DriverPortal from './pages/driver/DriverPortal'
+import DriversList from './pages/drivers/DriversList'
+import DriverProfile from './pages/drivers/DriverProfile'
+import WhatsAppSettings from './pages/admin/WhatsAppSettings'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user: session, loading } = useAuthStore()
@@ -33,6 +34,7 @@ function AnimatedRoutes() {
       <Routes location={location} key={location.pathname}>
         <Route path="/login" element={<Login />} />
         <Route path="/motorista/carga/:id" element={<DriverPortal />} />
+        <Route path="/motoristas/:id" element={<DriverProfile />} />
         <Route
           path="/drivers"
           element={

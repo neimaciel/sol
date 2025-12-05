@@ -14,6 +14,7 @@ import OperatorsList from '@/pages/operators/OperatorsList'
 import AgentAdmin from '@/pages/AgentAdmin'
 import Login from '@/pages/Login'
 import DriverPortal from '@/pages/driver/DriverPortal'
+import WhatsAppSettings from '@/pages/admin/WhatsAppSettings'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user: session, loading } = useAuthStore()
@@ -77,6 +78,14 @@ function AnimatedRoutes() {
           element={
             <ProtectedRoute>
               <AgentAdmin />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/whatsapp"
+          element={
+            <ProtectedRoute>
+              <WhatsAppSettings />
             </ProtectedRoute>
           }
         />

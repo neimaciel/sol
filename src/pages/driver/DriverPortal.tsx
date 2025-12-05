@@ -20,6 +20,7 @@ export default function DriverPortal() {
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState(false)
     const [submitting, setSubmitting] = useState(false)
+    const [systemPhone, setSystemPhone] = useState(import.meta.env.VITE_SYSTEM_PHONE || '5541999999999')
 
     // Form state
     const [formData, setFormData] = useState({
@@ -51,7 +52,25 @@ export default function DriverPortal() {
         }
 
         fetchLoad()
+        fetchLoad()
     }, [id])
+
+    // Fetch system phone
+    useEffect(() => {
+        const fetchSystemPhone = async () => {
+            try {
+                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+                const response = await fetch(`${apiUrl}/api/v1/whatsapp/system-phone`)
+                const data = await response.json()
+                if (data.phone) {
+                    setSystemPhone(data.phone)
+                }
+            } catch (error) {
+                console.error('Error fetching system phone:', error)
+            }
+        }
+        fetchSystemPhone()
+    }, [])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -125,7 +144,7 @@ export default function DriverPortal() {
     }
 
     if (success) {
-        const systemPhone = import.meta.env.VITE_SYSTEM_PHONE || '5541999999999' // Fallback or ask user to set
+        // systemPhone is already set from state (env var or API)
         const message = `Tenho interesse na carga ${load.id}. Meu nome é ${formData.name}. Placa: ${formData.vehicle_plate}.`
         const whatsappUrl = `https://wa.me/${systemPhone}?text=${encodeURIComponent(message)}`
 

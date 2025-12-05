@@ -80,4 +80,97 @@ class WhatsAppService:
                 print(f"❌ Error getting group info from invite: {e}")
                 raise Exception(f"Internal Error: {str(e)}")
 
+    async def get_instance_status(self):
+        """
+        Get the connection status of the instance.
+        """
+        if not self.base_url or not self.api_key:
+            return {"status": "error", "reason": "Evolution API not configured"}
+
+        url = f"{self.base_url}/instance/connectionState/{settings.INSTANCE_NAME}"
+        
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.get(url, headers=self.headers, timeout=5.0)
+                if response.status_code == 404:
+                     # Instance might not exist, try to fetch instance info to check
+                     return {"instance": settings.INSTANCE_NAME, "state": "not_found"}
+                
+                response.raise_for_status()
+                return response.json()
+            except Exception as e:
+                print(f"Error getting instance status: {e}")
+                return {"status": "error", "reason": str(e)}
+
+    async def connect_instance(self):
+        """
+        Connect the instance and get QR Code.
+        """
+        if not self.base_url or not self.api_key:
+            return None
+
+        url = f"{self.base_url}/instance/connect/{settings.INSTANCE_NAME}"
+        
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.get(url, headers=self.headers, timeout=10.0)
+                response.raise_for_status()
+                return response.json()
+            except Exception as e:
+                print(f"Error connecting instance: {e}")
+                return None
+
+    async def logout_instance(self):
+        """
+        Logout the instance.
+        """
+        if not self.base_url or not self.api_key:
+            return None
+
+        url = f"{self.base_url}/instance/logout/{settings.INSTANCE_NAME}"
+        
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.delete(url, headers=self.headers, timeout=10.0)
+                response.raise_for_status()
+                return response.json()
+            except Exception as e:
+                print(f"Error logging out instance: {e}")
+                return None
+
+    async def get_instance_info(self):
+        """
+        Get full instance info including phone number.
+        """
+        if not self.base_url or not self.api_key:
+            return None
+
+        # Evolution API endpoint to fetch specific instance info
+        # Usually /instance/fetchInstances?instanceName=...
+        url = f"{self.base_url}/instance/fetchInstances"
+        params = {"instanceName": settings.INSTANCE_NAME}
+        
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.get(url, params=params, headers=self.headers, timeout=5.0)
+                response.raise_for_status()
+                data = response.json()
+                # Data is usually a list or a single object depending on version
+                # We expect a list containing our instance
+                if isinstance(data, list):
+                    for instance in data:
+                        if instance.get('instance', {}).get('instanceName') == settings.INSTANCE_NAME:
+                            return instance
+                        # Fallback for older versions or different structure
+                        if instance.get('instanceName') == settings.INSTANCE_NAME:
+                            return instance
+                elif isinstance(data, dict):
+                     if data.get('instance', {}).get('instanceName') == settings.INSTANCE_NAME:
+                        return data
+                
+                return None
+            except Exception as e:
+                print(f"Error getting instance info: {e}")
+                return None
+
 whatsapp_service = WhatsAppService()

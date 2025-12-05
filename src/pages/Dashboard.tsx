@@ -5,7 +5,7 @@ import { CardFormModal } from '@/components/kanban/CardFormModal'
 import { useKanbanStore } from '@/store/useKanbanStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Bell, Settings, User, Plus, LayoutGrid, Truck, Users as UsersIcon, TrendingUp, Search, ChevronLeft, ChevronRight, Bot } from 'lucide-react'
+import { Bell, Settings, User, Plus, LayoutGrid, Truck, Users as UsersIcon, TrendingUp, Search, ChevronLeft, ChevronRight, Bot, Smartphone } from 'lucide-react'
 import { StatsCards } from '@/components/dashboard/StatsCards'
 import { RevenueChart, TripsChart, FunnelChart } from '@/components/dashboard/Charts'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -101,6 +101,7 @@ export default function Dashboard() {
                     <NavItem href="/history" icon={TrendingUp} label="Histórico" />
                     <div className="h-px bg-border my-2" />
                     <NavItem href="/agent-admin" icon={Bot} label="Inteligência Artificial" />
+                    <NavItem href="/admin/whatsapp" icon={Smartphone} label="WhatsApp" />
                 </nav>
 
                 {/* Bottom Icons */}

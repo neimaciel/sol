@@ -157,3 +157,65 @@ async def extract_group_jid(request: ExtractJIDRequest):
         print(f"Error extracting group JID: {e}")
         # Return the actual error message from the service
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/status")
+async def get_instance_status():
+    """
+    Get the connection status of the WhatsApp instance.
+    """
+    result = await whatsapp_service.get_instance_status()
+    if not result:
+        raise HTTPException(status_code=500, detail="Failed to get instance status")
+    return result
+
+@router.get("/connect")
+async def connect_instance():
+    """
+    Connect the instance and get QR Code.
+    """
+    result = await whatsapp_service.connect_instance()
+    if not result:
+        raise HTTPException(status_code=500, detail="Failed to connect instance")
+    return result
+
+@router.post("/logout")
+async def logout_instance():
+    """
+    Logout the instance.
+    """
+    result = await whatsapp_service.logout_instance()
+    if not result:
+        raise HTTPException(status_code=500, detail="Failed to logout instance")
+    return result
+
+@router.get("/system-phone")
+async def get_system_phone():
+    """
+    Get the connected system phone number.
+    Returns the number from the connected WhatsApp instance.
+    """
+    try:
+        # Check status first
+        status = await whatsapp_service.get_instance_status()
+        if not status or status.get('state') != 'open':
+             return {"phone": None, "status": "disconnected"}
+
+        # Get instance info to find the number
+        info = await whatsapp_service.get_instance_info()
+        if not info:
+             return {"phone": None, "status": "connected_but_no_info"}
+
+        # Extract number from owner JID
+        # Structure might vary, usually info['instance']['owner'] or info['owner']
+        owner_jid = info.get('instance', {}).get('owner') or info.get('owner')
+        
+        if owner_jid:
+            # Format: 554199999999@s.whatsapp.net
+            phone = owner_jid.split('@')[0]
+            return {"phone": phone, "status": "connected"}
+            
+        return {"phone": None, "status": "connected_no_owner"}
+        
+    except Exception as e:
+        print(f"Error getting system phone: {e}")
+        return {"phone": None, "error": str(e)}

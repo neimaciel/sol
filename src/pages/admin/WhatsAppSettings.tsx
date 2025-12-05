@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Loader2, RefreshCw, LogOut, Smartphone, QrCode, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react'
-import { motion } from 'framer-motion'
 import { QRCodeSVG } from 'qrcode.react'
 
 export default function WhatsAppSettings() {

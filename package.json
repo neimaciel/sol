@@ -60,5 +60,10 @@
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.3",
     "vite": "^7.2.2"
+  },
+  "overrides": {
+    "qrcode.react": {
+      "react": "$react"
+    }
   }
 }

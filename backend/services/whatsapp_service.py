@@ -108,7 +108,7 @@ class WhatsAppService:
         Connect the instance and get QR Code.
         """
         if not self.base_url or not self.api_key:
-            return None
+            return {"error": "Evolution API configuration missing (URL or Key)"}
 
         url = f"{self.base_url}/instance/connect/{settings.INSTANCE_NAME}"
         
@@ -117,9 +117,12 @@ class WhatsAppService:
                 response = await client.get(url, headers=self.headers, timeout=10.0)
                 response.raise_for_status()
                 return response.json()
+            except httpx.HTTPStatusError as e:
+                print(f"Evolution API Error: {e.response.text}")
+                return {"error": f"Evolution API Error: {e.response.status_code} - {e.response.text}"}
             except Exception as e:
                 print(f"Error connecting instance: {e}")
-                return None
+                return {"error": str(e)}
 
     async def logout_instance(self):
         """

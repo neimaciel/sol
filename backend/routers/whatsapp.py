@@ -175,7 +175,11 @@ async def connect_instance():
     """
     result = await whatsapp_service.connect_instance()
     if not result:
-        raise HTTPException(status_code=500, detail="Failed to connect instance")
+        raise HTTPException(status_code=500, detail="Unknown error connecting instance")
+        
+    if "error" in result:
+        raise HTTPException(status_code=502, detail=result["error"])
+        
     return result
 
 @router.post("/logout")

@@ -115,6 +115,17 @@ class WhatsAppService:
         async with httpx.AsyncClient() as client:
             try:
                 response = await client.get(url, headers=self.headers, timeout=10.0)
+                
+                # If 404, instance might not exist. Try to create it.
+                if response.status_code == 404:
+                    print(f"Instance {settings.INSTANCE_NAME} not found. Attempting to create...")
+                    create_result = await self.create_instance()
+                    if create_result and "error" not in create_result:
+                        # Retry connect after creation
+                        response = await client.get(url, headers=self.headers, timeout=10.0)
+                    else:
+                        return create_result or {"error": "Failed to create instance"}
+
                 response.raise_for_status()
                 return response.json()
             except httpx.HTTPStatusError as e:
@@ -122,6 +133,32 @@ class WhatsAppService:
                 return {"error": f"Evolution API Error: {e.response.status_code} - {e.response.text}"}
             except Exception as e:
                 print(f"Error connecting instance: {e}")
+                return {"error": str(e)}
+
+    async def create_instance(self):
+        """
+        Create a new instance.
+        """
+        if not self.base_url or not self.api_key:
+            return {"error": "Evolution API configuration missing"}
+
+        url = f"{self.base_url}/instance/create"
+        payload = {
+            "instanceName": settings.INSTANCE_NAME,
+            "token": "", # Optional: generate random or use specific
+            "qrcode": True
+        }
+        
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.post(url, json=payload, headers=self.headers, timeout=10.0)
+                response.raise_for_status()
+                return response.json()
+            except httpx.HTTPStatusError as e:
+                print(f"Error creating instance: {e.response.text}")
+                return {"error": f"Failed to create instance: {e.response.status_code} - {e.response.text}"}
+            except Exception as e:
+                print(f"Error creating instance: {e}")
                 return {"error": str(e)}
 
     async def logout_instance(self):

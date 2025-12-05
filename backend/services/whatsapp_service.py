@@ -146,7 +146,8 @@ class WhatsAppService:
         payload = {
             "instanceName": settings.INSTANCE_NAME,
             "token": "", # Optional: generate random or use specific
-            "qrcode": True
+            "qrcode": True,
+            "integration": "WHATSAPP-BAILEYS"
         }
         
         async with httpx.AsyncClient() as client:

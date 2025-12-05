@@ -197,7 +197,12 @@ async def get_system_phone():
     try:
         # Check status first
         status = await whatsapp_service.get_instance_status()
-        if not status or status.get('state') != 'open':
+        
+        state = status.get('state')
+        if not state and 'instance' in status:
+            state = status['instance'].get('state')
+            
+        if state != 'open':
              return {"phone": None, "status": "disconnected"}
 
         # Get instance info to find the number
@@ -206,8 +211,10 @@ async def get_system_phone():
              return {"phone": None, "status": "connected_but_no_info"}
 
         # Extract number from owner JID
-        # Structure might vary, usually info['instance']['owner'] or info['owner']
-        owner_jid = info.get('instance', {}).get('owner') or info.get('owner')
+        # Structure might vary: info['instance']['owner'], info['owner'], or info['ownerJid']
+        owner_jid = info.get('instance', {}).get('owner') or \
+                   info.get('owner') or \
+                   info.get('ownerJid')
         
         if owner_jid:
             # Format: 554199999999@s.whatsapp.net

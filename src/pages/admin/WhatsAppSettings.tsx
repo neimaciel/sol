@@ -22,11 +22,16 @@ export default function WhatsAppSettings() {
             const response = await fetch(`${apiUrl}/api/v1/whatsapp/status`)
             const data = await response.json()
 
-            if (data.state) {
-                // Evolution API returns 'open', 'close', 'connecting'
-                setStatus(data.state)
+            let state = data.state
+            if (!state && data.instance && data.instance.state) {
+                state = data.instance.state
+            }
 
-                if (data.state === 'open') {
+            if (state) {
+                // Evolution API returns 'open', 'close', 'connecting'
+                setStatus(state)
+
+                if (state === 'open') {
                     // Fetch connected number
                     try {
                         const phoneResponse = await fetch(`${apiUrl}/api/v1/whatsapp/system-phone`)

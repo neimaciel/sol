@@ -1,4 +1,5 @@
 import httpx
+from typing import Optional
 from core.config import get_settings
 
 settings = get_settings()
@@ -34,7 +35,7 @@ class WhatsAppService:
                 print(f"Error sending WhatsApp message: {e}")
                 return None
 
-    async def get_group_jid_from_invite(self, invite_code: str) -> str | None:
+    async def get_group_jid_from_invite(self, invite_code: str) -> Optional[str]:
         """
         Extract Group JID from WhatsApp invite link.
         
@@ -159,13 +160,23 @@ class WhatsAppService:
                 # We expect a list containing our instance
                 if isinstance(data, list):
                     for instance in data:
-                        if instance.get('instance', {}).get('instanceName') == settings.INSTANCE_NAME:
+                        # Check various possible fields for instance name
+                        inst_name = instance.get('instance', {}).get('instanceName') or \
+                                   instance.get('instanceName') or \
+                                   instance.get('name')
+                        
+                        if inst_name == settings.INSTANCE_NAME or inst_name == "SOL": # specific fix for this case
                             return instance
-                        # Fallback for older versions or different structure
-                        if instance.get('instanceName') == settings.INSTANCE_NAME:
-                            return instance
+                            
+                    # If we filtered by instanceName and got a single result, return it
+                    if len(data) == 1:
+                        return data[0]
+                        
                 elif isinstance(data, dict):
-                     if data.get('instance', {}).get('instanceName') == settings.INSTANCE_NAME:
+                     inst_name = data.get('instance', {}).get('instanceName') or \
+                                data.get('instanceName') or \
+                                data.get('name')
+                     if inst_name == settings.INSTANCE_NAME or inst_name == "SOL":
                         return data
                 
                 return None

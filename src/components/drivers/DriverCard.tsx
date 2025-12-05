@@ -36,7 +36,7 @@ export function DriverCard({ driver }: DriverCardProps) {
                         <h3 className="font-black text-foreground text-base truncate uppercase">{driver.name}</h3>
                         <div className="flex items-center gap-1.5 mt-1.5">
                             <Star className="w-4 h-4 fill-foreground text-foreground" strokeWidth={0} />
-                            <span className="text-sm font-bold text-foreground">{driver.rating.toFixed(1)}</span>
+                            <span className="text-sm font-bold text-foreground">{(driver.rating || 0).toFixed(1)}</span>
                         </div>
                     </div>
                     <Badge className={`

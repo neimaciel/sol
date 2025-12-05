@@ -196,10 +196,10 @@ export default function WhatsAppSettings() {
                                 <Button
                                     className="w-full bg-primary text-primary-foreground font-bold uppercase rounded-none shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
                                     onClick={handleConnect}
-                                    disabled={isLoading || status === 'connecting'}
+                                    disabled={isLoading}
                                 >
                                     {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <QrCode className="w-4 h-4 mr-2" />}
-                                    Gerar QR Code
+                                    {status === 'connecting' ? 'Mostrar QR Code' : 'Gerar QR Code'}
                                 </Button>
                             </div>
                         )}

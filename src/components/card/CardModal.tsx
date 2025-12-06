@@ -647,7 +647,12 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                             <p className="text-sm text-muted-foreground mt-0.5 font-medium">345 viagens • Ouro</p>
                                                         </div>
                                                         <div className="flex gap-2">
-                                                            <Button variant="outline" size="sm" className="bg-background border-2 border-foreground hover:bg-accent rounded-none font-bold" onClick={() => window.location.href = `/motoristas/${card.driver.id}`}>Ver Perfil</Button>
+                                                            <Button variant="outline" size="sm" className="bg-background border-2 border-foreground hover:bg-accent rounded-none font-bold" onClick={() => {
+                                                                if (card.driver) {
+                                                                    const driverId = typeof card.driver === 'object' ? card.driver.id : card.driver
+                                                                    window.location.href = `/motoristas/${driverId}`
+                                                                }
+                                                            }}>Ver Perfil</Button>
                                                             <Button
                                                                 variant="destructive"
                                                                 size="sm"

@@ -64,10 +64,7 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
     const [isEditing, setIsEditing] = useState(false)
     const [formData, setFormData] = useState<Partial<KanbanCard>>({})
     const [chatMessage, setChatMessage] = useState('')
-    const [chatHistory, setChatHistory] = useState([
-        { sender: 'system', text: 'Carga criada com sucesso.', time: '10:00' },
-        { sender: 'driver', text: 'Estou a caminho da coleta.', time: '10:15' }
-    ])
+
     const [selectedChatCandidate, setSelectedChatCandidate] = useState<any>(null)
     const [isUploading, setIsUploading] = useState(false)
     const [isBroadcasting, setIsBroadcasting] = useState(false)

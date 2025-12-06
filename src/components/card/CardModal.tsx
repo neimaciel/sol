@@ -650,7 +650,17 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                             <Button variant="outline" size="sm" className="bg-background border-2 border-foreground hover:bg-accent rounded-none font-bold" onClick={() => {
                                                                 if (card.driver) {
                                                                     const driverId = typeof card.driver === 'object' ? card.driver.id : card.driver
+                                                                    console.log('Debug - Driver Object:', card.driver)
+                                                                    console.log('Debug - Driver ID:', driverId)
+
+                                                                    if (!driverId) {
+                                                                        alert('Erro: ID do motorista não encontrado no cadastro.')
+                                                                        return
+                                                                    }
+
                                                                     window.location.href = `/motoristas/${driverId}`
+                                                                } else {
+                                                                    alert('Erro: Nenhum motorista vinculado.')
                                                                 }
                                                             }}>Ver Perfil</Button>
                                                             <Button

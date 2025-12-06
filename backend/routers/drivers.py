@@ -26,12 +26,21 @@ class DriverProfile(BaseModel):
 
 @router.get("/{driver_id}/profile", response_model=DriverProfile)
 async def get_driver_profile(driver_id: str, db: AsyncSession = Depends(get_db)):
+    print(f"🔍 Fetching profile for driver_id: '{driver_id}'")
+    
     # 1. Get Driver Info
     result = await db.execute(select(Driver).where(Driver.id == driver_id))
     driver = result.scalars().first()
     
     if not driver:
+        print(f"❌ Driver not found for id: '{driver_id}'")
+        # Try to list all drivers to see what's in DB (debug only)
+        all_drivers = await db.execute(select(Driver.id))
+        print(f"📋 Available Driver IDs: {all_drivers.scalars().all()}")
+        
         raise HTTPException(status_code=404, detail="Driver not found")
+    
+    print(f"✅ Driver found: {driver.name} (ID: {driver.id})")
     
     # Convert driver to dict
     driver_data = {

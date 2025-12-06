@@ -56,30 +56,39 @@ async def apply_for_load(request: ApplyRequest, db: AsyncSession = Depends(get_d
              raise HTTPException(status_code=400, detail="Esta carga não está mais recebendo candidaturas.")
 
         # 1. Upsert Driver
-        # Check if driver exists by phone
-        result = await db.execute(select(Driver).where(Driver.phone == request.driver.phone))
+        # Sanitize phone number to use as ID (remove all non-digits)
+        import re
+        clean_phone = re.sub(r'\D', '', request.driver.phone)
+        
+        # Check if driver exists by ID (which is the phone)
+        result = await db.execute(select(Driver).where(Driver.id == clean_phone))
         driver = result.scalars().first()
+
+        # Try to fetch profile picture from WhatsApp
+        from services.whatsapp_service import whatsapp_service
+        profile_pic = await whatsapp_service.get_profile_picture(clean_phone)
 
         if driver:
             # Update existing driver info
             driver.name = request.driver.name
             driver.vehicle_type = request.driver.vehicle_type
+            driver.phone = request.driver.phone # Update formatted phone if needed
             if request.driver.vehicle_plate:
                 driver.vehicle_plate = request.driver.vehicle_plate
             if request.driver.cpf_cnpj:
                 driver.cpf_cnpj = request.driver.cpf_cnpj
+            if profile_pic:
+                driver.photo = profile_pic
         else:
             # Create new driver
-            # Use phone as ID (sanitized)
-            driver_id = request.driver.phone.replace("+", "").replace(" ", "").replace("-", "")
-            
             driver = Driver(
-                id=driver_id,
+                id=clean_phone,
                 name=request.driver.name,
                 phone=request.driver.phone,
                 vehicle_type=request.driver.vehicle_type,
                 vehicle_plate=request.driver.vehicle_plate,
-                cpf_cnpj=request.driver.cpf_cnpj
+                cpf_cnpj=request.driver.cpf_cnpj,
+                photo=profile_pic
             )
             db.add(driver)
         

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
-from sqlalchemy.orm import Session
-from sqlalchemy import desc
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import desc, select
 from core.database import get_db
 from models.driver import Driver
 from models.load import Load
@@ -25,9 +25,11 @@ class DriverProfile(BaseModel):
     history: List[LoadSchema]
 
 @router.get("/{driver_id}/profile", response_model=DriverProfile)
-async def get_driver_profile(driver_id: str, db: Session = Depends(get_db)):
+async def get_driver_profile(driver_id: str, db: AsyncSession = Depends(get_db)):
     # 1. Get Driver Info
-    driver = db.query(Driver).filter(Driver.id == driver_id).first()
+    result = await db.execute(select(Driver).where(Driver.id == driver_id))
+    driver = result.scalars().first()
+    
     if not driver:
         raise HTTPException(status_code=404, detail="Driver not found")
     
@@ -39,15 +41,18 @@ async def get_driver_profile(driver_id: str, db: Session = Depends(get_db)):
         "vehicle": driver.vehicle_type, # Map vehicle_type to vehicle
         "location": "Desconhecido", # Not in DB model currently, placeholder
         "rating": 5.0, # Placeholder or need to add to model
-        "photo": "https://i.pravatar.cc/150", # Placeholder
+        "photo": driver.photo or "https://i.pravatar.cc/150", # Use real photo or fallback
         "status": "available" # Placeholder logic
     }
     
     # 2. Get Active Load (not completed)
-    active_load = db.query(Load).filter(
-        Load.driver_id == driver_id,
-        Load.column_id != "completed"
-    ).first()
+    load_result = await db.execute(
+        select(Load).where(
+            Load.driver_id == driver_id,
+            Load.column_id != "completed"
+        )
+    )
+    active_load = load_result.scalars().first()
     
     active_load_data = None
     if active_load:
@@ -64,10 +69,13 @@ async def get_driver_profile(driver_id: str, db: Session = Depends(get_db)):
         driver_data["status"] = "busy"
     
     # 3. Get History (completed loads)
-    history_loads = db.query(Load).filter(
-        Load.driver_id == driver_id,
-        Load.column_id == "completed"
-    ).order_by(desc(Load.created_at)).all()
+    history_result = await db.execute(
+        select(Load).where(
+            Load.driver_id == driver_id,
+            Load.column_id == "completed"
+        ).order_by(desc(Load.created_at))
+    )
+    history_loads = history_result.scalars().all()
     
     history_data = [
         LoadSchema(

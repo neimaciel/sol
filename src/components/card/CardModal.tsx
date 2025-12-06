@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import type { KanbanCard } from '@/store/useKanbanStore'
 import { useKanbanStore } from '@/store/useKanbanStore'
 import { supabase } from '@/lib/supabase'
-import { Calendar, DollarSign, X, Paperclip, Send, Check, AlertTriangle, FileCheck, Truck, Upload, Shield, FileSignature, ArrowRight, Box, History, MapPin, Clock, FileText } from 'lucide-react'
+import { Calendar, DollarSign, X, Paperclip, Send, Check, AlertTriangle, FileCheck, Truck, Upload, Shield, FileSignature, ArrowRight, Box, History, MapPin, Clock, FileText, MessageCircle } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import CandidateList from "./CandidateList"
 import { VehicleRequirements } from './VehicleRequirements'
@@ -237,18 +237,7 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
         }
     }
 
-    const handleSendMessage = (e: React.FormEvent) => {
-        e.preventDefault()
-        if (!chatMessage.trim()) return
 
-        setChatHistory([...chatHistory, { sender: 'user', text: chatMessage, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }])
-        setChatMessage('')
-
-        // Mock response
-        setTimeout(() => {
-            setChatHistory(prev => [...prev, { sender: 'driver', text: 'Ok, recebido!', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }])
-        }, 1000)
-    }
 
 
 

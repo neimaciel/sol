@@ -86,6 +86,25 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
         }
     }, [isOpen])
 
+    // Auto-select assigned driver for chat
+    useEffect(() => {
+        const fetchAssignedCandidate = async () => {
+            if (activeTab === 'chat' && !selectedChatCandidate && card?.driver && typeof card.driver !== 'string') {
+                const { data } = await supabase
+                    .from('candidates')
+                    .select('*, driver:drivers(*)')
+                    .eq('load_id', card.id)
+                    .eq('driver_id', card.driver.id)
+                    .single()
+
+                if (data) {
+                    setSelectedChatCandidate(data)
+                }
+            }
+        }
+        fetchAssignedCandidate()
+    }, [activeTab, card, selectedChatCandidate])
+
     const fetchGroups = async () => {
         const { data } = await supabase.from('groups').select('*').order('name')
         if (data) setGroups(data)

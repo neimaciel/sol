@@ -23,9 +23,6 @@ async def whatsapp_webhook(request: Request):
         
         message_type = data.get("messageType")
         if message_type != "conversation" and message_type != "extendedTextMessage":
-             # Note: extendedTextMessage is often used for replies or forwarded messages, 
-             # but for MVP we focus on conversation (text). 
-             # We might want to handle location messages later.
              pass
 
         remote_jid = data.get("key", {}).get("remoteJid")
@@ -42,12 +39,13 @@ async def whatsapp_webhook(request: Request):
         if not user_message:
              return {"status": "ignored", "reason": "no message content"}
 
-        print(f"Received message from {remote_jid}: {user_message}")
+        print(f"📩 Received message from {remote_jid}: {user_message}")
 
         # 1. Extract Phone Number
+        # remote_jid is like 554199999999@s.whatsapp.net
         phone = remote_jid.split('@')[0]
 
-        # 2. Find Driver & Candidate
+        # 2. Find Driver & Candidate using ORM
         from core.database import SessionLocal
         from models.driver import Driver
         from models.candidate import Candidate
@@ -57,44 +55,44 @@ async def whatsapp_webhook(request: Request):
 
         async with SessionLocal() as db:
             try:
-                # Find driver by phone
-                driver = await db.execute(
-                    text("SELECT * FROM drivers WHERE phone LIKE :phone"),
-                    {"phone": f"%{phone}%"}
-                )
-                driver = driver.fetchone()
+                # Find driver by ID (clean phone)
+                # We try exact match on ID first (preferred), then fuzzy on phone column if needed
+                result = await db.execute(select(Driver).where(Driver.id == phone))
+                driver = result.scalars().first()
 
+                if not driver:
+                    print(f"⚠️ Driver not found for phone {phone}")
+                    # Optional: Try to find by phone column if ID doesn't match?
+                    # result = await db.execute(select(Driver).where(Driver.phone.like(f"%{phone}%")))
+                    # driver = result.scalars().first()
+                
                 if driver:
+                    print(f"👤 Driver identified: {driver.name} ({driver.id})")
+                    
                     # Sync Driver Data (Profile Pic)
                     try:
                         profile_pic = await whatsapp_service.get_profile_picture(phone)
                         if profile_pic and profile_pic != driver.photo:
                             driver.photo = profile_pic
-                            # We need to explicitly update because we are using raw SQL select initially?
-                            # Actually, let's use ORM for driver update to be safe
-                            await db.execute(
-                                text("UPDATE drivers SET photo = :photo, updated_at = NOW() WHERE id = :id"),
-                                {"photo": profile_pic, "id": driver.id}
-                            )
-                            await db.commit()
+                            driver.updated_at = datetime.now()
+                            await db.commit() # Commit profile pic update immediately
                             print(f"📸 Updated profile picture for driver {driver.name}")
                     except Exception as e:
                         print(f"⚠️ Failed to sync profile picture: {e}")
 
                     # Find latest active candidate for this driver
-                    # We assume the chat is related to the most recent active load/candidacy
-                    candidate = await db.execute(
-                        text("""
-                            SELECT * FROM candidates 
-                            WHERE driver_id = :driver_id 
-                            ORDER BY created_at DESC 
-                            LIMIT 1
-                        """),
-                        {"driver_id": driver.id}
+                    # We want the most recent one
+                    candidate_result = await db.execute(
+                        select(Candidate)
+                        .where(Candidate.driver_id == driver.id)
+                        .order_by(desc(Candidate.created_at))
+                        .limit(1)
                     )
-                    candidate = candidate.fetchone()
+                    candidate = candidate_result.scalars().first()
 
                     if candidate:
+                        print(f"📝 Found candidate record {candidate.id} for load {candidate.load_id}")
+                        
                         # Append message to chat_messages
                         new_message = {
                             "sender": "driver",
@@ -111,27 +109,37 @@ async def whatsapp_webhook(request: Request):
                             except:
                                 current_messages = []
                         
+                        # Ensure it's a list
+                        if not isinstance(current_messages, list):
+                            current_messages = []
+
                         current_messages.append(new_message)
 
                         # Update candidate
-                        await db.execute(
-                            text("UPDATE candidates SET chat_messages = :messages, updated_at = NOW() WHERE id = :id"),
-                            {"messages": json.dumps(current_messages), "id": candidate.id}
-                        )
+                        # We need to re-assign to trigger SQLAlchemy change detection for JSON types usually,
+                        # but explicit assignment is best.
+                        candidate.chat_messages = list(current_messages) 
+                        candidate.updated_at = datetime.now()
+                        
                         await db.commit()
-                        print(f"Saved message for candidate {candidate.id}")
+                        print(f"✅ Saved message for candidate {candidate.id}")
+                    else:
+                        print(f"⚠️ No candidate record found for driver {driver.id}")
                 
             except Exception as db_e:
-                print(f"Database error in webhook: {db_e}")
+                print(f"❌ Database error in webhook: {db_e}")
+                import traceback
+                traceback.print_exc()
                 await db.rollback()
 
         # Delegate to ConversationService (AI)
+        # We run this even if driver not found? Maybe.
         await conversation_service.handle_message(remote_jid, user_message, message_type)
 
         return {"status": "processed"}
 
     except Exception as e:
-        print(f"Error processing webhook: {e}")
+        print(f"❌ Error processing webhook: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 from pydantic import BaseModel

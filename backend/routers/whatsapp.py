@@ -4,6 +4,7 @@ from services.whatsapp_service import whatsapp_service
 from services.freight_service import freight_service
 from services.rag_service import rag_service
 from services.conversation_service import conversation_service
+from sqlalchemy import text
 
 router = APIRouter()
 
@@ -39,7 +40,77 @@ async def whatsapp_webhook(request: Request):
 
         print(f"Received message from {remote_jid}: {user_message}")
 
-        # Delegate to ConversationService
+        # 1. Extract Phone Number
+        phone = remote_jid.split('@')[0]
+
+        # 2. Find Driver & Candidate
+        from core.database import SessionLocal
+        from models.driver import Driver
+        from models.candidate import Candidate
+        from sqlalchemy import desc
+        import json
+        from datetime import datetime
+
+        async with SessionLocal() as db:
+            try:
+                # Find driver by phone
+                driver = await db.execute(
+                    text("SELECT * FROM drivers WHERE phone LIKE :phone"),
+                    {"phone": f"%{phone}%"}
+                )
+                driver = driver.fetchone()
+
+                if driver:
+                    # Sync Driver Data (Profile Pic, etc) if available in payload
+                    # Note: Evolution API might send 'pushName' or profile pic url in different events
+                    # For now, we just log that we found the driver
+                    pass
+
+                    # Find latest active candidate for this driver
+                    # We assume the chat is related to the most recent active load/candidacy
+                    candidate = await db.execute(
+                        text("""
+                            SELECT * FROM candidates 
+                            WHERE driver_id = :driver_id 
+                            ORDER BY created_at DESC 
+                            LIMIT 1
+                        """),
+                        {"driver_id": driver.id}
+                    )
+                    candidate = candidate.fetchone()
+
+                    if candidate:
+                        # Append message to chat_messages
+                        new_message = {
+                            "sender": "driver",
+                            "text": user_message,
+                            "time": datetime.now().strftime("%H:%M"),
+                            "timestamp": datetime.now().isoformat()
+                        }
+                        
+                        # Fetch current messages
+                        current_messages = candidate.chat_messages or []
+                        if isinstance(current_messages, str):
+                            try:
+                                current_messages = json.loads(current_messages)
+                            except:
+                                current_messages = []
+                        
+                        current_messages.append(new_message)
+
+                        # Update candidate
+                        await db.execute(
+                            text("UPDATE candidates SET chat_messages = :messages, updated_at = NOW() WHERE id = :id"),
+                            {"messages": json.dumps(current_messages), "id": candidate.id}
+                        )
+                        await db.commit()
+                        print(f"Saved message for candidate {candidate.id}")
+                
+            except Exception as db_e:
+                print(f"Database error in webhook: {db_e}")
+                await db.rollback()
+
+        # Delegate to ConversationService (AI)
         await conversation_service.handle_message(remote_jid, user_message, message_type)
 
         return {"status": "processed"}
@@ -104,6 +175,84 @@ async def send_broadcast(request: BroadcastRequest):
     except Exception as e:
         print(f"Error sending broadcast: {e}")
         raise HTTPException(status_code=500, detail=f"Error sending broadcast: {str(e)}")
+
+class SendMessageRequest(BaseModel):
+    candidate_id: str
+    message: str
+
+@router.post("/send-message")
+async def send_message(request: SendMessageRequest):
+    """
+    Send a direct message to a candidate/driver and store it.
+    """
+    try:
+        from core.database import SessionLocal
+        from models.candidate import Candidate
+        from models.driver import Driver
+        import json
+        from datetime import datetime
+
+        async with SessionLocal() as db:
+            # 1. Get Candidate & Driver
+            candidate_result = await db.execute(
+                text("""
+                    SELECT c.*, d.phone 
+                    FROM candidates c
+                    JOIN drivers d ON c.driver_id = d.id
+                    WHERE c.id = :id
+                """),
+                {"id": request.candidate_id}
+            )
+            candidate_data = candidate_result.fetchone()
+            
+            if not candidate_data:
+                raise HTTPException(status_code=404, detail="Candidate not found")
+
+            phone = candidate_data.phone
+            if not phone:
+                 raise HTTPException(status_code=400, detail="Driver has no phone number")
+
+            # 2. Send via WhatsApp Service
+            # Format phone for WhatsApp (remove non-digits, add country code if missing)
+            # Assuming phone is stored cleanly or needs minimal cleaning
+            clean_phone = re.sub(r'\D', '', phone)
+            whatsapp_id = f"{clean_phone}@s.whatsapp.net"
+
+            response = await whatsapp_service.send_message(whatsapp_id, request.message)
+            
+            if not response:
+                 raise HTTPException(status_code=500, detail="Failed to send message via WhatsApp")
+
+            # 3. Store in DB
+            new_message = {
+                "sender": "user",
+                "text": request.message,
+                "time": datetime.now().strftime("%H:%M"),
+                "timestamp": datetime.now().isoformat()
+            }
+            
+            current_messages = candidate_data.chat_messages or []
+            if isinstance(current_messages, str):
+                try:
+                    current_messages = json.loads(current_messages)
+                except:
+                    current_messages = []
+            
+            current_messages.append(new_message)
+
+            await db.execute(
+                text("UPDATE candidates SET chat_messages = :messages, updated_at = NOW() WHERE id = :id"),
+                {"messages": json.dumps(current_messages), "id": request.candidate_id}
+            )
+            await db.commit()
+
+            return {"status": "sent", "message": new_message}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error sending message: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 class ExtractJIDRequest(BaseModel):
     invite_link: str

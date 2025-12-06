@@ -6,9 +6,10 @@ import { User, Truck, Phone, MessageCircle, CheckCircle } from 'lucide-react'
 interface CandidateListProps {
     loadId: string
     onSelectCandidate?: (driverId: string) => void
+    onChatClick?: (candidate: any) => void
 }
 
-export default function CandidateList({ loadId, onSelectCandidate }: CandidateListProps) {
+export default function CandidateList({ loadId, onSelectCandidate, onChatClick }: CandidateListProps) {
     const { candidates, loading, fetchCandidates, selectCandidate } = useCandidatesStore()
 
     useEffect(() => {
@@ -87,6 +88,7 @@ export default function CandidateList({ loadId, onSelectCandidate }: CandidateLi
                                 <button
                                     className="p-2 hover:bg-zinc-100 rounded text-zinc-600 hover:text-blue-600 transition-colors"
                                     title="Abrir Chat"
+                                    onClick={() => onChatClick && onChatClick(candidate)}
                                 >
                                     <MessageCircle className="w-4 h-4" />
                                 </button>

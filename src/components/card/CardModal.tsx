@@ -68,7 +68,9 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
         { sender: 'system', text: 'Carga criada com sucesso.', time: '10:00' },
         { sender: 'driver', text: 'Estou a caminho da coleta.', time: '10:15' }
     ])
+    const [selectedChatCandidate, setSelectedChatCandidate] = useState<any>(null)
     const [isUploading, setIsUploading] = useState(false)
+    const [isBroadcasting, setIsBroadcasting] = useState(false)
 
     // WhatsApp Groups State
     const [groups, setGroups] = useState<any[]>([])
@@ -441,6 +443,8 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                                     alert('Por favor, selecione um grupo de WhatsApp primeiro.')
                                                                     return
                                                                 }
+
+                                                                setIsBroadcasting(true)
                                                                 try {
                                                                     // First, fetch the group to get the whatsapp_id
                                                                     const { data: groupData, error: groupError } = await supabase
@@ -490,12 +494,16 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                                 } catch (error) {
                                                                     console.error('Erro na divulgação:', error)
                                                                     alert(`Erro ao divulgar carga: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
+                                                                } finally {
+                                                                    setIsBroadcasting(false)
                                                                 }
                                                             }}
-                                                            disabled={card.broadcast_status === 'sent'}
+                                                            disabled={card.broadcast_status === 'sent' || isBroadcasting}
                                                         >
                                                             {card.broadcast_status === 'sent' ? (
                                                                 <><Check className="w-4 h-4 mr-2" /> Divulgado</>
+                                                            ) : isBroadcasting ? (
+                                                                <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div> Enviando...</>
                                                             ) : (
                                                                 <><Send className="w-4 h-4 mr-2" /> Divulgar</>
                                                             )}
@@ -574,6 +582,10 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                 <CandidateList
                                                     loadId={card.id}
                                                     onSelectCandidate={handleSelectCandidate}
+                                                    onChatClick={(candidate) => {
+                                                        setSelectedChatCandidate(candidate)
+                                                        setActiveTab('chat')
+                                                    }}
                                                 />
                                             </div>
                                         ) : (
@@ -590,6 +602,10 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                         <CandidateList
                                                             loadId={card.id}
                                                             onSelectCandidate={handleSelectCandidate}
+                                                            onChatClick={(candidate) => {
+                                                                setSelectedChatCandidate(candidate)
+                                                                setActiveTab('chat')
+                                                            }}
                                                         />
                                                     </div>
                                                 ) : (
@@ -730,36 +746,95 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
                                     {/* Chat Tab */}
                                     <TabsContent value="chat" className="mt-0 h-[500px] flex flex-col">
-                                        <div className="flex-1 bg-muted/10 border-2 border-border p-6 mb-4 overflow-y-auto space-y-6 shadow-inner">
-                                            {chatHistory.map((msg, i) => (
-                                                <div key={i} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                                    <div className={`max-w-[80%] p-4 shadow-brutal-sm border-2 border-border ${msg.sender === 'user'
-                                                        ? 'bg-primary text-white rounded-none'
-                                                        : msg.sender === 'system'
-                                                            ? 'bg-muted text-muted-foreground text-xs text-center w-full shadow-none border-none'
-                                                            : 'bg-card text-foreground rounded-none'
-                                                        }`}>
-                                                        <p className="text-sm leading-relaxed font-medium">{msg.text}</p>
-                                                        {msg.sender !== 'system' && (
-                                                            <p className={`text-[10px] mt-2 font-bold uppercase ${msg.sender === 'user' ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
-                                                                {msg.time}
-                                                            </p>
-                                                        )}
+                                        {selectedChatCandidate ? (
+                                            <>
+                                                {/* Chat Header */}
+                                                <div className="flex items-center gap-4 p-4 border-b-2 border-border bg-muted/10">
+                                                    <Avatar className="h-10 w-10 border-2 border-foreground rounded-none">
+                                                        <AvatarImage src={selectedChatCandidate.driver.photo || "https://i.pravatar.cc/150?u=1"} />
+                                                        <AvatarFallback className="rounded-none font-bold">
+                                                            {selectedChatCandidate.driver.name.substring(0, 2).toUpperCase()}
+                                                        </AvatarFallback>
+                                                    </Avatar>
+                                                    <div>
+                                                        <h4 className="font-bold text-foreground uppercase">{selectedChatCandidate.driver.name}</h4>
+                                                        <p className="text-xs text-muted-foreground font-mono">{selectedChatCandidate.driver.phone}</p>
                                                     </div>
                                                 </div>
-                                            ))}
-                                        </div>
-                                        <form onSubmit={handleSendMessage} className="flex gap-3">
-                                            <Input
-                                                value={chatMessage}
-                                                onChange={(e) => setChatMessage(e.target.value)}
-                                                placeholder="Digite sua mensagem..."
-                                                className="flex-1 bg-background border-2 border-border focus:shadow-brutal transition-all h-12 rounded-none"
-                                            />
-                                            <Button type="submit" className="bg-primary hover:bg-primary/90 text-white h-12 w-12 rounded-none shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all px-0 border-2 border-primary">
-                                                <Send className="w-5 h-5" />
-                                            </Button>
-                                        </form>
+
+                                                <div className="flex-1 bg-muted/10 border-2 border-border p-6 mb-4 overflow-y-auto space-y-6 shadow-inner">
+                                                    {selectedChatCandidate.chat_messages && selectedChatCandidate.chat_messages.length > 0 ? (
+                                                        selectedChatCandidate.chat_messages.map((msg: any, i: number) => (
+                                                            <div key={i} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                                                <div className={`max-w-[80%] p-4 shadow-brutal-sm border-2 border-border ${msg.sender === 'user'
+                                                                    ? 'bg-primary text-white rounded-none'
+                                                                    : msg.sender === 'system'
+                                                                        ? 'bg-muted text-muted-foreground text-xs text-center w-full shadow-none border-none'
+                                                                        : 'bg-card text-foreground rounded-none'
+                                                                    }`}>
+                                                                    <p className="text-sm leading-relaxed font-medium">{msg.text}</p>
+                                                                    <p className={`text-[10px] mt-2 font-bold uppercase ${msg.sender === 'user' ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
+                                                                        {msg.time || new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        ))
+                                                    ) : (
+                                                        <div className="text-center text-muted-foreground py-10">
+                                                            <p>Nenhuma mensagem ainda.</p>
+                                                            <p className="text-xs">Envie uma mensagem para iniciar a conversa.</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <form onSubmit={async (e) => {
+                                                    e.preventDefault()
+                                                    if (!chatMessage.trim()) return
+
+                                                    const tempMessage = { sender: 'user', text: chatMessage, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), timestamp: new Date().toISOString() }
+
+                                                    // Optimistic update
+                                                    const updatedMessages = [...(selectedChatCandidate.chat_messages || []), tempMessage]
+                                                    setSelectedChatCandidate({ ...selectedChatCandidate, chat_messages: updatedMessages })
+                                                    setChatMessage('')
+
+                                                    try {
+                                                        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+                                                        const response = await fetch(`${apiUrl}/api/v1/whatsapp/send-message`, {
+                                                            method: 'POST',
+                                                            headers: { 'Content-Type': 'application/json' },
+                                                            body: JSON.stringify({
+                                                                candidate_id: selectedChatCandidate.id,
+                                                                message: tempMessage.text
+                                                            })
+                                                        })
+
+                                                        if (!response.ok) {
+                                                            throw new Error('Failed to send message')
+                                                        }
+                                                    } catch (error) {
+                                                        console.error('Error sending message:', error)
+                                                        alert('Erro ao enviar mensagem. Tente novamente.')
+                                                        // Revert optimistic update? Or just alert.
+                                                    }
+                                                }} className="flex gap-3">
+                                                    <Input
+                                                        value={chatMessage}
+                                                        onChange={(e) => setChatMessage(e.target.value)}
+                                                        placeholder="Digite sua mensagem..."
+                                                        className="flex-1 bg-background border-2 border-border focus:shadow-brutal transition-all h-12 rounded-none"
+                                                    />
+                                                    <Button type="submit" className="bg-primary hover:bg-primary/90 text-white h-12 w-12 rounded-none shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all px-0 border-2 border-primary">
+                                                        <Send className="w-5 h-5" />
+                                                    </Button>
+                                                </form>
+                                            </>
+                                        ) : (
+                                            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                                                <MessageCircle className="w-12 h-12 mb-4 opacity-20" />
+                                                <p className="font-bold uppercase">Nenhuma conversa selecionada</p>
+                                                <p className="text-sm">Selecione um motorista na aba "Candidatos" para abrir o chat.</p>
+                                            </div>
+                                        )}
                                     </TabsContent>
 
                                     {/* Attachments Tab */}

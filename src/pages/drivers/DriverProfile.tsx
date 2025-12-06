@@ -73,6 +73,7 @@ export default function DriverProfile() {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
                 <h1 className="text-2xl font-bold">Motorista não encontrado</h1>
+                <p className="text-muted-foreground">Não foi possível carregar os dados do perfil.</p>
                 <Button onClick={() => navigate('/motoristas')}>Voltar</Button>
             </div>
         )

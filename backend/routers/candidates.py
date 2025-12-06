@@ -59,16 +59,25 @@ async def apply_for_load(request: ApplyRequest, db: AsyncSession = Depends(get_d
         # Sanitize phone number to use as ID (remove all non-digits)
         import re
         clean_phone = re.sub(r'\D', '', request.driver.phone)
+        print(f"🔍 Processing application for phone: {clean_phone}")
         
         # Check if driver exists by ID (which is the phone)
         result = await db.execute(select(Driver).where(Driver.id == clean_phone))
         driver = result.scalars().first()
+        print(f"👤 Driver found: {driver is not None}")
 
         # Try to fetch profile picture from WhatsApp
         from services.whatsapp_service import whatsapp_service
-        profile_pic = await whatsapp_service.get_profile_picture(clean_phone)
+        profile_pic = None
+        try:
+            print(f"📸 Fetching profile picture for {clean_phone}...")
+            profile_pic = await whatsapp_service.get_profile_picture(clean_phone)
+            print(f"📸 Profile picture result: {profile_pic is not None}")
+        except Exception as e:
+            print(f"⚠️ Error fetching profile picture: {e}")
 
         if driver:
+            print("🔄 Updating existing driver...")
             # Update existing driver info
             driver.name = request.driver.name
             driver.vehicle_type = request.driver.vehicle_type
@@ -80,6 +89,7 @@ async def apply_for_load(request: ApplyRequest, db: AsyncSession = Depends(get_d
             if profile_pic:
                 driver.photo = profile_pic
         else:
+            print("✨ Creating new driver...")
             # Create new driver
             driver = Driver(
                 id=clean_phone,
@@ -93,6 +103,7 @@ async def apply_for_load(request: ApplyRequest, db: AsyncSession = Depends(get_d
             db.add(driver)
         
         await db.flush()
+        print("✅ Driver flushed to DB")
 
         # 2. Check if already applied
         result = await db.execute(
@@ -104,9 +115,11 @@ async def apply_for_load(request: ApplyRequest, db: AsyncSession = Depends(get_d
         existing_candidate = result.scalars().first()
 
         if existing_candidate:
+            print("⚠️ Driver already applied")
             return {"message": "Already applied", "candidate_id": existing_candidate.id}
 
         # 3. Create Candidate
+        print("📝 Creating candidate record...")
         candidate = Candidate(
             load_id=request.load_id,
             driver_id=driver.id,
@@ -117,9 +130,11 @@ async def apply_for_load(request: ApplyRequest, db: AsyncSession = Depends(get_d
         # 4. Auto-transition Load
         # Use the already fetched load object
         if load.column_id == 'registration':
+            print("🚚 Transitioning load to 'atendimento'...")
             load.column_id = 'atendimento'
                 
         await db.commit()
+        print("🎉 Transaction committed successfully!")
         return {"message": "Application successful", "candidate_id": candidate.id}
 
     except Exception as e:

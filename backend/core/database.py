@@ -16,16 +16,20 @@ from urllib.parse import urlparse, urlunparse
 # Ensure we have a valid database URL. 
 SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL or "postgresql+asyncpg://user:password@localhost/dbname"
 
+from sqlalchemy.pool import NullPool
+
 # Fix for Supabase Transaction Pooler (pgbouncer)
 # asyncpg tries to use prepared statements which fail in transaction mode
 connect_args = {
-    "statement_cache_size": 0
+    "statement_cache_size": 0,
+    "prepared_statement_cache_size": 0 # Redundant but safe
 }
 
 engine = create_async_engine(
     SQLALCHEMY_DATABASE_URL,
     echo=False, # Disable logging to prevent IO in error handlers
     pool_pre_ping=True, # Enable connection health checks
+    poolclass=NullPool, # Disable client-side pooling for pgbouncer
     connect_args=connect_args
 )
 

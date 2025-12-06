@@ -62,7 +62,7 @@ set({ cards: mappedCards })
 
 moveCard: async (cardId, toColumnId) => {
     // Determine if we need to reset broadcast status
-    const shouldResetBroadcast = toColumnId === 'registration'
+    const shouldResetBroadcast = toColumnId === 'registration' || toColumnId === 'broadcast'
 
     // Optimistic update
     set((state) => ({

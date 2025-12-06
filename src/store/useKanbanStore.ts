@@ -2,6 +2,11 @@ import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import { useCardEventsStore } from './useCardEventsStore'
 
+export interface KanbanColumn {
+    id: string
+    title: string
+}
+
 export interface Driver {
     id: string
     name: string
@@ -44,8 +49,10 @@ export interface KanbanCard {
 
 interface KanbanState {
     cards: KanbanCard[]
+    columns: KanbanColumn[]
     selectedCard: KanbanCard | null
     activeTab: string
+    isCompactMode: boolean
     fetchCards: () => Promise<void>
     addCard: (card: Omit<KanbanCard, 'id'>) => Promise<void>
     moveCard: (cardId: string, toColumnId: string) => Promise<void>
@@ -53,6 +60,7 @@ interface KanbanState {
     deleteCard: (id: string) => Promise<void>
     setSelectedCard: (card: KanbanCard | null) => void
     setActiveTab: (tab: string) => void
+    toggleCompactMode: () => void
     subscribeToCards: () => () => void
     assignDriver: (cardId: string, driverId: string) => Promise<void>
     unassignDriver: (cardId: string) => Promise<void>
@@ -61,10 +69,24 @@ interface KanbanState {
 
 export const useKanbanStore = create<KanbanState>((set, get) => ({
     cards: [],
+    columns: [
+        { id: 'registration', title: 'Cadastro' },
+        { id: 'broadcast', title: 'Divulgação' },
+        { id: 'initial_service', title: 'Atendimento' },
+        { id: 'documentation', title: 'Documentação' },
+        { id: 'risk', title: 'Risco' },
+        { id: 'contract', title: 'Contrato' },
+        { id: 'loading', title: 'Carregamento' },
+        { id: 'transit', title: 'Em Trânsito' },
+        { id: 'unloading', title: 'Descarga' },
+        { id: 'completed', title: 'Finalizado' }
+    ],
     selectedCard: null,
     activeTab: 'info',
+    isCompactMode: false,
     setSelectedCard: (card) => set({ selectedCard: card }),
     setActiveTab: (tab) => set({ activeTab: tab }),
+    toggleCompactMode: () => set((state) => ({ isCompactMode: !state.isCompactMode })),
 
     fetchCards: async () => {
         const { data, error } = await supabase

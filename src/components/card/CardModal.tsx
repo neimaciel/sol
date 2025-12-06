@@ -1111,13 +1111,15 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
                                             {/* Floating Info Card */}
                                             <div className="absolute bottom-6 left-6 right-6 bg-background border-2 border-border shadow-brutal p-4 flex items-center justify-between">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="p-3 bg-primary/10 border-2 border-primary/20">
-                                                        <Truck className="w-6 h-6 text-primary" />
+                                                <div className="flex items-center gap-4 p-4 border-b-2 border-border bg-muted/10">
+                                                    <div className="w-12 h-12 rounded-none bg-muted border-2 border-border overflow-hidden">
+                                                        {card.driver && typeof card.driver !== 'string' && (
+                                                            <img src={card.driver.photo} alt={card.driver.name} className="w-full h-full object-cover" />
+                                                        )}
                                                     </div>
                                                     <div>
-                                                        <p className="text-xs text-muted-foreground font-bold uppercase">Status Atual</p>
-                                                        <p className="text-sm font-bold text-foreground uppercase">Em trânsito - 80km/h</p>
+                                                        <p className="font-bold text-foreground uppercase">{card.driver && typeof card.driver !== 'string' ? card.driver.name : 'Motorista'}</p>
+                                                        <p className="text-xs text-muted-foreground font-mono">{card.driver && typeof card.driver !== 'string' ? card.driver.phone : ''}</p>
                                                     </div>
                                                 </div>
                                                 <div className="text-right">

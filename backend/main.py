@@ -118,7 +118,10 @@ async def run_migrations_startup():
         """,
         "GRANT SELECT ON loads TO anon, authenticated;",
         "GRANT ALL ON drivers TO anon, authenticated;",
-        "GRANT ALL ON candidates TO anon, authenticated;"
+        "GRANT ALL ON candidates TO anon, authenticated;",
+        
+        # Migration 005: Add photo to drivers
+        "ALTER TABLE drivers ADD COLUMN IF NOT EXISTS photo TEXT;"
     ]
     
     async with SessionLocal() as db:

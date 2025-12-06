@@ -16,6 +16,7 @@ class DriverInput(BaseModel):
     vehicle_type: str
     vehicle_plate: Optional[str] = None
     cpf_cnpj: Optional[str] = None
+    photo: Optional[str] = None
 
 class ApplyRequest(BaseModel):
     load_id: str
@@ -27,6 +28,7 @@ class CandidateResponse(BaseModel):
     driver_id: str
     status: str
     driver: DriverInput
+    chat_messages: Optional[List[dict]] = []
     created_at: str
 
     class Config:
@@ -118,7 +120,7 @@ async def apply_for_load(request: ApplyRequest, db: AsyncSession = Depends(get_d
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
 
-@router.get("/by-load/{load_id}")
+@router.get("/by-load/{load_id}", response_model=List[CandidateResponse])
 async def get_candidates_by_load(load_id: str, db: AsyncSession = Depends(get_db)):
     """
     List all candidates for a specific load.

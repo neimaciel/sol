@@ -225,4 +225,35 @@ class WhatsAppService:
                 print(f"Error getting instance info: {e}")
                 return None
 
+    async def get_profile_picture(self, phone: str):
+        """
+        Get profile picture URL for a phone number.
+        """
+        if not self.base_url or not self.api_key:
+            return None
+
+        # Evolution API endpoint: /chat/fetchProfilePictureUrl/{instance}
+        url = f"{self.base_url}/chat/fetchProfilePictureUrl/{settings.INSTANCE_NAME}"
+        
+        payload = {
+            "number": phone
+        }
+        
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.post(url, json=payload, headers=self.headers, timeout=5.0)
+                # Evolution API might return 404 if no picture
+                if response.status_code == 404:
+                    return None
+                    
+                response.raise_for_status()
+                data = response.json()
+                
+                if isinstance(data, dict) and "profilePictureUrl" in data:
+                    return data["profilePictureUrl"]
+                return None
+            except Exception as e:
+                print(f"Error fetching profile picture: {e}")
+                return None
+
 whatsapp_service = WhatsAppService()

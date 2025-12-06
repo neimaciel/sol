@@ -4,7 +4,11 @@ from services.whatsapp_service import whatsapp_service
 from services.freight_service import freight_service
 from services.rag_service import rag_service
 from services.conversation_service import conversation_service
-from sqlalchemy import text
+from sqlalchemy import text, select
+from sqlalchemy.orm import selectinload
+from fastapi import Depends
+from core.database import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 
@@ -61,10 +65,21 @@ async def whatsapp_webhook(request: Request):
                 driver = driver.fetchone()
 
                 if driver:
-                    # Sync Driver Data (Profile Pic, etc) if available in payload
-                    # Note: Evolution API might send 'pushName' or profile pic url in different events
-                    # For now, we just log that we found the driver
-                    pass
+                    # Sync Driver Data (Profile Pic)
+                    try:
+                        profile_pic = await whatsapp_service.get_profile_picture(phone)
+                        if profile_pic and profile_pic != driver.photo:
+                            driver.photo = profile_pic
+                            # We need to explicitly update because we are using raw SQL select initially?
+                            # Actually, let's use ORM for driver update to be safe
+                            await db.execute(
+                                text("UPDATE drivers SET photo = :photo, updated_at = NOW() WHERE id = :id"),
+                                {"photo": profile_pic, "id": driver.id}
+                            )
+                            await db.commit()
+                            print(f"📸 Updated profile picture for driver {driver.name}")
+                    except Exception as e:
+                        print(f"⚠️ Failed to sync profile picture: {e}")
 
                     # Find latest active candidate for this driver
                     # We assume the chat is related to the most recent active load/candidacy
@@ -181,72 +196,68 @@ class SendMessageRequest(BaseModel):
     message: str
 
 @router.post("/send-message")
-async def send_message(request: SendMessageRequest):
+async def send_message(request: SendMessageRequest, db: AsyncSession = Depends(get_db)):
     """
     Send a direct message to a candidate/driver and store it.
     """
     try:
-        from core.database import SessionLocal
         from models.candidate import Candidate
         from models.driver import Driver
         import json
         from datetime import datetime
+        from sqlalchemy import select
+        from sqlalchemy.orm import selectinload
 
-        async with SessionLocal() as db:
-            # 1. Get Candidate & Driver
-            candidate_result = await db.execute(
-                text("""
-                    SELECT c.*, d.phone 
-                    FROM candidates c
-                    JOIN drivers d ON c.driver_id = d.id
-                    WHERE c.id = :id
-                """),
-                {"id": request.candidate_id}
-            )
-            candidate_data = candidate_result.fetchone()
-            
-            if not candidate_data:
-                raise HTTPException(status_code=404, detail="Candidate not found")
+        # 1. Get Candidate & Driver
+        result = await db.execute(
+            select(Candidate)
+            .options(selectinload(Candidate.driver))
+            .where(Candidate.id == request.candidate_id)
+        )
+        candidate = result.scalars().first()
+        
+        if not candidate:
+            raise HTTPException(status_code=404, detail="Candidate not found")
 
-            phone = candidate_data.phone
-            if not phone:
-                 raise HTTPException(status_code=400, detail="Driver has no phone number")
+        if not candidate.driver or not candidate.driver.phone:
+             raise HTTPException(status_code=400, detail="Driver has no phone number")
 
-            # 2. Send via WhatsApp Service
-            # Format phone for WhatsApp (remove non-digits, add country code if missing)
-            # Assuming phone is stored cleanly or needs minimal cleaning
-            clean_phone = re.sub(r'\D', '', phone)
-            whatsapp_id = f"{clean_phone}@s.whatsapp.net"
+        phone = candidate.driver.phone
 
-            response = await whatsapp_service.send_message(whatsapp_id, request.message)
-            
-            if not response:
-                 raise HTTPException(status_code=500, detail="Failed to send message via WhatsApp")
+        # 2. Send via WhatsApp Service
+        clean_phone = re.sub(r'\D', '', phone)
+        whatsapp_id = f"{clean_phone}@s.whatsapp.net"
 
-            # 3. Store in DB
-            new_message = {
-                "sender": "user",
-                "text": request.message,
-                "time": datetime.now().strftime("%H:%M"),
-                "timestamp": datetime.now().isoformat()
-            }
-            
-            current_messages = candidate_data.chat_messages or []
-            if isinstance(current_messages, str):
-                try:
-                    current_messages = json.loads(current_messages)
-                except:
-                    current_messages = []
-            
-            current_messages.append(new_message)
+        response = await whatsapp_service.send_message(whatsapp_id, request.message)
+        
+        if not response:
+             raise HTTPException(status_code=500, detail="Failed to send message via WhatsApp")
 
-            await db.execute(
-                text("UPDATE candidates SET chat_messages = :messages, updated_at = NOW() WHERE id = :id"),
-                {"messages": json.dumps(current_messages), "id": request.candidate_id}
-            )
-            await db.commit()
+        # 3. Store in DB
+        new_message = {
+            "sender": "user",
+            "text": request.message,
+            "time": datetime.now().strftime("%H:%M"),
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        current_messages = candidate.chat_messages or []
+        if isinstance(current_messages, str):
+            try:
+                current_messages = json.loads(current_messages)
+            except:
+                current_messages = []
+        
+        # Create a new list to ensure SQLAlchemy detects the change
+        updated_messages = list(current_messages)
+        updated_messages.append(new_message)
+        
+        candidate.chat_messages = updated_messages
+        candidate.updated_at = datetime.now()
+        
+        await db.commit()
 
-            return {"status": "sent", "message": new_message}
+        return {"status": "sent", "message": new_message}
 
     except HTTPException:
         raise

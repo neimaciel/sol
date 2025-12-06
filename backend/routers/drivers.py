@@ -27,10 +27,21 @@ class DriverProfile(BaseModel):
 @router.get("/{driver_id}/profile", response_model=DriverProfile)
 async def get_driver_profile(driver_id: str, db: AsyncSession = Depends(get_db)):
     try:
-        print(f"🔍 Fetching profile for driver_id: '{driver_id}'")
+        clean_id = driver_id.strip()
+        print(f"🔍 Fetching profile for driver_id: '{clean_id}' (raw: '{driver_id}')")
         
         # 1. Get Driver Info
-        result = await db.execute(select(Driver).where(Driver.id == driver_id))
+        # Use func.trim to handle potential whitespace in DB
+        from sqlalchemy import func, or_
+        result = await db.execute(
+            select(Driver).where(
+                or_(
+                    Driver.id == clean_id,
+                    func.trim(Driver.id) == clean_id,
+                    Driver.phone == clean_id # Fallback to phone search
+                )
+            )
+        )
         driver = result.scalars().first()
         
         if not driver:

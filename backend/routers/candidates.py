@@ -62,7 +62,15 @@ async def apply_for_load(request: ApplyRequest, db: AsyncSession = Depends(get_d
         print(f"🔍 Processing application for phone: {clean_phone}")
         
         # Check if driver exists by ID (which is the phone)
-        result = await db.execute(select(Driver).where(Driver.id == clean_phone))
+        from sqlalchemy import func, or_
+        result = await db.execute(
+            select(Driver).where(
+                or_(
+                    Driver.id == clean_phone,
+                    func.trim(Driver.id) == clean_phone
+                )
+            )
+        )
         driver = result.scalars().first()
         print(f"👤 Driver found: {driver is not None}")
 

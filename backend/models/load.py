@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Float, DateTime, func
+from sqlalchemy import Column, String, Float, DateTime, func, JSON
 from core.database import Base
 
 class Load(Base):
@@ -21,6 +21,7 @@ class Load(Base):
     # Phase 5 Fields
     whatsapp_group_id = Column(String, nullable=True)
     broadcast_status = Column(String, nullable=True)
+    sent_groups = Column(JSON, default=[])
     
     driver_id = Column(String, nullable=True) # Foreign key to drivers table (implicit or explicit)
     

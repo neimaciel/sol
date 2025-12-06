@@ -416,67 +416,79 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                                 <Send className="w-4 h-4" /> Divulgação
                                                             </h3>
                                                             <p className="text-sm text-muted-foreground mt-1 font-medium">
-                                                                {card.broadcast_status === 'sent'
-                                                                    ? 'Carga divulgada para motoristas da região.'
-                                                                    : 'Divulgue para encontrar motoristas.'}
+                                                                Selecione até 3 grupos para divulgar a carga.
                                                             </p>
                                                         </div>
                                                         <Button
                                                             size="sm"
                                                             className="bg-primary hover:bg-primary/90 text-white shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all rounded-none font-bold uppercase"
                                                             onClick={async () => {
-                                                                if (!card.whatsapp_group_id) {
-                                                                    alert('Por favor, selecione um grupo de WhatsApp primeiro.')
+                                                                const selectedGroups = card.whatsapp_group_id ? card.whatsapp_group_id.split(',') : []
+
+                                                                if (selectedGroups.length === 0) {
+                                                                    alert('Por favor, selecione pelo menos um grupo de WhatsApp.')
                                                                     return
                                                                 }
 
                                                                 setIsBroadcasting(true)
                                                                 try {
-                                                                    // First, fetch the group to get the whatsapp_id
-                                                                    const { data: groupData, error: groupError } = await supabase
-                                                                        .from('groups')
-                                                                        .select('whatsapp_id, name')
-                                                                        .eq('id', card.whatsapp_group_id)
-                                                                        .single()
-
-                                                                    if (groupError || !groupData) {
-                                                                        throw new Error('Grupo não encontrado')
-                                                                    }
-
-                                                                    if (!groupData.whatsapp_id) {
-                                                                        throw new Error('Grupo não tem WhatsApp ID configurado. Por favor, recadastre o grupo com o link do WhatsApp.')
-                                                                    }
-
-                                                                    // Send broadcast with all necessary data
                                                                     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-                                                                    const response = await fetch(`${apiUrl}/api/v1/whatsapp/broadcast`, {
-                                                                        method: 'POST',
-                                                                        headers: {
-                                                                            'Content-Type': 'application/json'
-                                                                        },
-                                                                        body: JSON.stringify({
-                                                                            whatsapp_id: groupData.whatsapp_id,
-                                                                            load_id: card.id,
-                                                                            origin: card.origin,
-                                                                            destination: card.destination,
-                                                                            value: card.value,
-                                                                            vehicle_type: card.vehicle_type || 'TRUCK - RASTREADO',
-                                                                            body_type: 'BAÚ',
-                                                                            weight: 'A definir',
-                                                                            material: 'A definir',
-                                                                            pickup_date: 'A combinar',
-                                                                            delivery_date: 'A combinar'
-                                                                        })
-                                                                    })
+                                                                    const sentGroups = [...(card.sent_groups || [])]
+                                                                    let successCount = 0
 
-                                                                    if (!response.ok) {
-                                                                        const errorData = await response.json()
-                                                                        throw new Error(errorData.detail || 'Erro ao enviar mensagem')
+                                                                    for (const groupId of selectedGroups) {
+                                                                        // Skip if already sent recently? No, allow re-send.
+
+                                                                        // Fetch group data
+                                                                        const { data: groupData, error: groupError } = await supabase
+                                                                            .from('groups')
+                                                                            .select('whatsapp_id, name')
+                                                                            .eq('id', groupId)
+                                                                            .single()
+
+                                                                        if (groupError || !groupData || !groupData.whatsapp_id) {
+                                                                            console.warn(`Skipping group ${groupId}: Invalid data`)
+                                                                            continue
+                                                                        }
+
+                                                                        // Send broadcast
+                                                                        const response = await fetch(`${apiUrl}/api/v1/whatsapp/broadcast`, {
+                                                                            method: 'POST',
+                                                                            headers: { 'Content-Type': 'application/json' },
+                                                                            body: JSON.stringify({
+                                                                                whatsapp_id: groupData.whatsapp_id,
+                                                                                load_id: card.id,
+                                                                                origin: card.origin,
+                                                                                destination: card.destination,
+                                                                                value: card.value,
+                                                                                vehicle_type: card.vehicle_type || 'TRUCK - RASTREADO',
+                                                                                body_type: 'BAÚ',
+                                                                                weight: 'A definir',
+                                                                                material: 'A definir',
+                                                                                pickup_date: 'A combinar',
+                                                                                delivery_date: 'A combinar'
+                                                                            })
+                                                                        })
+
+                                                                        if (response.ok) {
+                                                                            successCount++
+                                                                            if (!sentGroups.includes(groupId)) {
+                                                                                sentGroups.push(groupId)
+                                                                            }
+                                                                        }
                                                                     }
 
-                                                                    await updateCard(card.id, { broadcast_status: 'sent' })
-                                                                    await autoAdvanceCard(card.id, 'broadcast_sent')
-                                                                    alert(`Carga divulgada com sucesso para o grupo ${groupData.name}!`)
+                                                                    if (successCount > 0) {
+                                                                        await updateCard(card.id, {
+                                                                            broadcast_status: 'sent',
+                                                                            sent_groups: sentGroups
+                                                                        })
+                                                                        await autoAdvanceCard(card.id, 'broadcast_sent')
+                                                                        alert(`Carga divulgada com sucesso para ${successCount} grupo(s)!`)
+                                                                    } else {
+                                                                        throw new Error('Falha ao enviar para os grupos selecionados.')
+                                                                    }
+
                                                                 } catch (error) {
                                                                     console.error('Erro na divulgação:', error)
                                                                     alert(`Erro ao divulgar carga: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
@@ -484,11 +496,9 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                                     setIsBroadcasting(false)
                                                                 }
                                                             }}
-                                                            disabled={card.broadcast_status === 'sent' || isBroadcasting}
+                                                            disabled={isBroadcasting}
                                                         >
-                                                            {card.broadcast_status === 'sent' ? (
-                                                                <><Check className="w-4 h-4 mr-2" /> Divulgado</>
-                                                            ) : isBroadcasting ? (
+                                                            {isBroadcasting ? (
                                                                 <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div> Enviando...</>
                                                             ) : (
                                                                 <><Send className="w-4 h-4 mr-2" /> Divulgar</>
@@ -496,70 +506,83 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                         </Button>
                                                     </div>
 
-                                                    {/* WhatsApp Group Selection */}
+                                                    {/* WhatsApp Group Selection (Multi-select) */}
                                                     <div className="pt-4 border-t border-primary/10">
-                                                        <Label className="text-xs font-bold text-primary mb-2 block flex items-center gap-1 uppercase tracking-wider">
-                                                            <Users className="w-3 h-3" /> Grupo WhatsApp
-                                                        </Label>
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <Label className="text-xs font-bold text-primary flex items-center gap-1 uppercase tracking-wider">
+                                                                <Users className="w-3 h-3" /> Grupos Selecionados (Máx 3)
+                                                            </Label>
+                                                            <Button size="sm" variant="outline" onClick={() => setShowNewGroupInput(true)} className="h-6 text-xs border-primary/20 text-primary bg-white/50 hover:bg-primary/10">
+                                                                <Plus className="w-3 h-3 mr-1" /> Novo Grupo
+                                                            </Button>
+                                                        </div>
+
                                                         {showNewGroupInput ? (
-                                                            <div className="flex flex-col gap-3 w-full animate-fade-in">
+                                                            <div className="flex flex-col gap-3 w-full animate-fade-in mb-4 bg-white p-3 border border-primary/20 shadow-sm">
                                                                 <div className="flex gap-2">
                                                                     <Input
                                                                         value={newGroupName}
                                                                         onChange={(e) => setNewGroupName(e.target.value)}
                                                                         placeholder="Nome do novo grupo..."
-                                                                        className="h-9 text-sm bg-white/80 flex-1"
+                                                                        className="h-8 text-sm bg-white flex-1"
                                                                     />
-                                                                    <Button size="sm" onClick={handleCreateGroup} className="h-9 bg-primary text-white">Salvar</Button>
-                                                                    <Button size="sm" variant="ghost" onClick={() => setShowNewGroupInput(false)} className="h-9">Cancelar</Button>
+                                                                    <Button size="sm" onClick={handleCreateGroup} className="h-8 bg-primary text-white">Salvar</Button>
+                                                                    <Button size="sm" variant="ghost" onClick={() => setShowNewGroupInput(false)} className="h-8">Cancelar</Button>
                                                                 </div>
                                                                 <Input
                                                                     value={newGroupLink}
                                                                     onChange={(e) => setNewGroupLink(e.target.value)}
                                                                     placeholder="Link do WhatsApp (opcional)..."
-                                                                    className="h-9 text-sm bg-white/80"
+                                                                    className="h-8 text-sm bg-white"
                                                                 />
                                                             </div>
                                                         ) : (
-                                                            <div className="space-y-3">
-                                                                <div className="flex gap-2">
-                                                                    <Select
-                                                                        value={card.whatsapp_group_id || ''}
-                                                                        onValueChange={async (val) => {
-                                                                            await updateCard(card.id, { whatsapp_group_id: val })
-                                                                            await autoAdvanceCard(card.id, 'whatsapp_group_selected')
-                                                                        }}
-                                                                    >
-                                                                        <SelectTrigger className="h-9 text-sm bg-white/80 border-primary/20 focus:ring-primary/20">
-                                                                            <SelectValue placeholder="Selecione um grupo..." />
-                                                                        </SelectTrigger>
-                                                                        <SelectContent>
-                                                                            {groups.map(g => (
-                                                                                <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
-                                                                            ))}
-                                                                        </SelectContent>
-                                                                    </Select>
-                                                                    <Button size="sm" variant="outline" onClick={() => setShowNewGroupInput(true)} className="h-9 border-primary/20 text-primary bg-white/50 hover:bg-primary/10">
-                                                                        <Plus className="w-4 h-4" />
-                                                                    </Button>
-                                                                </div>
-                                                                {card.whatsapp_group_id && (
-                                                                    <div className="text-xs text-primary bg-primary/5 p-3 rounded-none border-2 border-primary/20 flex items-center justify-between">
-                                                                        <span className="truncate max-w-[200px] font-medium">
-                                                                            {groups.find(g => g.id === card.whatsapp_group_id)?.whatsapp_link || 'Sem link cadastrado'}
-                                                                        </span>
-                                                                        {groups.find(g => g.id === card.whatsapp_group_id)?.whatsapp_link && (
-                                                                            <a
-                                                                                href={groups.find(g => g.id === card.whatsapp_group_id)?.whatsapp_link}
-                                                                                target="_blank"
-                                                                                rel="noopener noreferrer"
-                                                                                className="font-bold hover:underline flex items-center gap-1"
-                                                                            >
-                                                                                Abrir <ArrowRight className="w-3 h-3" />
-                                                                            </a>
-                                                                        )}
-                                                                    </div>
-                                                                )}
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[200px] overflow-y-auto pr-2">
+                                                                {groups.map(g => {
+                                                                    const selectedIds = card.whatsapp_group_id ? card.whatsapp_group_id.split(',') : []
+                                                                    const isSelected = selectedIds.includes(g.id)
+                                                                    const isSent = (card.sent_groups || []).includes(g.id)
+
+                                                                    return (
+                                                                        <div
+                                                                            key={g.id}
+                                                                            className={`
+                                                                                flex items-center justify-between p-2 border-2 cursor-pointer transition-all
+                                                                                ${isSelected
+                                                                                    ? 'border-primary bg-primary/5 shadow-sm'
+                                                                                    : 'border-transparent bg-white hover:border-gray-200'
+                                                                                }
+                                                                            `}
+                                                                            onClick={async () => {
+                                                                                let newSelected = [...selectedIds]
+                                                                                if (isSelected) {
+                                                                                    newSelected = newSelected.filter(id => id !== g.id)
+                                                                                } else {
+                                                                                    if (newSelected.length >= 3) {
+                                                                                        alert('Máximo de 3 grupos por vez.')
+                                                                                        return
+                                                                                    }
+                                                                                    newSelected.push(g.id)
+                                                                                }
+                                                                                // Filter out empty strings
+                                                                                newSelected = newSelected.filter(id => id)
+                                                                                await updateCard(card.id, { whatsapp_group_id: newSelected.join(',') })
+                                                                            }}
+                                                                        >
+                                                                            <div className="flex items-center gap-2 overflow-hidden">
+                                                                                <div className={`w-4 h-4 border-2 flex items-center justify-center ${isSelected ? 'border-primary bg-primary' : 'border-gray-300'}`}>
+                                                                                    {isSelected && <Check className="w-3 h-3 text-white" />}
+                                                                                </div>
+                                                                                <span className="text-sm font-medium truncate">{g.name}</span>
+                                                                            </div>
+                                                                            {isSent && (
+                                                                                <Badge variant="secondary" className="h-5 text-[10px] bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200">
+                                                                                    Enviado
+                                                                                </Badge>
+                                                                            )}
+                                                                        </div>
+                                                                    )
+                                                                })}
                                                             </div>
                                                         )}
                                                     </div>

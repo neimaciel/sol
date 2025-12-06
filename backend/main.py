@@ -121,7 +121,10 @@ async def run_migrations_startup():
         "GRANT ALL ON candidates TO anon, authenticated;",
         
         # Migration 005: Add photo to drivers
-        "ALTER TABLE drivers ADD COLUMN IF NOT EXISTS photo TEXT;"
+        "ALTER TABLE drivers ADD COLUMN IF NOT EXISTS photo TEXT;",
+        
+        # Migration 006: Add sent_groups to loads
+        "ALTER TABLE loads ADD COLUMN IF NOT EXISTS sent_groups JSONB DEFAULT '[]'::jsonb;"
     ]
     
     async with SessionLocal() as db:

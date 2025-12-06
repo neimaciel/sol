@@ -244,16 +244,19 @@ class WhatsAppService:
                 response = await client.post(url, json=payload, headers=self.headers, timeout=5.0)
                 # Evolution API might return 404 if no picture
                 if response.status_code == 404:
-                    return None
+                    print(f"No WhatsApp profile picture found for {phone}. Using fallback.")
+                else:
+                    response.raise_for_status()
+                    data = response.json()
                     
-                response.raise_for_status()
-                data = response.json()
-                
-                if isinstance(data, dict) and "profilePictureUrl" in data:
-                    return data["profilePictureUrl"]
-                return None
+                    if isinstance(data, dict) and "profilePictureUrl" in data and data["profilePictureUrl"]:
+                        return data["profilePictureUrl"]
             except Exception as e:
                 print(f"Error fetching profile picture: {e}")
-                return None
+                # Fallback to 8-bit avatar
+                pass
+            
+            # Return deterministic 8-bit avatar if no WhatsApp photo found
+            return f"https://api.dicebear.com/9.x/pixel-art/svg?seed={phone}"
 
 whatsapp_service = WhatsAppService()

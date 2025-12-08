@@ -124,7 +124,20 @@ async def run_migrations_startup():
         "ALTER TABLE drivers ADD COLUMN IF NOT EXISTS photo TEXT;",
         
         # Migration 006: Add sent_groups to loads
-        "ALTER TABLE loads ADD COLUMN IF NOT EXISTS sent_groups JSONB DEFAULT '[]'::jsonb;"
+        "ALTER TABLE loads ADD COLUMN IF NOT EXISTS sent_groups JSONB DEFAULT '[]'::jsonb;",
+        
+        # Migration 007: Fix FK missing between loads and drivers
+        """
+        DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_loads_drivers') THEN
+                ALTER TABLE loads 
+                ADD CONSTRAINT fk_loads_drivers 
+                FOREIGN KEY (driver_id) 
+                REFERENCES drivers (id)
+                ON DELETE SET NULL;
+            END IF;
+        END $$;
+        """
     ]
     
     async with SessionLocal() as db:

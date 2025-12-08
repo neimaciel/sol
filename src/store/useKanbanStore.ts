@@ -89,10 +89,23 @@ export const useKanbanStore = create<KanbanState>((set, get) => ({
     toggleCompactMode: () => set((state) => ({ isCompactMode: !state.isCompactMode })),
 
     fetchCards: async () => {
-        const { data, error } = await supabase
+        // Attempt 1: Fetch with driver join
+        let { data, error } = await supabase
             .from('loads')
             .select('*, driver:drivers(*)')
             .order('created_at', { ascending: false })
+
+        // Fallback: If FK error (PGRST200), fetch without join
+        if (error && error.code === 'PGRST200') {
+            console.warn('⚠️ Fetching cards without driver join due to PGRST200 error.')
+            const retry = await supabase
+                .from('loads')
+                .select('*')
+                .order('created_at', { ascending: false })
+
+            data = retry.data
+            error = retry.error
+        }
 
         if (error) {
             console.error('Error fetching cards:', error)

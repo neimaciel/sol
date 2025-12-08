@@ -456,8 +456,6 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                                     let successCount = 0
 
                                                                     for (const groupId of selectedGroups) {
-                                                                        // Skip if already sent recently? No, allow re-send.
-
                                                                         // Fetch group data
                                                                         const { data: groupData, error: groupError } = await supabase
                                                                             .from('groups')
@@ -494,28 +492,26 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                                             if (!sentGroups.includes(groupId)) {
                                                                                 sentGroups.push(groupId)
                                                                             }
+                                                                        } else {
+                                                                            const errorDetail = `Status: ${response.status}`
+                                                                            console.warn(`Failed to send to group ${groupId}:`, errorDetail)
                                                                         }
                                                                     }
 
-                                                                        const errorDetail = response.ok ? '' : `Status: ${response.status}`
-                                                                        console.warn(`Failed to send to group ${groupId}:`, errorDetail)
-                                                                    }
-                                                                }
-
-                                                                if (successCount > 0) {
-                                                                    await updateCard(card.id, {
-                                                                        broadcast_status: 'sent',
-                                                                        sent_groups: sentGroups
-                                                                    })
-                                                                    await autoAdvanceCard(card.id, 'broadcast_sent')
-                                                                    if (successCount < selectedGroups.length) {
-                                                                         alert(`⚠️ Parcial: Enviado para ${successCount} de ${selectedGroups.length} grupos. Verifique se os grupos têm ID do WhatsApp válido.`)
+                                                                    if (successCount > 0) {
+                                                                        await updateCard(card.id, {
+                                                                            broadcast_status: 'sent',
+                                                                            sent_groups: sentGroups
+                                                                        })
+                                                                        await autoAdvanceCard(card.id, 'broadcast_sent')
+                                                                        if (successCount < selectedGroups.length) {
+                                                                            alert(`⚠️ Parcial: Enviado para ${successCount} de ${selectedGroups.length} grupos. Verifique se os grupos têm ID do WhatsApp válido.`)
+                                                                        } else {
+                                                                            alert(`Carga divulgada com sucesso para ${successCount} grupo(s)!`)
+                                                                        }
                                                                     } else {
-                                                                         alert(`Carga divulgada com sucesso para ${successCount} grupo(s)!`)
+                                                                        throw new Error('Falha total: Nenhum grupo recebeu a mensagem. Verifique se os grupos possuem ID do WhatsApp vinculado.')
                                                                     }
-                                                                } else {
-                                                                    throw new Error('Falha total: Nenhum grupo recebeu a mensagem. Verifique se os grupos possuem ID do WhatsApp vinculado.')
-                                                                }
 
                                                                 } catch (error) {
                                                                     console.error('Erro na divulgação:', error)
@@ -625,539 +621,539 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                     }}
                                                 />
                                             </div>
-                                    ) : (
-                                    <div className="space-y-6">
-                                        {!card.driver ? (
-                                            <div className="space-y-4">
-                                                <div className="bg-amber-50 border-2 border-amber-200 p-6 text-center shadow-brutal-sm">
-                                                    <div className="w-12 h-12 bg-amber-100 border-2 border-amber-200 flex items-center justify-center mx-auto mb-3">
-                                                        <Users className="w-6 h-6 text-amber-700" />
-                                                    </div>
-                                                    <p className="text-sm text-amber-900 font-bold mb-1 uppercase">Nenhum motorista atribuído</p>
-                                                    <p className="text-xs text-amber-700 mb-4 font-medium">Selecione um candidato abaixo para prosseguir.</p>
-                                                </div>
-                                                <CandidateList
-                                                    loadId={card.id}
-                                                    onSelectCandidate={handleSelectCandidate}
-                                                    onChatClick={(candidate) => {
-                                                        setSelectedChatCandidate(candidate)
-                                                        setActiveTab('chat')
-                                                    }}
-                                                />
-                                            </div>
                                         ) : (
-                                            <div className="bg-card border-2 border-border shadow-brutal p-4 flex items-center gap-4">
-                                                <Avatar className="h-14 w-14 border-2 border-foreground rounded-none">
-                                                    <AvatarImage src="https://i.pravatar.cc/150?u=1" />
-                                                    <AvatarFallback className="rounded-none font-bold">RS</AvatarFallback>
-                                                </Avatar>
-                                                <div className="flex-1">
-                                                    <h4 className="text-base font-bold text-foreground uppercase">Roberto Santos <span className="text-amber-600 text-xs ml-1 bg-amber-50 px-1.5 py-0.5 border border-amber-200 font-mono">★ 4.7</span></h4>
-                                                    <p className="text-sm text-muted-foreground mt-0.5 font-medium">345 viagens • Ouro</p>
-                                                </div>
-                                                <div className="flex gap-2">
-                                                    <Button variant="outline" size="sm" className="bg-background border-2 border-foreground hover:bg-accent rounded-none font-bold" onClick={() => {
-                                                        if (card.driver) {
-                                                            const driverId = typeof card.driver === 'object' ? card.driver.id : card.driver
-                                                            console.log('Debug - Driver Object:', card.driver)
-                                                            console.log('Debug - Driver ID:', driverId)
-
-                                                            if (!driverId) {
-                                                                alert('Erro: ID do motorista não encontrado no cadastro.')
-                                                                return
-                                                            }
-
-                                                            window.location.href = `/motoristas/${driverId}`
-                                                        } else {
-                                                            alert('Erro: Nenhum motorista vinculado.')
-                                                        }
-                                                    }}>Ver Perfil</Button>
-                                                    <Button
-                                                        variant="destructive"
-                                                        size="sm"
-                                                        className="rounded-none font-bold"
-                                                        onClick={async () => {
-                                                            if (confirm('Tem certeza que deseja desvincular este motorista? A carga voltará para a etapa de Atendimento.')) {
-                                                                try {
-                                                                    await useKanbanStore.getState().unassignDriver(card.id)
-                                                                    alert('Motorista desvinculado com sucesso!')
-                                                                } catch (error) {
-                                                                    alert('Erro ao desvincular motorista')
-                                                                }
-                                                            }
-                                                        }}
-                                                    >
-                                                        Desvincular
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Check-in Action */}
-                                        {card.columnId === 'loading' && (
-                                            <div className="bg-amber-50 border-2 border-amber-200 p-6 flex items-center justify-between shadow-brutal-sm">
-                                                <div>
-                                                    <h3 className="text-base font-bold text-amber-900 flex items-center gap-2 uppercase">
-                                                        <Truck className="w-5 h-5" /> Check-in
-                                                    </h3>
-                                                    <p className="text-sm text-amber-700 mt-1 font-medium">Confirmar chegada para carregamento.</p>
-                                                </div>
-                                                <Button
-                                                    size="sm"
-                                                    className="bg-amber-500 hover:bg-amber-600 text-white shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all rounded-none font-bold uppercase"
-                                                    onClick={async () => {
-                                                        await updateCard(card.id, { checkin_time: new Date().toISOString() })
-                                                        await autoAdvanceCard(card.id, 'checkin_registered')
-                                                        alert('Check-in confirmado!')
-                                                    }}
-                                                    disabled={!!card.checkin_time}
-                                                >
-                                                    {card.checkin_time ? 'Realizado' : 'Confirmar'}
-                                                </Button>
-                                            </div>
-                                        )}
-
-                                        {/* Arrival Confirmation */}
-                                        {card.columnId === 'transit' && (
-                                            <div className="bg-blue-50 border-2 border-blue-200 p-6 flex items-center justify-between shadow-brutal-sm">
-                                                <div>
-                                                    <h3 className="text-base font-bold text-blue-900 flex items-center gap-2 uppercase">
-                                                        <Truck className="w-5 h-5" /> Chegada no Destino
-                                                    </h3>
-                                                    <p className="text-sm text-blue-700 mt-1 font-medium">Confirmar chegada para descarga.</p>
-                                                </div>
-                                                <Button
-                                                    size="sm"
-                                                    className="bg-blue-600 hover:bg-blue-700 text-white shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all rounded-none font-bold uppercase"
-                                                    onClick={async () => {
-                                                        await updateCard(card.id, { arrival_time: new Date().toISOString() })
-                                                        await autoAdvanceCard(card.id, 'arrival_registered')
-                                                        alert('Chegada confirmada!')
-                                                    }}
-                                                    disabled={!!card.arrival_time}
-                                                >
-                                                    {card.arrival_time ? 'Realizado' : 'Confirmar'}
-                                                </Button>
-                                            </div>
-                                        )}
-
-                                        {/*POD Upload */}
-                                        {['unloading', 'completed'].includes(card.columnId) && (
-                                            <div className="bg-emerald-50 border-2 border-emerald-200 p-6 flex items-center justify-between shadow-brutal-sm">
-                                                <div>
-                                                    <h3 className="text-base font-bold text-emerald-900 flex items-center gap-2 uppercase">
-                                                        <Upload className="w-5 h-5" /> Comprovante (POD)
-                                                    </h3>
-                                                    <p className="text-sm text-emerald-700 mt-1 font-medium">Upload do canhoto assinado.</p>
-                                                </div>
-                                                <div className="relative">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        className="border-2 border-emerald-600 text-emerald-700 hover:bg-emerald-100 bg-white font-bold rounded-none uppercase"
-                                                        disabled={isUploading || !!card.pod_url}
-                                                    >
-                                                        {isUploading ? 'Enviando...' : card.pod_url ? 'Ver POD' : 'Enviar'}
-                                                        {!card.pod_url && (
-                                                            <input
-                                                                type="file"
-                                                                className="absolute inset-0 opacity-0 cursor-pointer"
-                                                                accept="image/*,application/pdf"
-                                                                onChange={(e) => handleFileUpload(e, 'pod')}
-                                                            />
-                                                        )}
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                        )}
-
-                                    <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent w-full my-8" />
-
-                                    <VehicleRequirements />
-
-                                    {/* Actions Footer */}
-                                    <div className="flex justify-end gap-3 pt-6">
-                                        {showDeleteConfirm ? (
-                                            <div className="flex items-center gap-3 animate-fade-in bg-red-50 p-2 rounded-none border-2 border-red-100">
-                                                <span className="text-xs text-red-600 font-bold uppercase tracking-wide">Confirmar exclusão?</span>
-                                                <Button size="sm" variant="outline" onClick={() => setShowDeleteConfirm(false)} className="h-8 bg-white border-red-200 text-red-600 hover:bg-red-50">Não</Button>
-                                                <Button size="sm" className="h-8 bg-red-600 text-white hover:bg-red-700 shadow-md shadow-red-900/20" onClick={handleDelete}>Sim</Button>
-                                            </div>
-                                        ) : (
-                                            <Button variant="outline" onClick={() => setShowDeleteConfirm(true)} className="text-red-600 hover:bg-red-50 border-red-100 hover:border-red-200 transition-colors">
-                                                Excluir Carga
-                                            </Button>
-                                        )}
-                                        <Button className="bg-primary hover:bg-primary-600 text-white shadow-lg shadow-primary/25 transition-all hover:scale-105" onClick={isEditing ? handleSave : () => setIsEditing(true)}>
-                                            {isEditing ? 'Salvar Alterações' : 'Editar Informações'}
-                                        </Button>
-                                    </div>
-                                </TabsContent>
-
-                                {/* Chat Tab */}
-                                <TabsContent value="chat" className="mt-0 h-[500px] flex flex-col">
-                                    {selectedChatCandidate ? (
-                                        <>
-                                            {/* Chat Header */}
-                                            <div className="flex items-center gap-4 p-4 border-b-2 border-border bg-muted/10">
-                                                <Avatar className="h-10 w-10 border-2 border-foreground rounded-none">
-                                                    <AvatarImage src={selectedChatCandidate.driver.photo || "https://i.pravatar.cc/150?u=1"} />
-                                                    <AvatarFallback className="rounded-none font-bold">
-                                                        {selectedChatCandidate.driver.name.substring(0, 2).toUpperCase()}
-                                                    </AvatarFallback>
-                                                </Avatar>
-                                                <div>
-                                                    <h4 className="font-bold text-foreground uppercase">{selectedChatCandidate.driver.name}</h4>
-                                                    <p className="text-xs text-muted-foreground font-mono">{selectedChatCandidate.driver.phone}</p>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex-1 bg-muted/10 border-2 border-border p-6 mb-4 overflow-y-auto space-y-6 shadow-inner">
-                                                {selectedChatCandidate.chat_messages && selectedChatCandidate.chat_messages.length > 0 ? (
-                                                    selectedChatCandidate.chat_messages.map((msg: any, i: number) => (
-                                                        <div key={i} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                                            <div className={`max-w-[80%] p-4 shadow-brutal-sm border-2 border-border ${msg.sender === 'user'
-                                                                ? 'bg-primary text-white rounded-none'
-                                                                : msg.sender === 'system'
-                                                                    ? 'bg-muted text-muted-foreground text-xs text-center w-full shadow-none border-none'
-                                                                    : 'bg-card text-foreground rounded-none'
-                                                                }`}>
-                                                                <p className="text-sm leading-relaxed font-medium">{msg.text}</p>
-                                                                <p className={`text-[10px] mt-2 font-bold uppercase ${msg.sender === 'user' ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
-                                                                    {msg.time || new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                                </p>
+                                            <div className="space-y-6">
+                                                {!card.driver ? (
+                                                    <div className="space-y-4">
+                                                        <div className="bg-amber-50 border-2 border-amber-200 p-6 text-center shadow-brutal-sm">
+                                                            <div className="w-12 h-12 bg-amber-100 border-2 border-amber-200 flex items-center justify-center mx-auto mb-3">
+                                                                <Users className="w-6 h-6 text-amber-700" />
                                                             </div>
+                                                            <p className="text-sm text-amber-900 font-bold mb-1 uppercase">Nenhum motorista atribuído</p>
+                                                            <p className="text-xs text-amber-700 mb-4 font-medium">Selecione um candidato abaixo para prosseguir.</p>
                                                         </div>
-                                                    ))
+                                                        <CandidateList
+                                                            loadId={card.id}
+                                                            onSelectCandidate={handleSelectCandidate}
+                                                            onChatClick={(candidate) => {
+                                                                setSelectedChatCandidate(candidate)
+                                                                setActiveTab('chat')
+                                                            }}
+                                                        />
+                                                    </div>
                                                 ) : (
-                                                    <div className="text-center text-muted-foreground py-10">
-                                                        <p>Nenhuma mensagem ainda.</p>
-                                                        <p className="text-xs">Envie uma mensagem para iniciar a conversa.</p>
+                                                    <div className="bg-card border-2 border-border shadow-brutal p-4 flex items-center gap-4">
+                                                        <Avatar className="h-14 w-14 border-2 border-foreground rounded-none">
+                                                            <AvatarImage src="https://i.pravatar.cc/150?u=1" />
+                                                            <AvatarFallback className="rounded-none font-bold">RS</AvatarFallback>
+                                                        </Avatar>
+                                                        <div className="flex-1">
+                                                            <h4 className="text-base font-bold text-foreground uppercase">Roberto Santos <span className="text-amber-600 text-xs ml-1 bg-amber-50 px-1.5 py-0.5 border border-amber-200 font-mono">★ 4.7</span></h4>
+                                                            <p className="text-sm text-muted-foreground mt-0.5 font-medium">345 viagens • Ouro</p>
+                                                        </div>
+                                                        <div className="flex gap-2">
+                                                            <Button variant="outline" size="sm" className="bg-background border-2 border-foreground hover:bg-accent rounded-none font-bold" onClick={() => {
+                                                                if (card.driver) {
+                                                                    const driverId = typeof card.driver === 'object' ? card.driver.id : card.driver
+                                                                    console.log('Debug - Driver Object:', card.driver)
+                                                                    console.log('Debug - Driver ID:', driverId)
+
+                                                                    if (!driverId) {
+                                                                        alert('Erro: ID do motorista não encontrado no cadastro.')
+                                                                        return
+                                                                    }
+
+                                                                    window.location.href = `/motoristas/${driverId}`
+                                                                } else {
+                                                                    alert('Erro: Nenhum motorista vinculado.')
+                                                                }
+                                                            }}>Ver Perfil</Button>
+                                                            <Button
+                                                                variant="destructive"
+                                                                size="sm"
+                                                                className="rounded-none font-bold"
+                                                                onClick={async () => {
+                                                                    if (confirm('Tem certeza que deseja desvincular este motorista? A carga voltará para a etapa de Atendimento.')) {
+                                                                        try {
+                                                                            await useKanbanStore.getState().unassignDriver(card.id)
+                                                                            alert('Motorista desvinculado com sucesso!')
+                                                                        } catch (error) {
+                                                                            alert('Erro ao desvincular motorista')
+                                                                        }
+                                                                    }
+                                                                }}
+                                                            >
+                                                                Desvincular
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Check-in Action */}
+                                                {card.columnId === 'loading' && (
+                                                    <div className="bg-amber-50 border-2 border-amber-200 p-6 flex items-center justify-between shadow-brutal-sm">
+                                                        <div>
+                                                            <h3 className="text-base font-bold text-amber-900 flex items-center gap-2 uppercase">
+                                                                <Truck className="w-5 h-5" /> Check-in
+                                                            </h3>
+                                                            <p className="text-sm text-amber-700 mt-1 font-medium">Confirmar chegada para carregamento.</p>
+                                                        </div>
+                                                        <Button
+                                                            size="sm"
+                                                            className="bg-amber-500 hover:bg-amber-600 text-white shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all rounded-none font-bold uppercase"
+                                                            onClick={async () => {
+                                                                await updateCard(card.id, { checkin_time: new Date().toISOString() })
+                                                                await autoAdvanceCard(card.id, 'checkin_registered')
+                                                                alert('Check-in confirmado!')
+                                                            }}
+                                                            disabled={!!card.checkin_time}
+                                                        >
+                                                            {card.checkin_time ? 'Realizado' : 'Confirmar'}
+                                                        </Button>
+                                                    </div>
+                                                )}
+
+                                                {/* Arrival Confirmation */}
+                                                {card.columnId === 'transit' && (
+                                                    <div className="bg-blue-50 border-2 border-blue-200 p-6 flex items-center justify-between shadow-brutal-sm">
+                                                        <div>
+                                                            <h3 className="text-base font-bold text-blue-900 flex items-center gap-2 uppercase">
+                                                                <Truck className="w-5 h-5" /> Chegada no Destino
+                                                            </h3>
+                                                            <p className="text-sm text-blue-700 mt-1 font-medium">Confirmar chegada para descarga.</p>
+                                                        </div>
+                                                        <Button
+                                                            size="sm"
+                                                            className="bg-blue-600 hover:bg-blue-700 text-white shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all rounded-none font-bold uppercase"
+                                                            onClick={async () => {
+                                                                await updateCard(card.id, { arrival_time: new Date().toISOString() })
+                                                                await autoAdvanceCard(card.id, 'arrival_registered')
+                                                                alert('Chegada confirmada!')
+                                                            }}
+                                                            disabled={!!card.arrival_time}
+                                                        >
+                                                            {card.arrival_time ? 'Realizado' : 'Confirmar'}
+                                                        </Button>
+                                                    </div>
+                                                )}
+
+                                                {/*POD Upload */}
+                                                {['unloading', 'completed'].includes(card.columnId) && (
+                                                    <div className="bg-emerald-50 border-2 border-emerald-200 p-6 flex items-center justify-between shadow-brutal-sm">
+                                                        <div>
+                                                            <h3 className="text-base font-bold text-emerald-900 flex items-center gap-2 uppercase">
+                                                                <Upload className="w-5 h-5" /> Comprovante (POD)
+                                                            </h3>
+                                                            <p className="text-sm text-emerald-700 mt-1 font-medium">Upload do canhoto assinado.</p>
+                                                        </div>
+                                                        <div className="relative">
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                className="border-2 border-emerald-600 text-emerald-700 hover:bg-emerald-100 bg-white font-bold rounded-none uppercase"
+                                                                disabled={isUploading || !!card.pod_url}
+                                                            >
+                                                                {isUploading ? 'Enviando...' : card.pod_url ? 'Ver POD' : 'Enviar'}
+                                                                {!card.pod_url && (
+                                                                    <input
+                                                                        type="file"
+                                                                        className="absolute inset-0 opacity-0 cursor-pointer"
+                                                                        accept="image/*,application/pdf"
+                                                                        onChange={(e) => handleFileUpload(e, 'pod')}
+                                                                    />
+                                                                )}
+                                                            </Button>
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>
-                                            <form onSubmit={async (e) => {
-                                                e.preventDefault()
-                                                if (!chatMessage.trim()) return
+                                        )}
 
-                                                const tempMessage = { sender: 'user', text: chatMessage, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), timestamp: new Date().toISOString() }
+                                        <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent w-full my-8" />
 
-                                                // Optimistic update
-                                                const updatedMessages = [...(selectedChatCandidate.chat_messages || []), tempMessage]
-                                                setSelectedChatCandidate({ ...selectedChatCandidate, chat_messages: updatedMessages })
-                                                setChatMessage('')
+                                        <VehicleRequirements />
 
-                                                try {
-                                                    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-                                                    const response = await fetch(`${apiUrl}/api/v1/whatsapp/send-message`, {
-                                                        method: 'POST',
-                                                        headers: { 'Content-Type': 'application/json' },
-                                                        body: JSON.stringify({
-                                                            candidate_id: selectedChatCandidate.id,
-                                                            message: tempMessage.text
-                                                        })
-                                                    })
-
-                                                    if (!response.ok) {
-                                                        throw new Error('Failed to send message')
-                                                    }
-                                                } catch (error) {
-                                                    console.error('Error sending message:', error)
-                                                    alert('Erro ao enviar mensagem. Tente novamente.')
-                                                    // Revert optimistic update? Or just alert.
-                                                }
-                                            }} className="flex gap-3">
-                                                <Input
-                                                    value={chatMessage}
-                                                    onChange={(e) => setChatMessage(e.target.value)}
-                                                    placeholder="Digite sua mensagem..."
-                                                    className="flex-1 bg-background border-2 border-border focus:shadow-brutal transition-all h-12 rounded-none"
-                                                />
-                                                <Button type="submit" className="bg-primary hover:bg-primary/90 text-white h-12 w-12 rounded-none shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all px-0 border-2 border-primary">
-                                                    <Send className="w-5 h-5" />
+                                        {/* Actions Footer */}
+                                        <div className="flex justify-end gap-3 pt-6">
+                                            {showDeleteConfirm ? (
+                                                <div className="flex items-center gap-3 animate-fade-in bg-red-50 p-2 rounded-none border-2 border-red-100">
+                                                    <span className="text-xs text-red-600 font-bold uppercase tracking-wide">Confirmar exclusão?</span>
+                                                    <Button size="sm" variant="outline" onClick={() => setShowDeleteConfirm(false)} className="h-8 bg-white border-red-200 text-red-600 hover:bg-red-50">Não</Button>
+                                                    <Button size="sm" className="h-8 bg-red-600 text-white hover:bg-red-700 shadow-md shadow-red-900/20" onClick={handleDelete}>Sim</Button>
+                                                </div>
+                                            ) : (
+                                                <Button variant="outline" onClick={() => setShowDeleteConfirm(true)} className="text-red-600 hover:bg-red-50 border-red-100 hover:border-red-200 transition-colors">
+                                                    Excluir Carga
                                                 </Button>
-                                            </form>
-                                        </>
-                                    ) : (
-                                        <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                                            <MessageCircle className="w-12 h-12 mb-4 opacity-20" />
-                                            <p className="font-bold uppercase">Nenhuma conversa selecionada</p>
-                                            <p className="text-sm">Selecione um motorista na aba "Candidatos" para abrir o chat.</p>
+                                            )}
+                                            <Button className="bg-primary hover:bg-primary-600 text-white shadow-lg shadow-primary/25 transition-all hover:scale-105" onClick={isEditing ? handleSave : () => setIsEditing(true)}>
+                                                {isEditing ? 'Salvar Alterações' : 'Editar Informações'}
+                                            </Button>
                                         </div>
-                                    )}
-                                </TabsContent>
+                                    </TabsContent>
 
-                                {/* Attachments Tab */}
-                                <TabsContent value="attachments" className="mt-0">
-                                    <div className="bg-muted/10 border-2 border-dashed border-muted-foreground/50 hover:border-primary hover:bg-primary/5 transition-all duration-300 p-8 flex flex-col items-center justify-center h-[300px] mb-6 cursor-pointer relative group">
-                                        <input
-                                            type="file"
-                                            className="absolute inset-0 opacity-0 cursor-pointer"
-                                            onChange={(e) => handleFileUpload(e, 'attachment')}
-                                        />
-                                        <div className="w-16 h-16 bg-background border-2 border-border shadow-brutal-sm flex items-center justify-center mb-4 group-hover:translate-x-[2px] group-hover:translate-y-[2px] group-hover:shadow-none transition-all duration-300">
-                                            <Paperclip className="w-8 h-8 text-primary" />
-                                        </div>
-                                        <p className="text-lg font-bold text-foreground group-hover:text-primary transition-colors uppercase">
-                                            {isUploading ? 'Enviando...' : 'Clique para fazer upload'}
-                                        </p>
-                                        <p className="text-sm text-muted-foreground mt-2 font-medium">PDF, JPG ou PNG (max 5MB)</p>
-                                    </div>
-                                </TabsContent>
-
-                                {/* Timeline Tab */}
-                                <TabsContent value="timeline" className="mt-0">
-                                    <div className="bg-card border-2 border-border shadow-brutal p-8">
-                                        <h3 className="text-lg font-black text-foreground mb-8 flex items-center gap-3 uppercase">
-                                            <div className="p-2 bg-primary/10 border-2 border-primary/20 text-primary">
-                                                <History className="w-5 h-5" />
-                                            </div>
-                                            Histórico de Atividades
-                                        </h3>
-                                        <div className="relative border-l-2 border-border ml-3 space-y-8">
-                                            {events.map((event) => (
-                                                <div key={event.id} className="relative pl-8 group">
-                                                    <div className="absolute -left-[9px] top-0 w-4 h-4 bg-background border-4 border-muted-foreground group-hover:border-primary transition-colors"></div>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-xs text-muted-foreground font-mono mb-1 bg-muted w-fit px-2 py-0.5 border-2 border-border font-bold">
-                                                            {new Date(event.createdAt).toLocaleString('pt-BR')}
-                                                        </span>
-                                                        <span className="text-sm font-bold text-foreground capitalize mt-1">
-                                                            {event.action.replace(/_/g, ' ')}
-                                                        </span>
-                                                        {event.details && (
-                                                            <div className="text-xs text-muted-foreground mt-2 bg-muted/30 p-3 border-2 border-border font-mono">
-                                                                {JSON.stringify(event.details, null, 2)}
-                                                            </div>
-                                                        )}
+                                    {/* Chat Tab */}
+                                    <TabsContent value="chat" className="mt-0 h-[500px] flex flex-col">
+                                        {selectedChatCandidate ? (
+                                            <>
+                                                {/* Chat Header */}
+                                                <div className="flex items-center gap-4 p-4 border-b-2 border-border bg-muted/10">
+                                                    <Avatar className="h-10 w-10 border-2 border-foreground rounded-none">
+                                                        <AvatarImage src={selectedChatCandidate.driver.photo || "https://i.pravatar.cc/150?u=1"} />
+                                                        <AvatarFallback className="rounded-none font-bold">
+                                                            {selectedChatCandidate.driver.name.substring(0, 2).toUpperCase()}
+                                                        </AvatarFallback>
+                                                    </Avatar>
+                                                    <div>
+                                                        <h4 className="font-bold text-foreground uppercase">{selectedChatCandidate.driver.name}</h4>
+                                                        <p className="text-xs text-muted-foreground font-mono">{selectedChatCandidate.driver.phone}</p>
                                                     </div>
                                                 </div>
-                                            ))}
-                                            {events.length === 0 && (
-                                                <p className="text-sm text-muted-foreground pl-8 italic font-medium">Nenhuma atividade registrada.</p>
-                                            )}
-                                        </div>
-                                    </div>
-                                </TabsContent>
 
-                                {/* Candidates Tab */}
-                                <TabsContent value="candidates" className="mt-0">
-                                    <div className="bg-card border-2 border-border shadow-brutal p-8">
-                                        <h3 className="text-lg font-black text-foreground mb-6 flex items-center gap-3 uppercase">
-                                            <div className="p-2 bg-primary/10 border-2 border-primary/20 text-primary">
-                                                <Users className="w-5 h-5" />
-                                            </div>
-                                            Candidatos Interessados
-                                        </h3>
-                                        <CandidateList loadId={card.id} />
-                                    </div>
-                                </TabsContent>
-
-                                {/* Documentation Tab */}
-                                <TabsContent value="documentation" className="mt-0 space-y-6">
-                                    <div className="bg-card border-2 border-border shadow-brutal p-8">
-                                        <h3 className="text-lg font-black text-foreground mb-6 flex items-center gap-3 uppercase">
-                                            <div className="p-2 bg-primary/10 border-2 border-primary/20 text-primary">
-                                                <FileCheck className="w-5 h-5" />
-                                            </div>
-                                            Validação de Documentos
-                                        </h3>
-                                        <div className="space-y-4">
-                                            {['CNH do Motorista', 'CRLV do Veículo', 'Seguro de Carga', 'RNTRC'].map((doc, i) => (
-                                                <div key={i} className="flex items-center justify-between p-4 bg-muted/10 border-2 border-border hover:shadow-brutal-sm transition-all">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 bg-green-50 flex items-center justify-center border-2 border-green-200">
-                                                            <Check className="w-4 h-4 text-green-600" />
+                                                <div className="flex-1 bg-muted/10 border-2 border-border p-6 mb-4 overflow-y-auto space-y-6 shadow-inner">
+                                                    {selectedChatCandidate.chat_messages && selectedChatCandidate.chat_messages.length > 0 ? (
+                                                        selectedChatCandidate.chat_messages.map((msg: any, i: number) => (
+                                                            <div key={i} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                                                <div className={`max-w-[80%] p-4 shadow-brutal-sm border-2 border-border ${msg.sender === 'user'
+                                                                    ? 'bg-primary text-white rounded-none'
+                                                                    : msg.sender === 'system'
+                                                                        ? 'bg-muted text-muted-foreground text-xs text-center w-full shadow-none border-none'
+                                                                        : 'bg-card text-foreground rounded-none'
+                                                                    }`}>
+                                                                    <p className="text-sm leading-relaxed font-medium">{msg.text}</p>
+                                                                    <p className={`text-[10px] mt-2 font-bold uppercase ${msg.sender === 'user' ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
+                                                                        {msg.time || new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        ))
+                                                    ) : (
+                                                        <div className="text-center text-muted-foreground py-10">
+                                                            <p>Nenhuma mensagem ainda.</p>
+                                                            <p className="text-xs">Envie uma mensagem para iniciar a conversa.</p>
                                                         </div>
-                                                        <span className="text-sm font-bold text-foreground uppercase">{doc}</span>
+                                                    )}
+                                                </div>
+                                                <form onSubmit={async (e) => {
+                                                    e.preventDefault()
+                                                    if (!chatMessage.trim()) return
+
+                                                    const tempMessage = { sender: 'user', text: chatMessage, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), timestamp: new Date().toISOString() }
+
+                                                    // Optimistic update
+                                                    const updatedMessages = [...(selectedChatCandidate.chat_messages || []), tempMessage]
+                                                    setSelectedChatCandidate({ ...selectedChatCandidate, chat_messages: updatedMessages })
+                                                    setChatMessage('')
+
+                                                    try {
+                                                        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+                                                        const response = await fetch(`${apiUrl}/api/v1/whatsapp/send-message`, {
+                                                            method: 'POST',
+                                                            headers: { 'Content-Type': 'application/json' },
+                                                            body: JSON.stringify({
+                                                                candidate_id: selectedChatCandidate.id,
+                                                                message: tempMessage.text
+                                                            })
+                                                        })
+
+                                                        if (!response.ok) {
+                                                            throw new Error('Failed to send message')
+                                                        }
+                                                    } catch (error) {
+                                                        console.error('Error sending message:', error)
+                                                        alert('Erro ao enviar mensagem. Tente novamente.')
+                                                        // Revert optimistic update? Or just alert.
+                                                    }
+                                                }} className="flex gap-3">
+                                                    <Input
+                                                        value={chatMessage}
+                                                        onChange={(e) => setChatMessage(e.target.value)}
+                                                        placeholder="Digite sua mensagem..."
+                                                        className="flex-1 bg-background border-2 border-border focus:shadow-brutal transition-all h-12 rounded-none"
+                                                    />
+                                                    <Button type="submit" className="bg-primary hover:bg-primary/90 text-white h-12 w-12 rounded-none shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all px-0 border-2 border-primary">
+                                                        <Send className="w-5 h-5" />
+                                                    </Button>
+                                                </form>
+                                            </>
+                                        ) : (
+                                            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                                                <MessageCircle className="w-12 h-12 mb-4 opacity-20" />
+                                                <p className="font-bold uppercase">Nenhuma conversa selecionada</p>
+                                                <p className="text-sm">Selecione um motorista na aba "Candidatos" para abrir o chat.</p>
+                                            </div>
+                                        )}
+                                    </TabsContent>
+
+                                    {/* Attachments Tab */}
+                                    <TabsContent value="attachments" className="mt-0">
+                                        <div className="bg-muted/10 border-2 border-dashed border-muted-foreground/50 hover:border-primary hover:bg-primary/5 transition-all duration-300 p-8 flex flex-col items-center justify-center h-[300px] mb-6 cursor-pointer relative group">
+                                            <input
+                                                type="file"
+                                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                                onChange={(e) => handleFileUpload(e, 'attachment')}
+                                            />
+                                            <div className="w-16 h-16 bg-background border-2 border-border shadow-brutal-sm flex items-center justify-center mb-4 group-hover:translate-x-[2px] group-hover:translate-y-[2px] group-hover:shadow-none transition-all duration-300">
+                                                <Paperclip className="w-8 h-8 text-primary" />
+                                            </div>
+                                            <p className="text-lg font-bold text-foreground group-hover:text-primary transition-colors uppercase">
+                                                {isUploading ? 'Enviando...' : 'Clique para fazer upload'}
+                                            </p>
+                                            <p className="text-sm text-muted-foreground mt-2 font-medium">PDF, JPG ou PNG (max 5MB)</p>
+                                        </div>
+                                    </TabsContent>
+
+                                    {/* Timeline Tab */}
+                                    <TabsContent value="timeline" className="mt-0">
+                                        <div className="bg-card border-2 border-border shadow-brutal p-8">
+                                            <h3 className="text-lg font-black text-foreground mb-8 flex items-center gap-3 uppercase">
+                                                <div className="p-2 bg-primary/10 border-2 border-primary/20 text-primary">
+                                                    <History className="w-5 h-5" />
+                                                </div>
+                                                Histórico de Atividades
+                                            </h3>
+                                            <div className="relative border-l-2 border-border ml-3 space-y-8">
+                                                {events.map((event) => (
+                                                    <div key={event.id} className="relative pl-8 group">
+                                                        <div className="absolute -left-[9px] top-0 w-4 h-4 bg-background border-4 border-muted-foreground group-hover:border-primary transition-colors"></div>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-xs text-muted-foreground font-mono mb-1 bg-muted w-fit px-2 py-0.5 border-2 border-border font-bold">
+                                                                {new Date(event.createdAt).toLocaleString('pt-BR')}
+                                                            </span>
+                                                            <span className="text-sm font-bold text-foreground capitalize mt-1">
+                                                                {event.action.replace(/_/g, ' ')}
+                                                            </span>
+                                                            {event.details && (
+                                                                <div className="text-xs text-muted-foreground mt-2 bg-muted/30 p-3 border-2 border-border font-mono">
+                                                                    {JSON.stringify(event.details, null, 2)}
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
+                                                ))}
+                                                {events.length === 0 && (
+                                                    <p className="text-sm text-muted-foreground pl-8 italic font-medium">Nenhuma atividade registrada.</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </TabsContent>
+
+                                    {/* Candidates Tab */}
+                                    <TabsContent value="candidates" className="mt-0">
+                                        <div className="bg-card border-2 border-border shadow-brutal p-8">
+                                            <h3 className="text-lg font-black text-foreground mb-6 flex items-center gap-3 uppercase">
+                                                <div className="p-2 bg-primary/10 border-2 border-primary/20 text-primary">
+                                                    <Users className="w-5 h-5" />
+                                                </div>
+                                                Candidatos Interessados
+                                            </h3>
+                                            <CandidateList loadId={card.id} />
+                                        </div>
+                                    </TabsContent>
+
+                                    {/* Documentation Tab */}
+                                    <TabsContent value="documentation" className="mt-0 space-y-6">
+                                        <div className="bg-card border-2 border-border shadow-brutal p-8">
+                                            <h3 className="text-lg font-black text-foreground mb-6 flex items-center gap-3 uppercase">
+                                                <div className="p-2 bg-primary/10 border-2 border-primary/20 text-primary">
+                                                    <FileCheck className="w-5 h-5" />
+                                                </div>
+                                                Validação de Documentos
+                                            </h3>
+                                            <div className="space-y-4">
+                                                {['CNH do Motorista', 'CRLV do Veículo', 'Seguro de Carga', 'RNTRC'].map((doc, i) => (
+                                                    <div key={i} className="flex items-center justify-between p-4 bg-muted/10 border-2 border-border hover:shadow-brutal-sm transition-all">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 bg-green-50 flex items-center justify-center border-2 border-green-200">
+                                                                <Check className="w-4 h-4 text-green-600" />
+                                                            </div>
+                                                            <span className="text-sm font-bold text-foreground uppercase">{doc}</span>
+                                                        </div>
+                                                        <div className="flex gap-3">
+                                                            <Button size="sm" variant="outline" className="h-9 text-xs bg-background hover:bg-accent border-2 border-border rounded-none font-bold uppercase">Visualizar</Button>
+                                                            <Button size="sm" variant="ghost" className="h-9 w-9 p-0 text-green-600 hover:bg-green-50 rounded-none">
+                                                                <Check className="w-5 h-5" />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="mt-8 flex justify-end">
+                                                <Button
+                                                    className="bg-primary hover:bg-primary/90 text-white shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all font-bold px-6 h-10 rounded-none uppercase"
+                                                    onClick={async () => {
+                                                        await updateCard(card.id, { documents_status: 'verified' })
+                                                        await autoAdvanceCard(card.id, 'documents_verified')
+                                                        alert('Documentação validada com sucesso!')
+                                                    }}
+                                                    disabled={card.documents_status === 'verified'}
+                                                >
+                                                    {card.documents_status === 'verified' ? (
+                                                        <><Check className="w-4 h-4 mr-2" /> Documentação Aprovada</>
+                                                    ) : (
+                                                        'Aprovar Documentação'
+                                                    )}
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </TabsContent>
+
+                                    {/* Risk Tab */}
+                                    <TabsContent value="risk" className="mt-0 space-y-6">
+                                        <div className="bg-card border-2 border-border shadow-brutal p-8">
+                                            <h3 className="text-lg font-black text-foreground mb-6 flex items-center gap-3 uppercase">
+                                                <div className="p-2 bg-purple-100 border-2 border-purple-200 text-purple-600">
+                                                    <Shield className="w-5 h-5" />
+                                                </div>
+                                                Análise de Risco
+                                            </h3>
+                                            <div className="grid grid-cols-3 gap-6 mb-8">
+                                                <div className="p-6 bg-green-50 border-2 border-green-200 text-center shadow-brutal-sm">
+                                                    <p className="text-xs text-green-600 font-bold uppercase tracking-wider mb-2">Motorista</p>
+                                                    <p className="text-xl font-heading font-black text-green-700 uppercase">Baixo Risco</p>
+                                                </div>
+                                                <div className="p-6 bg-green-50 border-2 border-green-200 text-center shadow-brutal-sm">
+                                                    <p className="text-xs text-green-600 font-bold uppercase tracking-wider mb-2">Veículo</p>
+                                                    <p className="text-xl font-heading font-black text-green-700 uppercase">Baixo Risco</p>
+                                                </div>
+                                                <div className="p-6 bg-yellow-50 border-2 border-yellow-200 text-center shadow-brutal-sm">
+                                                    <p className="text-xs text-yellow-600 font-bold uppercase flex items-center justify-center gap-1 tracking-wider mb-2">
+                                                        <AlertTriangle className="w-3 h-3" /> Rota
+                                                    </p>
+                                                    <p className="text-xl font-heading font-black text-yellow-700 uppercase">Médio Risco</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex justify-end gap-4">
+                                                <Button variant="outline" className="border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 rounded-none font-bold uppercase">Reprovar</Button>
+                                                <Button
+                                                    className="bg-purple-600 hover:bg-purple-700 text-white shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all font-bold px-6 rounded-none uppercase"
+                                                    onClick={async () => {
+                                                        await updateCard(card.id, { risk_status: 'approved' })
+                                                        await autoAdvanceCard(card.id, 'risk_approved')
+                                                        alert('Risco aprovado! GR liberada.')
+                                                    }}
+                                                    disabled={card.risk_status === 'approved'}
+                                                >
+                                                    {card.risk_status === 'approved' ? (
+                                                        <><Check className="w-4 h-4 mr-2" /> GR Liberada</>
+                                                    ) : (
+                                                        'Aprovar Risco'
+                                                    )}
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </TabsContent>
+
+                                    {/* Contracts Tab */}
+                                    <TabsContent value="contracts" className="mt-0 space-y-6">
+                                        <div className="bg-card border-2 border-border shadow-brutal p-10 text-center">
+                                            <div className="w-20 h-20 bg-primary/10 border-2 border-primary/20 flex items-center justify-center mx-auto mb-6">
+                                                <FileSignature className="w-10 h-10 text-primary" />
+                                            </div>
+                                            <h3 className="text-xl font-black text-foreground mb-2 uppercase">Contrato de Transporte</h3>
+                                            <p className="text-sm text-muted-foreground mb-8 max-w-md mx-auto font-medium">Gere o contrato digital automaticamente ou selecione um modelo pré-aprovado para esta operação.</p>
+
+                                            {/* Contract Templates */}
+                                            {!card.contract_url && (
+                                                <div className="mb-8 max-w-sm mx-auto text-left bg-muted/10 p-6 border-2 border-border shadow-brutal-sm">
+                                                    <Label className="text-xs font-bold text-muted-foreground mb-3 block uppercase tracking-wider">Usar Modelo</Label>
                                                     <div className="flex gap-3">
-                                                        <Button size="sm" variant="outline" className="h-9 text-xs bg-background hover:bg-accent border-2 border-border rounded-none font-bold uppercase">Visualizar</Button>
-                                                        <Button size="sm" variant="ghost" className="h-9 w-9 p-0 text-green-600 hover:bg-green-50 rounded-none">
-                                                            <Check className="w-5 h-5" />
+                                                        <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+                                                            <SelectTrigger className="h-10 bg-background border-2 border-border rounded-none focus:ring-0 focus:border-primary font-medium">
+                                                                <SelectValue placeholder="Selecione um modelo..." />
+                                                            </SelectTrigger>
+                                                            <SelectContent className="rounded-none border-2 border-border shadow-brutal">
+                                                                {contractTemplates.map(t => (
+                                                                    <SelectItem key={t.id} value={t.id} className="focus:bg-primary/10 focus:text-primary font-medium">{t.name}</SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                        <Button
+                                                            size="sm"
+                                                            className="bg-primary text-white h-10 px-4 rounded-none border-2 border-primary shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all font-bold uppercase"
+                                                            disabled={!selectedTemplateId}
+                                                            onClick={() => {
+                                                                const template = contractTemplates.find(t => t.id === selectedTemplateId)
+                                                                if (template) {
+                                                                    updateCard(card.id, { contract_url: template.url })
+                                                                }
+                                                            }}
+                                                        >
+                                                            Usar
                                                         </Button>
                                                     </div>
                                                 </div>
-                                            ))}
-                                        </div>
-                                        <div className="mt-8 flex justify-end">
-                                            <Button
-                                                className="bg-primary hover:bg-primary/90 text-white shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all font-bold px-6 h-10 rounded-none uppercase"
-                                                onClick={async () => {
-                                                    await updateCard(card.id, { documents_status: 'verified' })
-                                                    await autoAdvanceCard(card.id, 'documents_verified')
-                                                    alert('Documentação validada com sucesso!')
-                                                }}
-                                                disabled={card.documents_status === 'verified'}
-                                            >
-                                                {card.documents_status === 'verified' ? (
-                                                    <><Check className="w-4 h-4 mr-2" /> Documentação Aprovada</>
-                                                ) : (
-                                                    'Aprovar Documentação'
-                                                )}
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </TabsContent>
+                                            )}
 
-                                {/* Risk Tab */}
-                                <TabsContent value="risk" className="mt-0 space-y-6">
-                                    <div className="bg-card border-2 border-border shadow-brutal p-8">
-                                        <h3 className="text-lg font-black text-foreground mb-6 flex items-center gap-3 uppercase">
-                                            <div className="p-2 bg-purple-100 border-2 border-purple-200 text-purple-600">
-                                                <Shield className="w-5 h-5" />
-                                            </div>
-                                            Análise de Risco
-                                        </h3>
-                                        <div className="grid grid-cols-3 gap-6 mb-8">
-                                            <div className="p-6 bg-green-50 border-2 border-green-200 text-center shadow-brutal-sm">
-                                                <p className="text-xs text-green-600 font-bold uppercase tracking-wider mb-2">Motorista</p>
-                                                <p className="text-xl font-heading font-black text-green-700 uppercase">Baixo Risco</p>
-                                            </div>
-                                            <div className="p-6 bg-green-50 border-2 border-green-200 text-center shadow-brutal-sm">
-                                                <p className="text-xs text-green-600 font-bold uppercase tracking-wider mb-2">Veículo</p>
-                                                <p className="text-xl font-heading font-black text-green-700 uppercase">Baixo Risco</p>
-                                            </div>
-                                            <div className="p-6 bg-yellow-50 border-2 border-yellow-200 text-center shadow-brutal-sm">
-                                                <p className="text-xs text-yellow-600 font-bold uppercase flex items-center justify-center gap-1 tracking-wider mb-2">
-                                                    <AlertTriangle className="w-3 h-3" /> Rota
-                                                </p>
-                                                <p className="text-xl font-heading font-black text-yellow-700 uppercase">Médio Risco</p>
-                                            </div>
+                                            {card.contract_url ? (
+                                                <div className="flex flex-col items-center gap-4 animate-fade-in">
+                                                    <div className="flex items-center gap-2 text-green-700 bg-green-100 px-6 py-3 border-2 border-green-200 shadow-brutal-sm">
+                                                        <Check className="w-5 h-5" />
+                                                        <span className="text-sm font-bold uppercase">Contrato Gerado</span>
+                                                    </div>
+                                                    <div className="flex gap-3 mt-2">
+                                                        <Button variant="outline" onClick={() => window.open(card.contract_url, '_blank')} className="bg-background hover:bg-accent border-2 border-foreground rounded-none font-bold uppercase">
+                                                            <FileText className="w-4 h-4 mr-2" /> Baixar PDF
+                                                        </Button>
+                                                        <Button variant="outline" onClick={handleSaveContractTemplate} className="bg-background hover:bg-accent border-2 border-foreground rounded-none font-bold uppercase">
+                                                            Salvar como Modelo
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <Button
+                                                    className="bg-primary hover:bg-primary/90 text-white shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all h-12 px-8 text-base font-bold rounded-none uppercase"
+                                                    onClick={async () => {
+                                                        await updateCard(card.id, { contract_url: 'https://example.com/contract.pdf' })
+                                                        await autoAdvanceCard(card.id, 'contract_generated')
+                                                        alert('Contrato gerado com sucesso!')
+                                                    }}
+                                                >
+                                                    Gerar Contrato Automático
+                                                </Button>
+                                            )}
                                         </div>
-                                        <div className="flex justify-end gap-4">
-                                            <Button variant="outline" className="border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 rounded-none font-bold uppercase">Reprovar</Button>
-                                            <Button
-                                                className="bg-purple-600 hover:bg-purple-700 text-white shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all font-bold px-6 rounded-none uppercase"
-                                                onClick={async () => {
-                                                    await updateCard(card.id, { risk_status: 'approved' })
-                                                    await autoAdvanceCard(card.id, 'risk_approved')
-                                                    alert('Risco aprovado! GR liberada.')
-                                                }}
-                                                disabled={card.risk_status === 'approved'}
-                                            >
-                                                {card.risk_status === 'approved' ? (
-                                                    <><Check className="w-4 h-4 mr-2" /> GR Liberada</>
-                                                ) : (
-                                                    'Aprovar Risco'
-                                                )}
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </TabsContent>
+                                    </TabsContent>
 
-                                {/* Contracts Tab */}
-                                <TabsContent value="contracts" className="mt-0 space-y-6">
-                                    <div className="bg-card border-2 border-border shadow-brutal p-10 text-center">
-                                        <div className="w-20 h-20 bg-primary/10 border-2 border-primary/20 flex items-center justify-center mx-auto mb-6">
-                                            <FileSignature className="w-10 h-10 text-primary" />
-                                        </div>
-                                        <h3 className="text-xl font-black text-foreground mb-2 uppercase">Contrato de Transporte</h3>
-                                        <p className="text-sm text-muted-foreground mb-8 max-w-md mx-auto font-medium">Gere o contrato digital automaticamente ou selecione um modelo pré-aprovado para esta operação.</p>
+                                    {/* Map Tab */}
+                                    <TabsContent value="map" className="mt-0">
+                                        <div className="bg-card border-2 border-border shadow-brutal p-4 h-[500px] relative overflow-hidden group">
+                                            <div className="absolute inset-0 bg-muted flex items-center justify-center">
+                                                <div className="text-center space-y-4 z-10">
+                                                    <div className="w-16 h-16 bg-background border-2 border-border flex items-center justify-center mx-auto shadow-brutal animate-pulse">
+                                                        <MapPin className="w-8 h-8 text-primary" />
+                                                    </div>
+                                                    <p className="text-muted-foreground font-bold uppercase">Mapa em tempo real</p>
+                                                </div>
+                                                {/* Decorative map pattern */}
+                                                <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]"></div>
+                                            </div>
 
-                                        {/* Contract Templates */}
-                                        {!card.contract_url && (
-                                            <div className="mb-8 max-w-sm mx-auto text-left bg-muted/10 p-6 border-2 border-border shadow-brutal-sm">
-                                                <Label className="text-xs font-bold text-muted-foreground mb-3 block uppercase tracking-wider">Usar Modelo</Label>
-                                                <div className="flex gap-3">
-                                                    <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
-                                                        <SelectTrigger className="h-10 bg-background border-2 border-border rounded-none focus:ring-0 focus:border-primary font-medium">
-                                                            <SelectValue placeholder="Selecione um modelo..." />
-                                                        </SelectTrigger>
-                                                        <SelectContent className="rounded-none border-2 border-border shadow-brutal">
-                                                            {contractTemplates.map(t => (
-                                                                <SelectItem key={t.id} value={t.id} className="focus:bg-primary/10 focus:text-primary font-medium">{t.name}</SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <Button
-                                                        size="sm"
-                                                        className="bg-primary text-white h-10 px-4 rounded-none border-2 border-primary shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all font-bold uppercase"
-                                                        disabled={!selectedTemplateId}
-                                                        onClick={() => {
-                                                            const template = contractTemplates.find(t => t.id === selectedTemplateId)
-                                                            if (template) {
-                                                                updateCard(card.id, { contract_url: template.url })
-                                                            }
-                                                        }}
-                                                    >
-                                                        Usar
-                                                    </Button>
+                                            {/* Floating Info Card */}
+                                            <div className="absolute bottom-6 left-6 right-6 bg-background border-2 border-border shadow-brutal p-4 flex items-center justify-between">
+                                                <div className="flex items-center gap-4 p-4 border-b-2 border-border bg-muted/10">
+                                                    <div className="w-12 h-12 rounded-none bg-muted border-2 border-border overflow-hidden">
+                                                        {card.driver && typeof card.driver !== 'string' && (
+                                                            <img src={card.driver.photo} alt={card.driver.name} className="w-full h-full object-cover" />
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-foreground uppercase">{card.driver && typeof card.driver !== 'string' ? card.driver.name : 'Motorista'}</p>
+                                                        <p className="text-xs text-muted-foreground font-mono">{card.driver && typeof card.driver !== 'string' ? card.driver.phone : ''}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-xs text-muted-foreground font-bold uppercase">Previsão</p>
+                                                    <p className="text-sm font-bold text-foreground uppercase">14:30 - Hoje</p>
                                                 </div>
                                             </div>
-                                        )}
-
-                                        {card.contract_url ? (
-                                            <div className="flex flex-col items-center gap-4 animate-fade-in">
-                                                <div className="flex items-center gap-2 text-green-700 bg-green-100 px-6 py-3 border-2 border-green-200 shadow-brutal-sm">
-                                                    <Check className="w-5 h-5" />
-                                                    <span className="text-sm font-bold uppercase">Contrato Gerado</span>
-                                                </div>
-                                                <div className="flex gap-3 mt-2">
-                                                    <Button variant="outline" onClick={() => window.open(card.contract_url, '_blank')} className="bg-background hover:bg-accent border-2 border-foreground rounded-none font-bold uppercase">
-                                                        <FileText className="w-4 h-4 mr-2" /> Baixar PDF
-                                                    </Button>
-                                                    <Button variant="outline" onClick={handleSaveContractTemplate} className="bg-background hover:bg-accent border-2 border-foreground rounded-none font-bold uppercase">
-                                                        Salvar como Modelo
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <Button
-                                                className="bg-primary hover:bg-primary/90 text-white shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all h-12 px-8 text-base font-bold rounded-none uppercase"
-                                                onClick={async () => {
-                                                    await updateCard(card.id, { contract_url: 'https://example.com/contract.pdf' })
-                                                    await autoAdvanceCard(card.id, 'contract_generated')
-                                                    alert('Contrato gerado com sucesso!')
-                                                }}
-                                            >
-                                                Gerar Contrato Automático
-                                            </Button>
-                                        )}
-                                    </div>
-                                </TabsContent>
-
-                                {/* Map Tab */}
-                                <TabsContent value="map" className="mt-0">
-                                    <div className="bg-card border-2 border-border shadow-brutal p-4 h-[500px] relative overflow-hidden group">
-                                        <div className="absolute inset-0 bg-muted flex items-center justify-center">
-                                            <div className="text-center space-y-4 z-10">
-                                                <div className="w-16 h-16 bg-background border-2 border-border flex items-center justify-center mx-auto shadow-brutal animate-pulse">
-                                                    <MapPin className="w-8 h-8 text-primary" />
-                                                </div>
-                                                <p className="text-muted-foreground font-bold uppercase">Mapa em tempo real</p>
-                                            </div>
-                                            {/* Decorative map pattern */}
-                                            <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]"></div>
                                         </div>
-
-                                        {/* Floating Info Card */}
-                                        <div className="absolute bottom-6 left-6 right-6 bg-background border-2 border-border shadow-brutal p-4 flex items-center justify-between">
-                                            <div className="flex items-center gap-4 p-4 border-b-2 border-border bg-muted/10">
-                                                <div className="w-12 h-12 rounded-none bg-muted border-2 border-border overflow-hidden">
-                                                    {card.driver && typeof card.driver !== 'string' && (
-                                                        <img src={card.driver.photo} alt={card.driver.name} className="w-full h-full object-cover" />
-                                                    )}
-                                                </div>
-                                                <div>
-                                                    <p className="font-bold text-foreground uppercase">{card.driver && typeof card.driver !== 'string' ? card.driver.name : 'Motorista'}</p>
-                                                    <p className="text-xs text-muted-foreground font-mono">{card.driver && typeof card.driver !== 'string' ? card.driver.phone : ''}</p>
-                                                </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="text-xs text-muted-foreground font-bold uppercase">Previsão</p>
-                                                <p className="text-sm font-bold text-foreground uppercase">14:30 - Hoje</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </TabsContent>
-                            </motion.div>
-                        </AnimatePresence>
+                                    </TabsContent>
+                                </motion.div>
+                            </AnimatePresence>
+                        </div>
+                    </Tabs>
                 </div>
-            </Tabs>
-        </div>
             </DialogContent >
         </Dialog >
     )

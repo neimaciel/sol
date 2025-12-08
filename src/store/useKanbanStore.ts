@@ -97,6 +97,12 @@ export const useKanbanStore = create<KanbanState>((set, get) => ({
 
         // Fallback: If FK error (PGRST200), fetch without join
         if (error && error.code === 'PGRST200') {
+            console.warn('⚠️ PGRST200 detected. Attempting to trigger backend self-repair migration...')
+
+            // Fire and forget migration trigger
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+            fetch(`${apiUrl}/api/v1/system/migrate`, { method: 'POST' }).catch(e => console.error('Migration trigger failed:', e))
+
             console.warn('⚠️ Fetching cards without driver join due to PGRST200 error.')
             const retry = await supabase
                 .from('loads')

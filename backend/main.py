@@ -129,6 +129,13 @@ async def run_migrations_startup():
         # Migration 007: Fix FK missing between loads and drivers
         """
         DO $$ BEGIN
+            -- First, clean up any invalid driver_ids that would cause the FK creation to fail
+            UPDATE loads 
+            SET driver_id = NULL 
+            WHERE driver_id IS NOT NULL 
+            AND driver_id NOT IN (SELECT id FROM drivers);
+
+            -- Then add the constraint if it doesn't exist
             IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_loads_drivers') THEN
                 ALTER TABLE loads 
                 ADD CONSTRAINT fk_loads_drivers 

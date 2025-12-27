@@ -1,13 +1,28 @@
 import { create } from 'zustand'
-import type { User } from '@supabase/supabase-js'
-import { supabase } from '@/lib/supabase'
+import { api } from '@/lib/api'
+// import type { LoginResponse } from '@/lib/api'
+
+interface Operator {
+    id: string
+    email: string
+    name: string
+    role: string
+    permissions: {
+        can_manage_drivers: boolean
+        can_manage_loads: boolean
+        can_confirm_payments: boolean
+        can_manage_operators: boolean
+        can_access_reports: boolean
+        can_manage_contracts: boolean
+    }
+}
 
 interface AuthState {
-    user: User | null
+    user: Operator | null
     loading: boolean
     initialize: () => Promise<void>
     signIn: (email: string, password: string) => Promise<{ error: any }>
-    signUp: (email: string, password: string) => Promise<{ error: any }>
+    signUp: (email: string, password: string, name: string) => Promise<{ error: any }>
     signOut: () => Promise<void>
 }
 
@@ -16,55 +31,73 @@ export const useAuthStore = create<AuthState>((set) => ({
     loading: true,
     initialize: async () => {
         try {
-            // Mock Mode Check
-            const isMock = import.meta.env.VITE_SUPABASE_URL?.includes('placeholder')
-
-            if (isMock) {
-                console.log('Running in Mock Mode')
-                set({
-                    user: {
-                        id: 'mock-user-id',
-                        email: 'demo@sol-tms.com',
-                        app_metadata: {},
-                        user_metadata: {},
-                        aud: 'authenticated',
-                        created_at: new Date().toISOString()
-                    } as User,
-                    loading: false
-                })
+            set({ loading: true })
+            
+            // Check if we have a token
+            const token = api.getToken()
+            if (!token) {
+                set({ user: null, loading: false })
                 return
             }
 
-            const { data: { session } } = await supabase.auth.getSession()
-            set({ user: session?.user ?? null, loading: false })
-
-            supabase.auth.onAuthStateChange((_event, session) => {
-                set({ user: session?.user ?? null })
-            })
+            // Try to get current user with existing token
+            try {
+                const currentUser = await api.getCurrentUser()
+                set({ 
+                    user: {
+                        id: currentUser.id,
+                        email: currentUser.email,
+                        name: currentUser.name,
+                        role: currentUser.role,
+                        permissions: currentUser.permissions
+                    },
+                    loading: false 
+                })
+            } catch (error) {
+                // Token is invalid, clear it
+                console.error('Invalid token, clearing...', error)
+                api.clearToken()
+                set({ user: null, loading: false })
+            }
         } catch (error) {
             console.error('Auth initialization error:', error)
-            set({ loading: false })
+            set({ user: null, loading: false })
         }
     },
     signIn: async (email, password) => {
-        const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password
-        })
-        return { error }
+        try {
+            const response = await api.login(email, password)
+            
+            set({ 
+                user: response.operator,
+                loading: false 
+            })
+            
+            return { error: null }
+        } catch (error: any) {
+            console.error('Login error:', error)
+            return { 
+                error: {
+                    message: error.message || 'Erro ao fazer login'
+                }
+            }
+        }
     },
-    signUp: async (email, password) => {
-        const { error } = await supabase.auth.signUp({
-            email,
-            password
-        })
-        return { error }
+    signUp: async (_email: string, _password: string, _name: string) => {
+        // Mock signUp for now, as it's not implemented in the API
+        return { 
+            error: {
+                message: 'SignUp não implementado. Use as credenciais existentes.'
+            }
+        }
     },
     signOut: async () => {
-        const isMock = import.meta.env.VITE_SUPABASE_URL?.includes('placeholder')
-        if (!isMock) {
-            await supabase.auth.signOut()
+        try {
+            await api.logout()
+        } catch (error) {
+            console.error('Logout error:', error)
+        } finally {
+            set({ user: null })
         }
-        set({ user: null })
     },
 }))

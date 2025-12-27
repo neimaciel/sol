@@ -126,7 +126,7 @@ export const useOperatorsStore = create<OperatorsState>((set) => ({
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'operators' },
-                (payload) => {
+                (payload: any) => {
                     console.log('Real-time operators update:', payload)
                     useOperatorsStore.getState().fetchOperators()
                 }

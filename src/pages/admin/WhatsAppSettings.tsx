@@ -65,15 +65,19 @@ export default function WhatsAppSettings() {
             const response = await fetch(`${apiUrl}/api/v1/whatsapp/connect`)
             const data = await response.json()
 
-            if (data.qrcode && data.qrcode.base64) {
-                // Remove prefix if present
+            // Evolution API returns the QR code in different formats
+            if (data.base64) {
+                // Most common: direct base64 field
+                setQrCode(data.base64.replace('data:image/png;base64,', ''))
+            } else if (data.qrcode && data.qrcode.base64) {
+                // Alternative: nested qrcode object
                 const base64 = data.qrcode.base64.replace('data:image/png;base64,', '')
                 setQrCode(base64)
-            } else if (data.base64) {
-                setQrCode(data.base64.replace('data:image/png;base64,', ''))
             } else if (data.code) {
                 // Sometimes it returns just the code string for QR generation
                 setQrCode(data.code)
+            } else {
+                console.warn('No QR code data found in response:', data)
             }
 
             setStatus('connecting')
@@ -102,6 +106,29 @@ export default function WhatsAppSettings() {
         }
     }
 
+    const handleRestart = async () => {
+        if (!confirm('Reiniciar a instância WhatsApp? Isso irá gerar um novo QR Code.')) return
+
+        setIsLoading(true)
+        setQrCode(null)
+        try {
+            const response = await fetch(`${apiUrl}/api/v1/whatsapp/restart`, { method: 'POST' })
+            const data = await response.json()
+
+            if (data.base64) {
+                setQrCode(data.base64.replace('data:image/png;base64,', ''))
+                setStatus('connecting')
+            } else {
+                console.warn('No QR code in restart response:', data)
+            }
+        } catch (error) {
+            console.error('Error restarting:', error)
+            alert('Erro ao reiniciar instância')
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
     useEffect(() => {
         fetchStatus()
         // Poll status every 5 seconds if connecting or open
@@ -110,6 +137,14 @@ export default function WhatsAppSettings() {
         }, 5000)
         return () => clearInterval(interval)
     }, [])
+
+    // Auto-load QR code when status is connecting and no QR code yet
+    useEffect(() => {
+        if (status === 'connecting' && !qrCode && !isLoading) {
+            console.log('Status is connecting but no QR code - attempting to fetch...')
+            handleConnect()
+        }
+    }, [status, qrCode, isLoading])
 
     return (
         <div className="p-8 space-y-8 bg-background min-h-screen">
@@ -178,29 +213,44 @@ export default function WhatsAppSettings() {
                                     />
                                 </div>
 
-                                <Button
-                                    variant="destructive"
-                                    className="w-full font-bold uppercase rounded-none shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
-                                    onClick={handleLogout}
-                                    disabled={isLoading}
-                                >
-                                    <LogOut className="w-4 h-4 mr-2" />
-                                    Desconectar
-                                </Button>
+                                <div className="space-y-3">
+                                    <Button
+                                        variant="destructive"
+                                        className="w-full font-bold uppercase rounded-none shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+                                        onClick={handleLogout}
+                                        disabled={isLoading}
+                                    >
+                                        <LogOut className="w-4 h-4 mr-2" />
+                                        Desconectar
+                                    </Button>
+                                </div>
                             </div>
                         ) : (
                             <div className="space-y-4">
                                 <p className="text-sm text-muted-foreground">
                                     Para conectar, clique no botão abaixo e escaneie o QR Code com seu WhatsApp.
                                 </p>
-                                <Button
-                                    className="w-full bg-primary text-primary-foreground font-bold uppercase rounded-none shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
-                                    onClick={handleConnect}
-                                    disabled={isLoading}
-                                >
-                                    {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <QrCode className="w-4 h-4 mr-2" />}
-                                    {status === 'connecting' ? 'Mostrar QR Code' : 'Gerar QR Code'}
-                                </Button>
+                                <div className="space-y-3">
+                                    <Button
+                                        className="w-full bg-primary text-primary-foreground font-bold uppercase rounded-none shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+                                        onClick={handleConnect}
+                                        disabled={isLoading}
+                                    >
+                                        {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <QrCode className="w-4 h-4 mr-2" />}
+                                        {status === 'connecting' ? 'Atualizar QR Code' : 'Gerar QR Code'}
+                                    </Button>
+                                    {(status === 'connecting' || status === 'close') && (
+                                        <Button
+                                            variant="outline"
+                                            className="w-full font-bold uppercase rounded-none border-2 border-orange-500 text-orange-600 hover:bg-orange-50"
+                                            onClick={handleRestart}
+                                            disabled={isLoading}
+                                        >
+                                            <RefreshCw className="w-4 h-4 mr-2" />
+                                            Reiniciar Instância
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
                         )}
                     </CardContent>
@@ -232,7 +282,7 @@ export default function WhatsAppSettings() {
                                 </div>
                             ) : (
                                 <div className="text-center text-muted-foreground">
-                                    <QrCode className="w-16 h-16 mx-auto mb-4 opacity-20" />
+                                    <QrCode className="w-16 h-16 mx-auto mb-4 opacity-60" />
                                     <p>Clique em "Gerar QR Code" para iniciar</p>
                                 </div>
                             )}

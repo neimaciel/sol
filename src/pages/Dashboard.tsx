@@ -5,7 +5,7 @@ import { CardFormModal } from '@/components/kanban/CardFormModal'
 import { useKanbanStore } from '@/store/useKanbanStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Bell, Settings, User, Plus, LayoutGrid, Truck, Users as UsersIcon, TrendingUp, Search, ChevronLeft, ChevronRight, Bot, Smartphone } from 'lucide-react'
+import { Bell, Settings, User, Plus, LayoutGrid, Truck, Users as UsersIcon, TrendingUp, Search, ChevronLeft, ChevronRight, Bot, Smartphone, Menu, X } from 'lucide-react'
 import { StatsCards } from '@/components/dashboard/StatsCards'
 import { RevenueChart, TripsChart, FunnelChart } from '@/components/dashboard/Charts'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -17,6 +17,7 @@ export default function Dashboard() {
     const [searchTerm, setSearchTerm] = useState('')
     const [isCollapsed, setIsCollapsed] = useState(true)
     const [isAnalyticsExpanded, setIsAnalyticsExpanded] = useState(true)
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
     useEffect(() => {
         fetchCards()
@@ -32,7 +33,7 @@ export default function Dashboard() {
                 ${isCollapsed ? 'w-12 h-12 justify-center' : 'w-full h-12 px-4 gap-3'}
                 ${isActive
                     ? 'bg-black dark:bg-white text-white dark:text-black border-2 border-black dark:border-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]'
-                    : 'hover:bg-gray-200 dark:hover:bg-zinc-800 text-black dark:text-white border-2 border-transparent hover:border-black dark:hover:border-white'}
+                    : 'hover:bg-accent text-foreground border-2 border-transparent hover:border-foreground'}
             `}
             title={isCollapsed ? label : undefined}
         >
@@ -63,13 +64,13 @@ export default function Dashboard() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
-            className="h-screen flex overflow-hidden bg-background"
+            className="min-h-screen flex flex-col lg:flex-row overflow-hidden bg-background"
         >
             {/* Sidebar Navigation */}
             <motion.aside
                 initial={false}
                 animate={{ width: isCollapsed ? 80 : 280 }}
-                className="bg-card m-4 flex flex-col py-6 border-2 border-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] shrink-0 z-20 relative"
+                className="bg-card m-4 flex flex-col py-6 border-2 border-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] shrink-0 z-20 relative hidden lg:flex"
             >
                 {/* Logo */}
                 <div className={`flex items-center gap-3 mb-8 ${isCollapsed ? 'justify-center' : 'px-6'}`}>
@@ -139,18 +140,119 @@ export default function Dashboard() {
                 </div>
             </motion.aside>
 
+            {/* Mobile Menu Overlay */}
+            <AnimatePresence>
+                {isMobileMenuOpen && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                        />
+                        <motion.div
+                            initial={{ x: -280 }}
+                            animate={{ x: 0 }}
+                            exit={{ x: -280 }}
+                            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                            className="fixed top-0 left-0 bottom-0 w-80 bg-card border-r-2 border-border shadow-brutal z-50 lg:hidden flex flex-col p-4"
+                        >
+                            {/* Mobile Menu Header */}
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="icon-3d w-8 h-8">
+                                        <Truck className="w-4 h-4" strokeWidth={2.5} />
+                                    </div>
+                                    <div>
+                                        <span className="font-heading font-black text-foreground text-lg leading-none tracking-tight uppercase">S.O.L.</span>
+                                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Logística Inteligente</p>
+                                    </div>
+                                </div>
+                                <Button 
+                                    size="icon" 
+                                    variant="ghost"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="hover:bg-accent text-foreground"
+                                >
+                                    <X className="w-5 h-5" />
+                                </Button>
+                            </div>
+
+                            {/* Mobile Menu Navigation */}
+                            <nav className="flex-1 space-y-2">
+                                <a href="/" className="flex items-center gap-3 w-full h-12 px-4 bg-foreground text-background border-2 border-foreground rounded-none">
+                                    <LayoutGrid className="w-5 h-5" />
+                                    <span className="font-medium">Dashboard</span>
+                                </a>
+                                <a href="/drivers" className="flex items-center gap-3 w-full h-12 px-4 hover:bg-accent text-foreground border-2 border-transparent hover:border-border rounded-none">
+                                    <Truck className="w-5 h-5" />
+                                    <span className="font-medium">Motoristas</span>
+                                </a>
+                                <a href="/operators" className="flex items-center gap-3 w-full h-12 px-4 hover:bg-accent text-foreground border-2 border-transparent hover:border-border rounded-none">
+                                    <UsersIcon className="w-5 h-5" />
+                                    <span className="font-medium">Operadores</span>
+                                </a>
+                                <a href="/groups" className="flex items-center gap-3 w-full h-12 px-4 hover:bg-accent text-foreground border-2 border-transparent hover:border-border rounded-none">
+                                    <UsersIcon className="w-5 h-5" />
+                                    <span className="font-medium">Grupos</span>
+                                </a>
+                                <a href="/models" className="flex items-center gap-3 w-full h-12 px-4 hover:bg-accent text-foreground border-2 border-transparent hover:border-border rounded-none">
+                                    <Settings className="w-5 h-5" />
+                                    <span className="font-medium">Modelos</span>
+                                </a>
+                                <a href="/history" className="flex items-center gap-3 w-full h-12 px-4 hover:bg-accent text-foreground border-2 border-transparent hover:border-border rounded-none">
+                                    <TrendingUp className="w-5 h-5" />
+                                    <span className="font-medium">Histórico</span>
+                                </a>
+                                <div className="h-px bg-border my-2" />
+                                <a href="/agent-admin" className="flex items-center gap-3 w-full h-12 px-4 hover:bg-accent text-foreground border-2 border-transparent hover:border-border rounded-none">
+                                    <Bot className="w-5 h-5" />
+                                    <span className="font-medium">Inteligência Artificial</span>
+                                </a>
+                                <a href="/admin/whatsapp" className="flex items-center gap-3 w-full h-12 px-4 hover:bg-accent text-foreground border-2 border-transparent hover:border-border rounded-none">
+                                    <Smartphone className="w-5 h-5" />
+                                    <span className="font-medium">WhatsApp</span>
+                                </a>
+                            </nav>
+
+                            {/* Mobile Menu Footer */}
+                            <div className="border-t border-border pt-4">
+                                <div className="flex items-center gap-3 p-3 bg-muted border-2 border-border">
+                                    <div className="w-8 h-8 border-2 border-border bg-card flex items-center justify-center">
+                                        <User className="w-4 h-4" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <span className="text-sm font-bold text-foreground block truncate">Admin User</span>
+                                        <span className="text-xs text-muted-foreground font-mono block truncate">admin@sol.com</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+
             {/* Main Content */}
-            <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10">
+            <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10 w-full">
                 {/* Header */}
-                <header className="h-20 px-8 flex items-center justify-between bg-card border-b-2 border-border sticky top-0 z-10">
-                    <div className="flex items-center gap-4">
-                        <h1 className="text-2xl font-heading font-black text-foreground tracking-tight uppercase">Dashboard</h1>
-                        <div className="h-8 w-0.5 bg-border" />
-                        <p className="text-sm text-muted-foreground font-bold uppercase">Visão Geral da Operação</p>
+                <header className="h-16 sm:h-20 px-4 sm:px-8 flex items-center justify-between bg-card border-b-2 border-border sticky top-0 z-10">
+                    <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+                        <Button 
+                            size="icon" 
+                            variant="ghost" 
+                            className="lg:hidden hover:bg-accent text-foreground border-2 border-transparent hover:border-border transition-colors"
+                            onClick={() => setIsMobileMenuOpen(true)}
+                        >
+                            <Menu className="w-5 h-5" />
+                        </Button>
+                        <h1 className="text-lg sm:text-2xl font-heading font-black text-foreground tracking-tight uppercase">Dashboard</h1>
+                        <div className="h-6 sm:h-8 w-0.5 bg-border hidden sm:block" />
+                        <p className="text-xs sm:text-sm text-muted-foreground font-bold uppercase hidden md:block">Visão Geral da Operação</p>
                     </div>
 
-                    <div className="flex items-center gap-4">
-                        <div className="relative hidden md:block group">
+                    <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+                        <div className="relative hidden lg:block group">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground group-focus-within:text-foreground transition-colors" />
                             <Input
                                 placeholder="BUSCAR CARGAS..."
@@ -159,23 +261,26 @@ export default function Dashboard() {
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
+                        <Button size="icon" variant="ghost" className="hover:bg-accent text-foreground border-2 border-transparent hover:border-border transition-colors relative lg:hidden">
+                            <Search className="w-4 h-4" />
+                        </Button>
                         <ModeToggle />
                         <Button size="icon" variant="ghost" className="hover:bg-accent text-foreground border-2 border-transparent hover:border-border transition-colors relative">
-                            <Bell className="w-5 h-5" />
-                            <span className="absolute top-2 right-2 w-2 h-2 bg-red-600 border border-border" />
+                            <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
+                            <span className="absolute top-1 sm:top-2 right-1 sm:right-2 w-2 h-2 bg-red-600 border border-border" />
                         </Button>
                         <Button
-                            className="bg-foreground hover:bg-foreground/90 text-background border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.5)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,0.5)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.5)] hover:-translate-y-0.5 transition-all font-bold px-6 uppercase"
+                            className="bg-foreground hover:bg-foreground/90 text-background border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.5)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,0.5)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.5)] hover:-translate-y-0.5 transition-all font-bold px-2 sm:px-6 uppercase text-xs sm:text-sm"
                             onClick={() => setShowCardForm(true)}
                         >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Nova Carga
+                            <Plus className="w-4 h-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Nova Carga</span>
                         </Button>
                     </div>
                 </header>
 
                 {/* Content Area */}
-                <main className="flex-1 overflow-y-auto p-8 space-y-8 min-h-0 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                <main className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-4 sm:space-y-8 min-h-0 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                     {/* Analytics Section */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -185,11 +290,12 @@ export default function Dashboard() {
                     >
                         {/* Analytics Header & Toggle */}
                         <div className="flex items-center justify-between">
-                            <h2 className="text-base font-black text-foreground uppercase flex items-center gap-2">
-                                <div className="p-1.5 bg-foreground text-background border-2 border-border">
-                                    <TrendingUp className="w-4 h-4" />
+                            <h2 className="text-sm sm:text-base font-black text-foreground uppercase flex items-center gap-2">
+                                <div className="p-1 sm:p-1.5 bg-foreground text-background border-2 border-border">
+                                    <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
                                 </div>
-                                Analytics em Tempo Real
+                                <span className="hidden sm:inline">Analytics em Tempo Real</span>
+                                <span className="sm:hidden">Analytics</span>
                             </h2>
                             <button
                                 onClick={() => setIsAnalyticsExpanded(!isAnalyticsExpanded)}
@@ -212,34 +318,34 @@ export default function Dashboard() {
                                     <StatsCards />
 
                                     {/* Charts Grid */}
-                                    <div className="grid gap-6 md:grid-cols-3">
+                                    <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-3">
                                         <motion.div
                                             whileHover={{ y: -5 }}
-                                            className="bg-card border-2 border-border shadow-brutal p-6"
+                                            className="bg-card border-2 border-border shadow-brutal p-4 sm:p-6"
                                         >
-                                            <div className="mb-6">
-                                                <h3 className="text-sm font-bold text-foreground">Faturamento Semanal</h3>
-                                                <p className="text-xs text-muted-foreground font-medium mt-1">Últimos 7 dias</p>
+                                            <div className="mb-4 sm:mb-6">
+                                                <h3 className="text-xs sm:text-sm font-bold text-foreground">Faturamento Semanal</h3>
+                                                <p className="text-[10px] sm:text-xs text-muted-foreground font-medium mt-1">Últimos 7 dias</p>
                                             </div>
                                             <RevenueChart />
                                         </motion.div>
                                         <motion.div
                                             whileHover={{ y: -5 }}
-                                            className="bg-card border-2 border-border shadow-brutal p-6"
+                                            className="bg-card border-2 border-border shadow-brutal p-4 sm:p-6"
                                         >
-                                            <div className="mb-6">
-                                                <h3 className="text-sm font-bold text-foreground">Viagens por Período</h3>
-                                                <p className="text-xs text-muted-foreground font-medium mt-1">Últimas 4 semanas</p>
+                                            <div className="mb-4 sm:mb-6">
+                                                <h3 className="text-xs sm:text-sm font-bold text-foreground">Viagens por Período</h3>
+                                                <p className="text-[10px] sm:text-xs text-muted-foreground font-medium mt-1">Últimas 4 semanas</p>
                                             </div>
                                             <TripsChart />
                                         </motion.div>
                                         <motion.div
                                             whileHover={{ y: -5 }}
-                                            className="bg-card border-2 border-border shadow-brutal p-6"
+                                            className="bg-card border-2 border-border shadow-brutal p-4 sm:p-6"
                                         >
-                                            <div className="mb-6">
-                                                <h3 className="text-sm font-bold text-foreground">Funil de Conversão</h3>
-                                                <p className="text-xs text-muted-foreground font-medium mt-1">Ofertas vs Conclusão</p>
+                                            <div className="mb-4 sm:mb-6">
+                                                <h3 className="text-xs sm:text-sm font-bold text-foreground">Funil de Conversão</h3>
+                                                <p className="text-[10px] sm:text-xs text-muted-foreground font-medium mt-1">Ofertas vs Conclusão</p>
                                             </div>
                                             <FunnelChart />
                                         </motion.div>
@@ -310,9 +416,9 @@ export default function Dashboard() {
                         </div>
 
                         {/* Infinite Width Container */}
-                        <div className="bg-muted/10 border-2 border-border p-1 overflow-x-auto shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)]">
-                            <div className="min-w-fit p-4">
-                                <KanbanBoard />
+                        <div className="bg-muted/10 border-2 border-border p-0.5 sm:p-1 overflow-x-auto shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)]">
+                            <div className="min-w-fit p-2 sm:p-4">
+                                <KanbanBoard searchTerm={searchTerm} />
                             </div>
                         </div>
                     </div>

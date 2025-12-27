@@ -180,6 +180,50 @@ class WhatsAppService:
                 print(f"Error logging out instance: {e}")
                 return None
 
+    async def delete_instance(self):
+        """
+        Delete the instance completely.
+        """
+        if not self.base_url or not self.api_key:
+            return None
+
+        url = f"{self.base_url}/instance/delete/{settings.INSTANCE_NAME}"
+        
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.delete(url, headers=self.headers, timeout=10.0)
+                response.raise_for_status()
+                return response.json()
+            except Exception as e:
+                print(f"Error deleting instance: {e}")
+                return None
+
+    async def restart_instance(self):
+        """
+        Restart instance: delete + recreate + connect.
+        """
+        try:
+            print(f"🔄 Restarting instance {settings.INSTANCE_NAME}...")
+            
+            # 1. Try to delete existing instance
+            delete_result = await self.delete_instance()
+            print(f"Delete result: {delete_result}")
+            
+            # 2. Create new instance
+            create_result = await self.create_instance()
+            if create_result and "error" not in create_result:
+                print(f"✅ Instance recreated successfully")
+                
+                # 3. Connect to get new QR
+                connect_result = await self.connect_instance()
+                return connect_result
+            else:
+                return create_result
+                
+        except Exception as e:
+            print(f"Error restarting instance: {e}")
+            return {"error": str(e)}
+
     async def get_instance_info(self):
         """
         Get full instance info including phone number.

@@ -27,7 +27,7 @@ export default function CandidateList({ loadId, onSelectCandidate, onChatClick }
     if (candidates.length === 0) {
         return (
             <div className="text-center py-12 text-zinc-500">
-                <User className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                <User className="w-12 h-12 mx-auto mb-3 opacity-60" />
                 <p>Nenhum candidato ainda.</p>
                 <p className="text-sm mt-1">Divulgue a carga para receber propostas.</p>
             </div>

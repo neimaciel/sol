@@ -122,7 +122,7 @@ export default function GroupsList() {
                                     <div className="flex items-start justify-between mb-4">
                                         <div>
                                             <h3 className="text-lg font-heading font-bold text-foreground mb-1">{group.name}</h3>
-                                            <span className="px-2.5 py-1 rounded-md bg-secondary text-[10px] font-bold uppercase tracking-wider text-muted-foreground border border-border/50">
+                                            <span className="px-2.5 py-1 rounded-md bg-secondary text-[10px] font-bold uppercase tracking-wider text-secondary-foreground border border-border">
                                                 {group.type}
                                             </span>
                                         </div>
@@ -150,7 +150,7 @@ export default function GroupsList() {
                                         {group.description}
                                     </p>
 
-                                    <div className="flex items-center justify-between pt-4 border-t border-border/40">
+                                    <div className="flex items-center justify-between pt-4 border-t border-border/60">
                                         <div className="flex items-center gap-2 text-muted-foreground">
                                             <Users className="w-4 h-4 text-primary/70" />
                                             <span className="text-sm font-medium">{group.membersCount} membros</span>

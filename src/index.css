@@ -1,7 +1,5 @@
 @import "tailwindcss";
-@config "../tailwind.config.js";
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
-
 
 @layer base {
   :root {
@@ -52,53 +50,99 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
 
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 }
 
-/* Custom Scrollbar - Brutalist */
+/* Utility classes for components */
+.bg-card {
+  background-color: hsl(var(--card));
+}
+
+.bg-background {
+  background-color: hsl(var(--background));
+}
+
+.bg-muted {
+  background-color: hsl(var(--muted));
+}
+
+.text-foreground {
+  color: hsl(var(--foreground));
+}
+
+.text-muted-foreground {
+  color: hsl(var(--muted-foreground));
+}
+
+.border-border {
+  border-color: hsl(var(--border));
+}
+
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 12px;
   height: 12px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-muted border-l-2 border-border;
+  background-color: #f1f5f9;
+  border-left: 2px solid #e2e8f0;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-foreground border-2 border-background;
+  background-color: #1e293b;
+  border: 2px solid white;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-foreground/80;
+  background-color: #374151;
 }
 
-@layer components {
+/* Custom Utilities */
+.glass-card-hover {
+  transition: all 0.2s;
+}
 
-  /* Brutalist Card */
-  .glass-card-hover {
-    @apply transition-all duration-200 hover:-translate-y-1 hover:shadow-brutal-hover dark:hover:shadow-brutal-hover-dark;
-  }
+.glass-card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
 
-  /* Custom Utilities */
-  .btn-soft-blue {
-    @apply bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100 border-2 border-blue-900 dark:border-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none shadow-brutal dark:shadow-brutal-dark transition-all font-bold uppercase;
-  }
+.btn-soft-blue {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border: 2px solid #1e40af;
+  font-weight: bold;
+  text-transform: uppercase;
+  transition: all 0.2s;
+}
 
-  @apply bg-background border-2 border-border focus:ring-0 focus:shadow-brutal dark:focus:shadow-brutal-dark transition-all placeholder:text-muted-foreground;
+.btn-soft-blue:hover {
+  background-color: #bfdbfe;
+  transform: translate(2px, 2px);
 }
 
 .gradient-text-blue {
-  @apply text-blue-700 dark:text-blue-400 font-black;
+  color: #1d4ed8;
+  font-weight: 900;
 }
 
 .icon-3d {
-  @apply relative flex items-center justify-center bg-card text-foreground border-2 border-border shadow-brutal dark:shadow-brutal-dark;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
+  color: #1e293b;
+  border: 2px solid #e2e8f0;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 .animate-fade-in {

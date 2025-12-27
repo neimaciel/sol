@@ -6,12 +6,14 @@ import { Input } from '@/components/ui/input'
 import type { KanbanCard } from '@/store/useKanbanStore'
 import { useKanbanStore } from '@/store/useKanbanStore'
 import { supabase } from '@/lib/supabase'
-import { Calendar, DollarSign, X, Paperclip, Send, Check, AlertTriangle, FileCheck, Truck, Upload, Shield, FileSignature, ArrowRight, Box, History, MapPin, Clock, FileText, MessageCircle } from 'lucide-react'
+import { Calendar, DollarSign, X, Paperclip, Send, Check, AlertTriangle, FileCheck, Truck, Upload, Shield, FileSignature, ArrowRight, Box, History, MapPin, Clock, FileText, MessageCircle, QrCode } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import CandidateList from "./CandidateList"
 import { VehicleRequirements } from './VehicleRequirements'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useCardEventsStore } from '@/store/useCardEventsStore'
+import { PaymentModal } from '@/components/payments/PaymentModal'
+import { usePaymentsStore, formatCurrency, getPaymentStatusColor, getPaymentStatusLabel } from '@/store/usePaymentsStore'
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
@@ -29,6 +31,7 @@ interface CardModalProps {
 export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardModalProps) {
     const { deleteCard, updateCard, autoAdvanceCard, activeTab, setActiveTab } = useKanbanStore()
     const { events, fetchEvents } = useCardEventsStore()
+    const { payments, fetchPayment } = usePaymentsStore()
 
     // ... (omitted lines)
 
@@ -78,6 +81,9 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
     // Contract Templates State
     const [contractTemplates, setContractTemplates] = useState<any[]>([])
     const [selectedTemplateId, setSelectedTemplateId] = useState<string>('')
+    
+    // Pagamentos
+    const [showPaymentModal, setShowPaymentModal] = useState(false)
 
     useEffect(() => {
         if (isOpen) {
@@ -106,8 +112,22 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
     }, [activeTab, card, selectedChatCandidate])
 
     const fetchGroups = async () => {
-        const { data } = await supabase.from('groups').select('*').order('name')
-        if (data) setGroups(data)
+        try {
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+            const response = await fetch(`${apiUrl}/api/v1/groups/`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
+                }
+            })
+            if (response.ok) {
+                const data = await response.json()
+                setGroups(data)
+            } else {
+                console.error('Failed to fetch groups:', response.status)
+            }
+        } catch (error) {
+            console.error('Error fetching groups:', error)
+        }
     }
 
     const fetchContractTemplates = async () => {
@@ -147,26 +167,43 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
             }
         }
 
-        const { data } = await supabase.from('groups').insert([{
-            name: newGroupName,
-            type: 'Carreta', // Default
-            description: 'Criado via Card',
-            region: 'Nacional',
-            whatsapp_link: newGroupLink || null,
-            whatsapp_id: whatsappId // Save the extracted ID
-        }]).select().single()
+        try {
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+            const response = await fetch(`${apiUrl}/api/v1/groups`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
+                },
+                body: JSON.stringify({
+                    name: newGroupName,
+                    type: 'Carreta',
+                    description: 'Criado via Card',
+                    region: 'Nacional',
+                    whatsapp_link: newGroupLink || null,
+                    whatsapp_id: whatsappId
+                })
+            })
 
-        if (data) {
-            setGroups([...groups, data])
-            await updateCard(card!.id, { whatsapp_group_id: data.id })
-            await autoAdvanceCard(card!.id, 'whatsapp_group_created')
-            setShowNewGroupInput(false)
-            setNewGroupName('')
-            setNewGroupLink('')
+            if (response.ok) {
+                const data = await response.json()
+                setGroups([...groups, data])
+                await updateCard(card!.id, { whatsapp_group_id: data.id })
+                await autoAdvanceCard(card!.id, 'whatsapp_group_created')
+                setShowNewGroupInput(false)
+                setNewGroupName('')
+                setNewGroupLink('')
 
-            if (newGroupLink && !whatsappId) {
-                alert('Grupo criado, mas não foi possível extrair o ID do WhatsApp automaticamente. Verifique o link e tente novamente se necessário.')
+                if (newGroupLink && !whatsappId) {
+                    alert('Grupo criado, mas não foi possível extrair o ID do WhatsApp automaticamente. Verifique o link e tente novamente se necessário.')
+                }
+            } else {
+                console.error('Failed to create group:', response.status)
+                alert('Erro ao criar grupo.')
             }
+        } catch (error) {
+            console.error('Error creating group:', error)
+            alert('Erro ao criar grupo.')
         }
     }
 
@@ -261,7 +298,7 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="bg-background border-2 border-foreground shadow-brutal max-w-5xl max-h-[90vh] overflow-hidden p-0 gap-0 rounded-none">
+            <DialogContent className="bg-background border-2 border-foreground shadow-brutal w-[90vw] max-w-[90vw] lg:max-w-4xl max-h-[95vh] overflow-hidden p-0 gap-0 rounded-none m-2 sm:m-4 box-border">
                 <DialogHeader className="sr-only">
                     <DialogTitle>Detalhes da Carga {card.id}</DialogTitle>
                     <DialogDescription>
@@ -269,21 +306,21 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                     </DialogDescription>
                 </DialogHeader>
                 {/* Header */}
-                <div className="px-8 py-6 border-b-2 border-border bg-background sticky top-0 z-10">
-                    <div className="flex items-start justify-between">
-                        <div>
-                            <div className="flex items-center gap-3 mb-2">
-                                <Badge variant="outline" className="bg-primary/10 text-primary border-2 border-primary/20 font-mono tracking-wider rounded-none font-bold">
+                <div className="px-4 sm:px-8 py-4 sm:py-6 border-b-2 border-border bg-background sticky top-0 z-10">
+                    <div className="flex items-start justify-between flex-wrap gap-3">
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 sm:gap-3 mb-2 flex-wrap">
+                                <Badge variant="outline" className="bg-primary/10 text-primary border-2 border-primary/20 font-mono tracking-wider rounded-none font-bold text-[10px] sm:text-xs">
                                     CARGA-{card.id.substring(0, 4)}
                                 </Badge>
-                                <Badge variant="secondary" className="bg-muted text-muted-foreground font-bold border-2 border-border rounded-none uppercase text-[10px]">Carga Completa</Badge>
+                                <Badge variant="secondary" className="bg-muted text-foreground font-bold border-2 border-border rounded-none uppercase text-[8px] sm:text-[10px]">Carga Completa</Badge>
                             </div>
-                            <h2 className="text-2xl font-heading font-black text-foreground flex items-center gap-2 tracking-tight uppercase">
-                                {card.origin} <ArrowRight className="w-5 h-5 text-muted-foreground" /> {card.destination}
+                            <h2 className="text-lg sm:text-2xl font-heading font-black text-foreground flex items-center gap-1 sm:gap-2 tracking-tight uppercase flex-wrap">
+                                <span className="break-all">{card.origin}</span> <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0" /> <span className="break-all">{card.destination}</span>
                             </h2>
                         </div>
-                        <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-3 bg-muted/30 px-4 py-2 border-2 border-border shadow-sm">
+                        <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+                            <div className="flex items-center gap-2 sm:gap-3 bg-muted/30 px-2 sm:px-4 py-2 border-2 border-border shadow-sm">
                                 <Switch
                                     checked={formData.auto_advance !== false}
                                     onCheckedChange={(checked) => {
@@ -293,55 +330,71 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                     id="auto-advance"
                                     className="data-[state=checked]:bg-primary border-2 border-transparent data-[state=unchecked]:bg-input"
                                 />
-                                <Label htmlFor="auto-advance" className="text-xs font-bold text-muted-foreground cursor-pointer uppercase tracking-wide">
+                                <Label htmlFor="auto-advance" className="text-[10px] sm:text-xs font-bold text-muted-foreground cursor-pointer uppercase tracking-wide hidden sm:block">
                                     Automação
                                 </Label>
+                                <Label htmlFor="auto-advance" className="text-[10px] font-bold text-muted-foreground cursor-pointer uppercase tracking-wide sm:hidden">
+                                    Auto
+                                </Label>
                             </div>
-                            <Button variant="ghost" size="icon" onClick={onClose} className="text-muted-foreground hover:text-foreground hover:bg-accent border-2 border-transparent hover:border-border w-10 h-10 transition-all rounded-none">
-                                <X className="w-5 h-5" />
+                            <Button variant="ghost" size="icon" onClick={onClose} className="text-muted-foreground hover:text-foreground hover:bg-accent border-2 border-transparent hover:border-border w-8 h-8 sm:w-10 sm:h-10 transition-all rounded-none">
+                                <X className="w-4 h-4 sm:w-5 sm:h-5" />
                             </Button>
                         </div>
                     </div>
                 </div>
 
 
-                <div className="flex h-[calc(90vh-88px)]">
-                    <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-                        <div className="px-8 pt-2 border-b-2 border-border bg-muted/10">
-                            <TabsList className="bg-transparent w-full justify-start h-14 p-0 space-x-8">
-                                <TabsTrigger value="info" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm uppercase tracking-wide">
+                <div className="flex h-[calc(90vh-88px)] sm:h-[calc(90vh-120px)] w-full overflow-hidden">
+                    <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col w-full min-w-0">
+                        <div className="px-2 sm:px-8 pt-2 border-b-2 border-border bg-muted/10 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300">
+                            <TabsList className="bg-transparent justify-start h-12 sm:h-14 p-0 gap-1 sm:gap-4 lg:gap-8 min-w-max flex flex-nowrap pr-4">
+                                <TabsTrigger value="info" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-1 sm:px-3 lg:px-4 font-bold text-muted-foreground hover:text-foreground transition-colors text-xs sm:text-sm uppercase tracking-wide whitespace-nowrap flex-shrink-0">
                                     Informações
                                 </TabsTrigger>
-                                <TabsTrigger value="chat" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm uppercase tracking-wide">
+                                <TabsTrigger value="chat" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-1 sm:px-3 lg:px-4 font-bold text-muted-foreground hover:text-foreground transition-colors text-xs sm:text-sm uppercase tracking-wide whitespace-nowrap flex-shrink-0">
                                     Chat
                                 </TabsTrigger>
-                                <TabsTrigger value="attachments" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm uppercase tracking-wide">
+                                <TabsTrigger value="attachments" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-1 sm:px-3 lg:px-4 font-bold text-muted-foreground hover:text-foreground transition-colors text-xs sm:text-sm uppercase tracking-wide whitespace-nowrap flex-shrink-0">
                                     Anexos
                                 </TabsTrigger>
-                                <TabsTrigger value="timeline" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm uppercase tracking-wide">
+                                <TabsTrigger value="timeline" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-1 sm:px-3 lg:px-4 font-bold text-muted-foreground hover:text-foreground transition-colors text-xs sm:text-sm uppercase tracking-wide whitespace-nowrap flex-shrink-0">
                                     Timeline
                                 </TabsTrigger>
-                                <TabsTrigger value="candidates" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm uppercase tracking-wide">
+                                <TabsTrigger value="candidates" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-1 sm:px-3 lg:px-4 font-bold text-muted-foreground hover:text-foreground transition-colors text-xs sm:text-sm uppercase tracking-wide whitespace-nowrap flex-shrink-0">
                                     Candidatos
                                 </TabsTrigger>
 
                                 {/* Dynamic Tabs - Enabled for all columns as requested */}
-                                <TabsTrigger value="documentation" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm uppercase tracking-wide">
-                                    Documentação
+                                <TabsTrigger value="documentation" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-1 sm:px-2 lg:px-4 font-bold text-muted-foreground hover:text-foreground transition-colors text-xs sm:text-sm uppercase tracking-wide whitespace-nowrap flex-shrink-0">
+                                    <span className="hidden sm:inline">Documentação</span>
+                                    <span className="sm:hidden">Docs</span>
                                 </TabsTrigger>
-                                <TabsTrigger value="risk" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm uppercase tracking-wide">
+                                <TabsTrigger value="risk" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-1 sm:px-3 lg:px-4 font-bold text-muted-foreground hover:text-foreground transition-colors text-xs sm:text-sm uppercase tracking-wide whitespace-nowrap flex-shrink-0">
                                     Risco
                                 </TabsTrigger>
-                                <TabsTrigger value="contracts" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm uppercase tracking-wide">
+                                <TabsTrigger value="contracts" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-1 sm:px-3 lg:px-4 font-bold text-muted-foreground hover:text-foreground transition-colors text-xs sm:text-sm uppercase tracking-wide whitespace-nowrap flex-shrink-0">
                                     Contratos
                                 </TabsTrigger>
-                                <TabsTrigger value="map" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-0 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm uppercase tracking-wide">
+                                <TabsTrigger value="map" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-1 sm:px-3 lg:px-4 font-bold text-muted-foreground hover:text-foreground transition-colors text-xs sm:text-sm uppercase tracking-wide whitespace-nowrap flex-shrink-0">
                                     Rota
+                                </TabsTrigger>
+                                <TabsTrigger value="payment" className="h-full rounded-none border-b-4 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-1 sm:px-2 lg:px-4 font-bold text-muted-foreground hover:text-foreground transition-colors text-xs sm:text-sm uppercase tracking-wide whitespace-nowrap flex-shrink-0">
+                                    <div className="flex items-center gap-1 sm:gap-2">
+                                        <DollarSign className="w-3 h-3 sm:w-4 sm:h-4" />
+                                        <span className="hidden sm:inline">Pagamento</span>
+                                        <span className="sm:hidden">Pag.</span>
+                                        {card && payments[card.id] && (
+                                            <Badge className={`text-[10px] sm:text-xs ${getPaymentStatusColor(payments[card.id].status)} hidden md:inline-flex`}>
+                                                {getPaymentStatusLabel(payments[card.id].status)}
+                                            </Badge>
+                                        )}
+                                    </div>
                                 </TabsTrigger>
                             </TabsList>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto bg-background p-8 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                        <div className="flex-1 overflow-y-auto bg-background p-3 sm:p-6 lg:p-8 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent max-w-full">
                             <AnimatePresence mode="wait">
                                 <motion.div
                                     key={activeTab}
@@ -350,27 +403,27 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                     exit={{ opacity: 0, y: -10 }}
                                     transition={{ duration: 0.2 }}
                                 >
-                                    <TabsContent value="info" className="mt-0 space-y-8">
+                                    <TabsContent value="info" className="mt-0 space-y-4 sm:space-y-8">
                                         {/* Grid with origin/destination info */}
-                                        <div className="grid grid-cols-2 gap-8">
-                                            <div className="space-y-2">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6 w-full max-w-full">
+                                            <div className="space-y-2 min-w-0">
                                                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                                                     <MapPin className="w-3 h-3" /> Origem
                                                 </p>
-                                                <div className="p-4 bg-card border-2 border-border shadow-brutal-sm">
-                                                    <p className="text-lg font-heading font-bold text-foreground">CD {card.origin}</p>
-                                                    <p className="text-sm text-muted-foreground mt-1">Av. Principal, 1000</p>
-                                                    <p className="text-sm text-muted-foreground">{card.origin}, SP</p>
+                                                <div className="p-3 sm:p-4 bg-card border-2 border-border shadow-brutal-sm min-w-0">
+                                                    <p className="text-base sm:text-lg font-heading font-bold text-foreground break-words">CD {card.origin}</p>
+                                                    <p className="text-xs sm:text-sm text-muted-foreground mt-1 break-words">Av. Principal, 1000</p>
+                                                    <p className="text-xs sm:text-sm text-muted-foreground break-words">{card.origin}, SP</p>
                                                 </div>
                                             </div>
-                                            <div className="space-y-2">
+                                            <div className="space-y-2 min-w-0">
                                                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                                                     <MapPin className="w-3 h-3" /> Destino
                                                 </p>
-                                                <div className="p-4 bg-card border-2 border-border shadow-brutal-sm">
-                                                    <p className="text-lg font-heading font-bold text-foreground">CD {card.destination}</p>
-                                                    <p className="text-sm text-muted-foreground mt-1">Av. Central, 500</p>
-                                                    <p className="text-sm text-muted-foreground">{card.destination}, SP</p>
+                                                <div className="p-3 sm:p-4 bg-card border-2 border-border shadow-brutal-sm min-w-0">
+                                                    <p className="text-base sm:text-lg font-heading font-bold text-foreground break-words">CD {card.destination}</p>
+                                                    <p className="text-xs sm:text-sm text-muted-foreground mt-1 break-words">Av. Central, 500</p>
+                                                    <p className="text-xs sm:text-sm text-muted-foreground break-words">{card.destination}, SP</p>
                                                 </div>
                                             </div>
 
@@ -457,14 +510,27 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
                                                                     for (const groupId of selectedGroups) {
                                                                         // Fetch group data
-                                                                        const { data: groupData, error: groupError } = await supabase
-                                                                            .from('groups')
-                                                                            .select('whatsapp_id, name')
-                                                                            .eq('id', groupId)
-                                                                            .single()
-
-                                                                        if (groupError || !groupData || !groupData.whatsapp_id) {
-                                                                            console.warn(`Skipping group ${groupId}: Invalid data`)
+                                                                        let groupData = null
+                                                                        try {
+                                                                            const groupResponse = await fetch(`${apiUrl}/api/v1/groups/${groupId}`, {
+                                                                                headers: {
+                                                                                    'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
+                                                                                }
+                                                                            })
+                                                                            
+                                                                            if (!groupResponse.ok) {
+                                                                                console.warn(`Skipping group ${groupId}: Failed to fetch`)
+                                                                                continue
+                                                                            }
+                                                                            
+                                                                            groupData = await groupResponse.json()
+                                                                            
+                                                                            if (!groupData || !groupData.whatsapp_id) {
+                                                                                console.warn(`Skipping group ${groupId}: Invalid data`)
+                                                                                continue
+                                                                            }
+                                                                        } catch (error) {
+                                                                            console.warn(`Skipping group ${groupId}: Error fetching`, error)
                                                                             continue
                                                                         }
 
@@ -507,7 +573,16 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                                         if (successCount < selectedGroups.length) {
                                                                             alert(`⚠️ Parcial: Enviado para ${successCount} de ${selectedGroups.length} grupos. Verifique se os grupos têm ID do WhatsApp válido.`)
                                                                         } else {
-                                                                            alert(`Carga divulgada com sucesso para ${successCount} grupo(s)!`)
+                                                                            // Melhor feedback de sucesso
+                                                                            const successMessage = [
+                                                                                `✅ Carga divulgada com sucesso!`,
+                                                                                `📤 ${successCount} grupo(s) notificado(s)`,
+                                                                                `🚛 ${card.origin} → ${card.destination}`,
+                                                                                `💰 ${card.value ? `R$ ${card.value}` : 'Valor a negociar'}`,
+                                                                                `\n🔗 Link disponível no WhatsApp para motoristas`
+                                                                            ].join('\n')
+                                                                            
+                                                                            alert(successMessage)
                                                                         }
                                                                     } else {
                                                                         throw new Error('Falha total: Nenhum grupo recebeu a mensagem. Verifique se os grupos possuem ID do WhatsApp vinculado.')
@@ -561,7 +636,7 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                                 />
                                                             </div>
                                                         ) : (
-                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[200px] overflow-y-auto pr-2">
+                                                            <div className="grid grid-cols-1 gap-2 max-h-[200px] overflow-y-auto pr-1">
                                                                 {groups.map(g => {
                                                                     const selectedIds = card.whatsapp_group_id ? card.whatsapp_group_id.split(',') : []
                                                                     const isSelected = selectedIds.includes(g.id)
@@ -571,10 +646,10 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                                         <div
                                                                             key={g.id}
                                                                             className={`
-                                                                                flex items-center justify-between p-2 border-2 cursor-pointer transition-all
+                                                                                flex items-center justify-between p-3 border-2 cursor-pointer transition-all rounded-none shadow-brutal-sm
                                                                                 ${isSelected
-                                                                                    ? 'border-primary bg-primary/5 shadow-sm'
-                                                                                    : 'border-transparent bg-white hover:border-gray-200'
+                                                                                    ? 'border-primary bg-primary/10 shadow-md'
+                                                                                    : 'border-border bg-card hover:border-primary/30 hover:bg-primary/5'
                                                                                 }
                                                                             `}
                                                                             onClick={async () => {
@@ -593,11 +668,14 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                                                 await updateCard(card.id, { whatsapp_group_id: newSelected.join(',') })
                                                                             }}
                                                                         >
-                                                                            <div className="flex items-center gap-2 overflow-hidden">
-                                                                                <div className={`w-4 h-4 border-2 flex items-center justify-center ${isSelected ? 'border-primary bg-primary' : 'border-gray-300'}`}>
-                                                                                    {isSelected && <Check className="w-3 h-3 text-white" />}
+                                                                            <div className="flex items-center gap-3 overflow-hidden">
+                                                                                <div className={`w-5 h-5 border-2 flex items-center justify-center rounded-none shadow-brutal-xs ${isSelected ? 'border-primary bg-primary' : 'border-foreground bg-background'}`}>
+                                                                                    {isSelected && <Check className="w-3 h-3 text-white font-bold" strokeWidth={3} />}
                                                                                 </div>
-                                                                                <span className="text-sm font-medium truncate">{g.name}</span>
+                                                                                <div className="flex-1 min-w-0">
+                                                                                    <span className="text-sm font-bold text-foreground block truncate">{g.name}</span>
+                                                                                    <span className="text-xs text-muted-foreground font-medium block truncate">{g.type} • {g.region}</span>
+                                                                                </div>
                                                                             </div>
                                                                             {isSent && (
                                                                                 <Badge variant="secondary" className="h-5 text-[10px] bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200">
@@ -817,7 +895,7 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                                 <div className={`max-w-[80%] p-4 shadow-brutal-sm border-2 border-border ${msg.sender === 'user'
                                                                     ? 'bg-primary text-white rounded-none'
                                                                     : msg.sender === 'system'
-                                                                        ? 'bg-muted text-muted-foreground text-xs text-center w-full shadow-none border-none'
+                                                                        ? 'bg-muted text-foreground text-xs text-center w-full shadow-none border-none'
                                                                         : 'bg-card text-foreground rounded-none'
                                                                     }`}>
                                                                     <p className="text-sm leading-relaxed font-medium">{msg.text}</p>
@@ -878,7 +956,7 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                             </>
                                         ) : (
                                             <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                                                <MessageCircle className="w-12 h-12 mb-4 opacity-20" />
+                                                <MessageCircle className="w-12 h-12 mb-4 opacity-60" />
                                                 <p className="font-bold uppercase">Nenhuma conversa selecionada</p>
                                                 <p className="text-sm">Selecione um motorista na aba "Candidatos" para abrir o chat.</p>
                                             </div>
@@ -917,14 +995,14 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                     <div key={event.id} className="relative pl-8 group">
                                                         <div className="absolute -left-[9px] top-0 w-4 h-4 bg-background border-4 border-muted-foreground group-hover:border-primary transition-colors"></div>
                                                         <div className="flex flex-col">
-                                                            <span className="text-xs text-muted-foreground font-mono mb-1 bg-muted w-fit px-2 py-0.5 border-2 border-border font-bold">
+                                                            <span className="text-xs text-foreground font-mono mb-1 bg-muted w-fit px-2 py-0.5 border-2 border-border font-bold">
                                                                 {new Date(event.createdAt).toLocaleString('pt-BR')}
                                                             </span>
                                                             <span className="text-sm font-bold text-foreground capitalize mt-1">
                                                                 {event.action.replace(/_/g, ' ')}
                                                             </span>
                                                             {event.details && (
-                                                                <div className="text-xs text-muted-foreground mt-2 bg-muted/30 p-3 border-2 border-border font-mono">
+                                                                <div className="text-xs text-foreground mt-2 bg-muted/30 p-3 border-2 border-border font-mono">
                                                                     {JSON.stringify(event.details, null, 2)}
                                                                 </div>
                                                             )}
@@ -1007,7 +1085,7 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                 </div>
                                                 Análise de Risco
                                             </h3>
-                                            <div className="grid grid-cols-3 gap-6 mb-8">
+                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 mb-6 sm:mb-8">
                                                 <div className="p-6 bg-green-50 border-2 border-green-200 text-center shadow-brutal-sm">
                                                     <p className="text-xs text-green-600 font-bold uppercase tracking-wider mb-2">Motorista</p>
                                                     <p className="text-xl font-heading font-black text-green-700 uppercase">Baixo Risco</p>
@@ -1149,11 +1227,209 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                             </div>
                                         </div>
                                     </TabsContent>
+
+                                    {/* Payment Tab */}
+                                    <TabsContent value="payment" className="mt-0">
+                                        <div className="space-y-6">
+                                            {/* Payment Status Overview */}
+                                            <div className="bg-card border-2 border-border shadow-brutal p-6">
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <h3 className="text-lg font-bold text-foreground uppercase flex items-center gap-2">
+                                                        <DollarSign className="w-5 h-5" />
+                                                        Status do Pagamento
+                                                    </h3>
+                                                    {card && payments[card.id] && (
+                                                        <Badge className={`${getPaymentStatusColor(payments[card.id].status)}`}>
+                                                            {getPaymentStatusLabel(payments[card.id].status)}
+                                                        </Badge>
+                                                    )}
+                                                </div>
+
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
+                                                    <div>
+                                                        <Label className="text-sm text-muted-foreground font-bold uppercase">Valor do Frete</Label>
+                                                        <p className="text-2xl font-bold text-foreground">{formatCurrency(parseFloat(card?.value || '0') || 0)}</p>
+                                                    </div>
+                                                    <div>
+                                                        <Label className="text-sm text-muted-foreground font-bold uppercase">Motorista</Label>
+                                                        <p className="text-lg font-medium">
+                                                            {card?.driver && typeof card.driver !== 'string' 
+                                                                ? card.driver.name 
+                                                                : 'Não atribuído'
+                                                            }
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Payment Details */}
+                                                {card && payments[card.id] ? (
+                                                    <div className="mt-6 pt-6 border-t border-border">
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
+                                                            <div>
+                                                                <Label className="text-muted-foreground">Método</Label>
+                                                                <p className="font-medium">{payments[card.id].method}</p>
+                                                            </div>
+                                                            <div>
+                                                                <Label className="text-muted-foreground">Criado em</Label>
+                                                                <p className="font-medium">
+                                                                    {payments[card.id].created_at ? new Date(payments[card.id].created_at).toLocaleString('pt-BR') : '-'}
+                                                                </p>
+                                                            </div>
+                                                            {payments[card.id].processed_at && (
+                                                                <>
+                                                                    <div>
+                                                                        <Label className="text-muted-foreground">Processado em</Label>
+                                                                        <p className="font-medium">
+                                                                            {payments[card.id].processed_at ? new Date(payments[card.id].processed_at!).toLocaleString('pt-BR') : '-'}
+                                                                        </p>
+                                                                    </div>
+                                                                    <div>
+                                                                        <Label className="text-muted-foreground">Confirmado por</Label>
+                                                                        <p className="font-medium">{payments[card.id].manual_confirmed_by || 'Sistema'}</p>
+                                                                    </div>
+                                                                </>
+                                                            )}
+                                                        </div>
+
+                                                        {/* PIX/Bank Data Display */}
+                                                        {payments[card.id].method === 'MANUAL' && payments[card.id].bank_data && (
+                                                            <div className="mt-4 p-4 bg-muted/30 border border-border">
+                                                                <h4 className="text-sm font-bold text-foreground mb-2 uppercase">Dados para Pagamento</h4>
+                                                                {payments[card.id].bank_data && payments[card.id].bank_data?.pix_key && (
+                                                                    <div className="flex items-center gap-2 p-2 bg-card rounded border text-sm">
+                                                                        <QrCode className="w-4 h-4 text-green-600" />
+                                                                        <div>
+                                                                            <span className="font-medium">PIX: </span>
+                                                                            <span className="font-mono">{payments[card.id].bank_data!.pix_key}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
+
+                                                        {/* Actions */}
+                                                        <div className="flex gap-2 mt-4">
+                                                            <Button 
+                                                                variant="outline" 
+                                                                onClick={() => setShowPaymentModal(true)}
+                                                                className="border-2 border-foreground rounded-none font-bold uppercase"
+                                                            >
+                                                                <DollarSign className="w-4 h-4 mr-2" />
+                                                                Gerenciar Pagamento
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    /* No Payment Yet */
+                                                    <div className="mt-6 pt-6 border-t border-border text-center">
+                                                        <div className="space-y-4">
+                                                            <div className="w-16 h-16 bg-muted border-2 border-border flex items-center justify-center mx-auto">
+                                                                <DollarSign className="w-8 h-8 text-muted-foreground" />
+                                                            </div>
+                                                            <p className="text-muted-foreground font-medium">
+                                                                Nenhum pagamento configurado para esta carga
+                                                            </p>
+                                                            {card?.driver && typeof card.driver !== 'string' ? (
+                                                                <Button 
+                                                                    onClick={() => setShowPaymentModal(true)}
+                                                                    className="bg-primary hover:bg-primary/90 text-white shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all h-12 px-8 text-base font-bold rounded-none uppercase"
+                                                                >
+                                                                    <DollarSign className="w-5 h-5 mr-2" />
+                                                                    Criar Pagamento
+                                                                </Button>
+                                                            ) : (
+                                                                <div className="flex items-center gap-2 text-amber-700 bg-amber-100 px-4 py-2 border-2 border-amber-200">
+                                                                    <AlertTriangle className="w-4 h-4" />
+                                                                    <span className="text-sm font-medium">
+                                                                        Atribua um motorista antes de configurar o pagamento
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Payment History */}
+                                            {card && payments[card.id] && (
+                                                <div className="bg-card border-2 border-border shadow-brutal p-6">
+                                                    <h3 className="text-lg font-bold text-foreground uppercase flex items-center gap-2 mb-4">
+                                                        <History className="w-5 h-5" />
+                                                        Histórico de Transações
+                                                    </h3>
+                                                    
+                                                    <div className="space-y-3">
+                                                        <div className="flex items-center gap-3 p-3 border rounded">
+                                                            <Clock className="w-4 h-4 text-muted-foreground" />
+                                                            <div className="flex-1">
+                                                                <p className="text-sm font-medium">Pagamento criado</p>
+                                                                <p className="text-xs text-muted-foreground">
+                                                                    {new Date(payments[card.id].created_at).toLocaleString('pt-BR')}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
+                                                        {payments[card.id].manual_confirmed_at && (
+                                                            <div className="flex items-center gap-3 p-3 border rounded">
+                                                                <Check className="w-4 h-4 text-green-600" />
+                                                                <div className="flex-1">
+                                                                    <p className="text-sm font-medium">Pagamento confirmado</p>
+                                                                    <p className="text-xs text-muted-foreground">
+                                                                        {payments[card.id].manual_confirmed_at ? new Date(payments[card.id].manual_confirmed_at!).toLocaleString('pt-BR') : '-'}
+                                                                    </p>
+                                                                    {payments[card.id].manual_confirmation_notes && (
+                                                                        <p className="text-xs text-muted-foreground mt-1">
+                                                                            {payments[card.id].manual_confirmation_notes}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {payments[card.id].receipt_url && (
+                                                            <div className="flex items-center gap-3 p-3 border rounded">
+                                                                <Upload className="w-4 h-4 text-blue-600" />
+                                                                <div className="flex-1">
+                                                                    <p className="text-sm font-medium">Comprovante enviado</p>
+                                                                    <a 
+                                                                        href={payments[card.id].receipt_url}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="text-xs text-blue-600 hover:underline"
+                                                                    >
+                                                                        Ver comprovante
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </TabsContent>
                                 </motion.div>
                             </AnimatePresence>
                         </div>
                     </Tabs>
                 </div>
+
+                {/* Payment Modal */}
+                {showPaymentModal && card && (
+                    <PaymentModal
+                        isOpen={showPaymentModal}
+                        onClose={() => {
+                            setShowPaymentModal(false)
+                            // Refresh payment data after modal closes
+                            if (card) {
+                                fetchPayment(card.id)
+                            }
+                        }}
+                        loadId={card.id}
+                        driverId={card.driver && typeof card.driver !== 'string' ? card.driver.id : ''}
+                        amount={parseFloat(card.value || '0') || 0}
+                        existingPayment={payments[card.id]}
+                    />
+                )}
             </DialogContent >
         </Dialog >
     )

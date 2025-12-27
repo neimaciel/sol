@@ -1,4 +1,5 @@
-from sqlalchemy import Column, String, Float, DateTime, func, JSON
+from sqlalchemy import Column, String, Float, DateTime, func, Text, ForeignKey
+from sqlalchemy.orm import relationship
 from core.database import Base
 
 class Load(Base):
@@ -21,11 +22,15 @@ class Load(Base):
     # Phase 5 Fields
     whatsapp_group_id = Column(String, nullable=True)
     broadcast_status = Column(String, nullable=True)
-    sent_groups = Column(JSON, default=[])
+    sent_groups = Column(Text, default="[]")  # JSON as text for SQLite
     
-    driver_id = Column(String, nullable=True) # Foreign key to drivers table (implicit or explicit)
+    driver_id = Column(String, ForeignKey("drivers.id"), nullable=True) # Foreign key to drivers table
     
-    # Relationships (if needed for joins)
-    # driver = relationship("Driver", backref="loads")
+    # Payment Status
+    payment_status = Column(String, default="PENDING")  # PENDING, PROCESSING, COMPLETED, FAILED
+    
+    # Relationships
+    payment = relationship("Payment", back_populates="load", uselist=False)
+    driver = relationship("Driver", backref="loads")
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())

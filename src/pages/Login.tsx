@@ -36,7 +36,7 @@ export default function Login() {
                 navigate('/')
             }
         } else {
-            const { error } = await signUp(email, password)
+            const { error } = await signUp(email, password, 'User')
             if (error) {
                 alert('Erro ao criar conta: ' + error.message)
                 setIsLoading(false)
@@ -53,7 +53,7 @@ export default function Login() {
         const { error } = await signIn('test_brutal_123@example.com', 'password123')
         if (error) {
             // Fallback to signup if user doesn't exist in this env
-            const { error: signUpError } = await signUp('test_brutal_123@example.com', 'password123')
+            const { error: signUpError } = await signUp('test_brutal_123@example.com', 'password123', 'Test User')
             if (signUpError) {
                 alert('Quick Access Failed: ' + signUpError.message)
                 setIsLoading(false)
@@ -142,7 +142,7 @@ export default function Login() {
                                         placeholder="usuario@sol-log.com.br"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="h-12 bg-muted/30 border-2 border-muted-foreground/20 focus:border-primary focus:ring-0 rounded-none font-mono text-sm transition-colors"
+                                        className="h-12 bg-muted/30 border-2 border-border focus:border-primary focus:ring-0 rounded-none font-mono text-sm transition-colors"
                                         required
                                     />
                                 </div>
@@ -153,7 +153,7 @@ export default function Login() {
                                         placeholder="••••••••"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
-                                        className="h-12 bg-muted/30 border-2 border-muted-foreground/20 focus:border-primary focus:ring-0 rounded-none font-mono text-sm transition-colors"
+                                        className="h-12 bg-muted/30 border-2 border-border focus:border-primary focus:ring-0 rounded-none font-mono text-sm transition-colors"
                                         required
                                     />
                                 </div>
@@ -174,7 +174,7 @@ export default function Login() {
                                 )}
                             </Button>
 
-                            <div className="text-center pt-4 border-t-2 border-dashed border-muted-foreground/20">
+                            <div className="text-center pt-4 border-t-2 border-dashed border-border">
                                 <button
                                     type="button"
                                     onClick={() => setIsLogin(!isLogin)}

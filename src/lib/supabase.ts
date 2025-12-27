@@ -1,14 +1,32 @@
-import { createClient } from '@supabase/supabase-js'
+// Supabase disabled for local development
+// Using local API backend instead
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn('Missing Supabase environment variables. Please check your .env file.')
-}
-
-export const supabase = createClient(
-    supabaseUrl || 'https://placeholder.supabase.co',
-    supabaseAnonKey || 'placeholder-key'
-)
-// export const supabase = {} as any
+// Mock supabase client to prevent errors
+export const supabase = {
+  auth: {
+    getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+    signInWithPassword: () => Promise.resolve({ error: { message: 'Using local API' } }),
+    signUp: () => Promise.resolve({ error: { message: 'Using local API' } }),
+    signOut: () => Promise.resolve({ error: null }),
+    onAuthStateChange: () => ({ data: { subscription: null }, error: null })
+  },
+  from: (_table: string) => ({
+    select: () => ({
+      order: () => Promise.resolve({ data: [], error: null })
+    }),
+    insert: () => ({
+      select: () => Promise.resolve({ data: [], error: null })
+    }),
+    update: () => ({
+      eq: () => Promise.resolve({ error: null })
+    }),
+    delete: () => ({
+      eq: () => Promise.resolve({ error: null })
+    })
+  }),
+  channel: () => ({
+    on: () => ({ subscribe: () => ({}) }),
+    subscribe: () => ({})
+  }),
+  removeChannel: () => {}
+} as any;

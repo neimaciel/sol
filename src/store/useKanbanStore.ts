@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { supabase } from '@/lib/supabase'
+import { api } from '@/lib/api'
 import { useCardEventsStore } from './useCardEventsStore'
 
 export interface KanbanColumn {
@@ -89,236 +89,189 @@ export const useKanbanStore = create<KanbanState>((set, get) => ({
     toggleCompactMode: () => set((state) => ({ isCompactMode: !state.isCompactMode })),
 
     fetchCards: async () => {
-        // Attempt 1: Fetch with driver join
-        let { data, error } = await supabase
-            .from('loads')
-            .select('*, driver:drivers(*)')
-            .order('created_at', { ascending: false })
+        try {
+            const response = await api.getLoads()
+            const data = response.loads
 
-        // Fallback: If FK error (PGRST200), fetch without join
-        if (error && error.code === 'PGRST200') {
-            console.warn('⚠️ PGRST200 detected. Attempting to trigger backend self-repair migration...')
+            if (!data) {
+                console.warn('No loads data received')
+                return
+            }
 
-            // Fire and forget migration trigger
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-            fetch(`${apiUrl}/api/v1/system/migrate`, { method: 'POST' }).catch(e => console.error('Migration trigger failed:', e))
+            // Map database fields to frontend model
+            const mappedCards: KanbanCard[] = data.map((item: any) => ({
+                id: item.id,
+                title: item.title || 'Carga sem título',
+                columnId: item.column_id || 'registration',
+                priority: item.priority || 'normal',
+                origin: item.origin || 'Origem não informada',
+                destination: item.destination || 'Destino não informado',
+                value: item.value || 'R$ 0,00',
+                date: item.created_at ? new Date(item.created_at).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR'),
+                driver: item.driver, // Driver object if assigned
+                status: item.status || 'registration',
+                // Phase 5 Mappings
+                broadcast_status: item.broadcast_status,
+                sent_groups: item.sent_groups || [],
+                risk_status: item.risk_status,
+                documents_status: item.documents_status,
+                contract_url: item.contract_url,
+                checkin_time: item.checkin_time,
+                pod_url: item.pod_url,
+                invoice_status: item.invoice_status,
+                whatsapp_group_id: item.whatsapp_group_id,
+                arrival_time: item.arrival_time,
+                auto_advance: item.auto_advance
+            }))
 
-            console.warn('⚠️ Fetching cards without driver join due to PGRST200 error.')
-            const retry = await supabase
-                .from('loads')
-                .select('*')
-                .order('created_at', { ascending: false })
-
-            data = retry.data
-            error = retry.error
-        }
-
-        if (error) {
+            set({ cards: mappedCards })
+        } catch (error) {
             console.error('Error fetching cards:', error)
-            return
         }
-
-        if (!data) return
-
-        // Map database fields to frontend model
-        const mappedCards: KanbanCard[] = data.map((item: any) => ({
-            id: item.id,
-            title: item.title,
-            columnId: item.column_id,
-            priority: item.priority,
-            origin: item.origin,
-            destination: item.destination,
-            value: item.value,
-            date: item.date,
-            driver: item.driver, // Now using the joined driver object
-            status: item.status,
-            // Phase 5 Mappings
-            broadcast_status: item.broadcast_status,
-            sent_groups: item.sent_groups || [],
-            risk_status: item.risk_status,
-            documents_status: item.documents_status,
-            contract_url: item.contract_url,
-            checkin_time: item.checkin_time,
-            pod_url: item.pod_url,
-            invoice_status: item.invoice_status,
-            whatsapp_group_id: item.whatsapp_group_id,
-            arrival_time: item.arrival_time,
-            auto_advance: item.auto_advance
-        }))
-
-        set({ cards: mappedCards })
     },
 
     addCard: async (card) => {
-        const newCardId = `CARGA-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`
-        const newCard = { ...card, id: newCardId }
-
-        // Optimistic update
-        set((state) => ({
-            cards: [...state.cards, newCard],
-        }))
-
-        const { error } = await supabase
-            .from('loads')
-            .insert([{
-                id: newCardId,
+        try {
+            const response = await api.createLoad({
                 title: card.title,
-                column_id: card.columnId,
-                priority: card.priority,
                 origin: card.origin,
                 destination: card.destination,
                 value: card.value,
-                date: card.date,
-                // Default values for new fields
-                broadcast_status: 'pending',
-                risk_status: 'pending',
-                documents_status: 'pending',
-                invoice_status: 'pending'
-            }])
+                priority: card.priority || 'normal',
+                column_id: card.columnId || 'registration'
+            })
 
-        if (error) {
+            if (response.success) {
+                // Refresh cards to get the latest data
+                await get().fetchCards()
+                useCardEventsStore.getState().logEvent(response.load.id, 'created', { title: card.title })
+            }
+        } catch (error) {
             console.error('Error adding card:', error)
-        } else {
-            useCardEventsStore.getState().logEvent(newCardId, 'created', { title: card.title })
         }
     },
 
     moveCard: async (cardId, toColumnId) => {
-        // Determine if we need to reset broadcast status
-        const shouldResetBroadcast = toColumnId === 'registration' || toColumnId === 'broadcast'
+        try {
+            // Determine if we need to reset broadcast status
+            const shouldResetBroadcast = toColumnId === 'registration' || toColumnId === 'broadcast'
 
-        // Optimistic update
-        set((state) => ({
-            cards: state.cards.map((card) =>
-                card.id === cardId
-                    ? {
-                        ...card,
-                        columnId: toColumnId,
-                        // Reset broadcast_status if moving to Cadastro
-                        ...(shouldResetBroadcast ? { broadcast_status: 'pending' } : {})
-                    }
-                    : card
-            ),
-        }))
+            // Optimistic update
+            set((state) => ({
+                cards: state.cards.map((card) =>
+                    card.id === cardId
+                        ? {
+                            ...card,
+                            columnId: toColumnId,
+                            // Reset broadcast_status if moving to Cadastro
+                            ...(shouldResetBroadcast ? { broadcast_status: 'pending' } : {})
+                        }
+                        : card
+                ),
+            }))
 
-        const updateData: any = { column_id: toColumnId }
+            const updateData: any = { column_id: toColumnId }
 
-        // Reset broadcast_status in database if moving to Cadastro
-        if (shouldResetBroadcast) {
-            updateData.broadcast_status = 'pending'
-        }
+            // Reset broadcast_status in database if moving to Cadastro
+            if (shouldResetBroadcast) {
+                updateData.broadcast_status = 'pending'
+            }
 
-        const { error } = await supabase
-            .from('loads')
-            .update(updateData)
-            .eq('id', cardId)
+            const response = await api.updateLoad(cardId, updateData)
 
-        if (error) {
+            if (response.success) {
+                // Log event
+                useCardEventsStore.getState().logEvent(cardId, 'moved', { to: toColumnId })
+            }
+        } catch (error) {
             console.error('Error moving card:', error)
-        } else {
-            // Log event
-            useCardEventsStore.getState().logEvent(cardId, 'moved', { to: toColumnId })
+            // Revert optimistic update on error
+            await get().fetchCards()
         }
     },
 
     updateCard: async (id, updatedCard) => {
-        // Optimistic update
-        set((state) => ({
-            cards: state.cards.map((card) =>
-                card.id === id ? { ...card, ...updatedCard } : card
-            ),
-            selectedCard:
-                state.selectedCard?.id === id
-                    ? { ...state.selectedCard, ...updatedCard }
-                    : state.selectedCard,
-        }))
+        try {
+            // Optimistic update
+            set((state) => ({
+                cards: state.cards.map((card) =>
+                    card.id === id ? { ...card, ...updatedCard } : card
+                ),
+                selectedCard:
+                    state.selectedCard?.id === id
+                        ? { ...state.selectedCard, ...updatedCard }
+                        : state.selectedCard,
+            }))
 
-        // Prepare DB update object (snake_case)
-        const dbUpdate: any = {}
-        if (updatedCard.columnId) dbUpdate.column_id = updatedCard.columnId
-        if (updatedCard.title) dbUpdate.title = updatedCard.title
-        if (updatedCard.priority) dbUpdate.priority = updatedCard.priority
-        if (updatedCard.origin) dbUpdate.origin = updatedCard.origin
-        if (updatedCard.destination) dbUpdate.destination = updatedCard.destination
-        if (updatedCard.value) dbUpdate.value = updatedCard.value
-        if (updatedCard.date) dbUpdate.date = updatedCard.date
-        // Phase 5 Updates
-        if (updatedCard.broadcast_status) dbUpdate.broadcast_status = updatedCard.broadcast_status
-        if (updatedCard.risk_status) dbUpdate.risk_status = updatedCard.risk_status
-        if (updatedCard.documents_status) dbUpdate.documents_status = updatedCard.documents_status
-        if (updatedCard.contract_url) dbUpdate.contract_url = updatedCard.contract_url
-        if (updatedCard.checkin_time) dbUpdate.checkin_time = updatedCard.checkin_time
-        if (updatedCard.pod_url) dbUpdate.pod_url = updatedCard.pod_url
-        if (updatedCard.invoice_status) dbUpdate.invoice_status = updatedCard.invoice_status
-        if (updatedCard.whatsapp_group_id) dbUpdate.whatsapp_group_id = updatedCard.whatsapp_group_id
-        if (updatedCard.sent_groups) dbUpdate.sent_groups = updatedCard.sent_groups
-        if (updatedCard.arrival_time) dbUpdate.arrival_time = updatedCard.arrival_time
-        if (updatedCard.auto_advance !== undefined) dbUpdate.auto_advance = updatedCard.auto_advance
+            // Prepare DB update object (snake_case)
+            const dbUpdate: any = {}
+            if (updatedCard.columnId) dbUpdate.column_id = updatedCard.columnId
+            if (updatedCard.title) dbUpdate.title = updatedCard.title
+            if (updatedCard.priority) dbUpdate.priority = updatedCard.priority
+            if (updatedCard.origin) dbUpdate.origin = updatedCard.origin
+            if (updatedCard.destination) dbUpdate.destination = updatedCard.destination
+            if (updatedCard.value) dbUpdate.value = updatedCard.value
+            if (updatedCard.broadcast_status) dbUpdate.broadcast_status = updatedCard.broadcast_status
+            if (updatedCard.driver !== undefined) dbUpdate.driver_id = typeof updatedCard.driver === 'string' ? updatedCard.driver : updatedCard.driver?.id
 
-        const { error } = await supabase
-            .from('loads')
-            .update(dbUpdate)
-            .eq('id', id)
+            const response = await api.updateLoad(id, dbUpdate)
 
-        if (error) {
+            if (response.success) {
+                // Log significant updates
+                if (updatedCard.checkin_time) useCardEventsStore.getState().logEvent(id, 'check-in', { time: updatedCard.checkin_time })
+                if (updatedCard.pod_url) useCardEventsStore.getState().logEvent(id, 'pod_uploaded', { url: updatedCard.pod_url })
+                if (updatedCard.broadcast_status === 'sent') useCardEventsStore.getState().logEvent(id, 'broadcast_sent')
+                if (updatedCard.risk_status) useCardEventsStore.getState().logEvent(id, 'risk_updated', { status: updatedCard.risk_status })
+                if (updatedCard.documents_status) useCardEventsStore.getState().logEvent(id, 'documents_updated', { status: updatedCard.documents_status })
+            }
+        } catch (error) {
             console.error('Error updating card:', error)
-        } else {
-            // Log significant updates
-            if (updatedCard.checkin_time) useCardEventsStore.getState().logEvent(id, 'check-in', { time: updatedCard.checkin_time })
-            if (updatedCard.pod_url) useCardEventsStore.getState().logEvent(id, 'pod_uploaded', { url: updatedCard.pod_url })
-            if (updatedCard.broadcast_status === 'sent') useCardEventsStore.getState().logEvent(id, 'broadcast_sent')
-            if (updatedCard.risk_status) useCardEventsStore.getState().logEvent(id, 'risk_updated', { status: updatedCard.risk_status })
-            if (updatedCard.documents_status) useCardEventsStore.getState().logEvent(id, 'documents_updated', { status: updatedCard.documents_status })
+            // Revert optimistic update on error
+            await get().fetchCards()
         }
     },
 
     deleteCard: async (id) => {
-        // Optimistic update
-        set((state) => ({
-            cards: state.cards.filter((card) => card.id !== id),
-            selectedCard: state.selectedCard?.id === id ? null : state.selectedCard,
-        }))
+        try {
+            // Optimistic update
+            set((state) => ({
+                cards: state.cards.filter((card) => card.id !== id),
+                selectedCard: state.selectedCard?.id === id ? null : state.selectedCard,
+            }))
 
-        const { error } = await supabase
-            .from('loads')
-            .delete()
-            .eq('id', id)
+            const response = await api.deleteLoad(id)
 
-        if (error) {
+            if (!response.success) {
+                throw new Error('Failed to delete load')
+            }
+        } catch (error) {
             console.error('Error deleting card:', error)
+            // Revert optimistic update on error
+            await get().fetchCards()
         }
     },
 
     subscribeToCards: () => {
-        const subscription = supabase
-            .channel('loads_channel')
-            .on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table: 'loads' },
-                (payload) => {
-                    console.log('Real-time update:', payload)
-                    // Refresh cards on any change
-                    useKanbanStore.getState().fetchCards()
-                }
-            )
-            .subscribe()
-
+        // For local development, we'll use polling or manual refresh
+        // Real-time subscriptions would require WebSocket implementation
+        console.log('Real-time subscriptions disabled for local API')
+        
+        // Return empty unsubscribe function
         return () => {
-            supabase.removeChannel(subscription)
+            // No-op
         }
     },
 
     assignDriver: async (cardId, driverId) => {
         try {
-            const { error } = await supabase
-                .from('loads')
-                .update({
-                    driver_id: driverId,
-                    column_id: 'documentation'
-                })
-                .eq('id', cardId)
+            const response = await api.updateLoad(cardId, {
+                driver_id: driverId,
+                column_id: 'documentation'
+            })
 
-            if (error) throw error
+            if (!response.success) {
+                throw new Error('Failed to assign driver')
+            }
 
             // Log event
             useCardEventsStore.getState().logEvent(
@@ -337,12 +290,12 @@ export const useKanbanStore = create<KanbanState>((set, get) => ({
 
     unassignDriver: async (cardId) => {
         try {
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-            const response = await fetch(`${apiUrl}/api/v1/candidates/by-load/${cardId}/unassign`, {
-                method: 'POST',
+            const response = await api.updateLoad(cardId, {
+                driver_id: null,
+                column_id: 'initial_service'
             })
 
-            if (!response.ok) {
+            if (!response.success) {
                 throw new Error('Failed to unassign driver')
             }
 

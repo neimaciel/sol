@@ -14,22 +14,22 @@ export function Column({ column, cards }: ColumnProps) {
     const isCompactMode = useKanbanStore((state) => state.isCompactMode)
 
     return (
-        <div className={`${isCompactMode ? 'min-w-[280px]' : 'min-w-[350px]'} flex-shrink-0 h-full transition-all duration-300`}>
+        <div className={`${isCompactMode ? 'min-w-[240px] sm:min-w-[280px]' : 'min-w-[280px] sm:min-w-[350px]'} flex-shrink-0 h-full transition-all duration-300 snap-start`}>
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4 }}
-                className="bg-card border-2 border-border h-full flex flex-col shadow-brutal overflow-hidden"
+                className="bg-card border-2 border-border h-full flex flex-col shadow-brutal"
             >
                 {/* Column Header */}
-                <div className="p-4 border-b-2 border-border bg-muted/30">
+                <div className="p-2 sm:p-4 border-b-2 border-border bg-muted/30">
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <div className={`w-3 h-3 border-2 border-foreground ${cards.length > 0 ? 'bg-primary' : 'bg-transparent'}`} />
-                            <h3 className="text-sm font-heading font-black text-foreground tracking-tight uppercase">{column.title}</h3>
+                        <div className="flex items-center gap-1 sm:gap-2">
+                            <div className={`w-2 h-2 sm:w-3 sm:h-3 border-2 border-foreground ${cards.length > 0 ? 'bg-primary' : 'bg-transparent'}`} />
+                            <h3 className="text-xs sm:text-sm font-heading font-black text-foreground tracking-tight uppercase">{column.title}</h3>
                         </div>
-                        <div className="px-2 py-0.5 bg-background border-2 border-border flex items-center justify-center shadow-brutal-sm">
-                            <span className="text-[10px] font-bold text-foreground">{cards.length}</span>
+                        <div className="px-1 sm:px-2 py-0.5 bg-background border-2 border-border flex items-center justify-center shadow-brutal-sm">
+                            <span className="text-[8px] sm:text-[10px] font-bold text-foreground">{cards.length}</span>
                         </div>
                     </div>
                 </div>
@@ -37,7 +37,7 @@ export function Column({ column, cards }: ColumnProps) {
                 {/* Cards Container */}
                 <div
                     ref={setNodeRef}
-                    className="p-3 space-y-3 flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-foreground scrollbar-track-muted"
+                    className="p-2 sm:p-3 space-y-2 sm:space-y-3 flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-foreground scrollbar-track-muted"
                 >
                     {cards.map((card, index) => (
                         <motion.div

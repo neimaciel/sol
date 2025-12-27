@@ -36,7 +36,7 @@ export const useModelsStore = create<ModelsState>((set, get) => ({
             if (error) throw error
 
             set({
-                models: data.map(m => ({
+                models: data.map((m: any) => ({
                     id: m.id,
                     name: m.name,
                     type: m.type,

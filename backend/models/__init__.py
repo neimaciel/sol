@@ -4,3 +4,5 @@ from .vehicle import Vehicle
 from .conversation import Conversation
 from .group import Group
 from .candidate import Candidate
+from .payment import Payment, PaymentMethod
+from .operator import Operator, OperatorSession, OperatorActivity

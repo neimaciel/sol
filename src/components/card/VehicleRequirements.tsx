@@ -25,8 +25,8 @@ export function VehicleRequirements() {
             <div>
                 <h3 className="text-sm font-black text-foreground mb-3 uppercase tracking-wide">Tags</h3>
                 <div className="flex gap-2">
-                    <Badge variant="secondary" className="bg-muted text-muted-foreground hover:bg-muted/80 border-2 border-border rounded-none font-bold uppercase">Carga Completa</Badge>
-                    <Badge variant="secondary" className="bg-muted text-muted-foreground hover:bg-muted/80 border-2 border-border rounded-none font-bold uppercase">Baú</Badge>
+                    <Badge variant="secondary" className="bg-muted text-foreground hover:bg-muted/80 border-2 border-border rounded-none font-bold uppercase">Carga Completa</Badge>
+                    <Badge variant="secondary" className="bg-muted text-foreground hover:bg-muted/80 border-2 border-border rounded-none font-bold uppercase">Baú</Badge>
                     <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-200 border-2 border-blue-200 rounded-none font-bold uppercase">Urgente</Badge>
                 </div>
             </div>

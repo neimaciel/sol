@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { supabase } from '@/lib/supabase'
+import { api } from '@/lib/api'
 
 export interface Driver {
     id: string
@@ -27,129 +27,53 @@ export const useDriversStore = create<DriversState>((set) => ({
     drivers: [],
 
     fetchDrivers: async () => {
-        const { data, error } = await supabase
-            .from('drivers')
-            .select('*')
+        try {
+            const response = await api.getDrivers()
+            const data = response.drivers
 
-        if (error) {
+            if (!data) {
+                console.warn('No drivers data received')
+                return
+            }
+
+            const mappedDrivers: Driver[] = data.map((item: any) => ({
+                id: item.id,
+                name: item.name || 'Motorista',
+                photo: item.photo || 'https://i.pravatar.cc/150',
+                rating: 5.0, // Default rating
+                phone: item.phone || '',
+                location: 'Disponível',
+                vehicle: item.vehicle_type || 'Não informado',
+                status: 'available',
+                cnh: item.cpf_cnpj || '',
+                cpf: item.cpf_cnpj || ''
+            }))
+
+            set({ drivers: mappedDrivers })
+        } catch (error) {
             console.error('Error fetching drivers:', error)
-            return
-        }
-
-        const mappedDrivers: Driver[] = data.map((item: any) => ({
-            id: item.id,
-            name: item.name,
-            photo: item.avatar_url || 'https://i.pravatar.cc/150',
-            rating: item.rating,
-            phone: item.phone,
-            location: item.location,
-            vehicle: item.vehicle,
-            status: item.status,
-            cnh: item.cnh,
-            cpf: item.cpf
-        }))
-
-        set({ drivers: mappedDrivers })
-    },
-
-    addDriver: async (driver) => {
-        // Optimistic update
-        const tempId = Math.random().toString(36).substr(2, 9)
-        set((state) => ({
-            drivers: [...state.drivers, { ...driver, id: tempId }],
-        }))
-
-        const { data, error } = await supabase
-            .from('drivers')
-            .insert([{
-                name: driver.name,
-                phone: driver.phone,
-                vehicle: driver.vehicle,
-                location: driver.location,
-                status: driver.status,
-                rating: driver.rating,
-                cnh: driver.cnh,
-                cpf: driver.cpf,
-                avatar_url: driver.photo
-            }])
-            .select()
-
-        if (error) {
-            console.error('Error adding driver:', error)
-            // Revert optimistic update
-            set((state) => ({
-                drivers: state.drivers.filter((d) => d.id !== tempId),
-            }))
-        } else if (data) {
-            // Update with real ID
-            set((state) => ({
-                drivers: state.drivers.map((d) =>
-                    d.id === tempId ? { ...d, id: data[0].id } : d
-                ),
-            }))
         }
     },
 
-    updateDriver: async (id, updatedDriver) => {
-        // Optimistic update
-        set((state) => ({
-            drivers: state.drivers.map((driver) =>
-                driver.id === id ? { ...driver, ...updatedDriver } : driver
-            ),
-        }))
-
-        const dbUpdate: any = {}
-        if (updatedDriver.name) dbUpdate.name = updatedDriver.name
-        if (updatedDriver.phone) dbUpdate.phone = updatedDriver.phone
-        if (updatedDriver.vehicle) dbUpdate.vehicle = updatedDriver.vehicle
-        if (updatedDriver.location) dbUpdate.location = updatedDriver.location
-        if (updatedDriver.status) dbUpdate.status = updatedDriver.status
-        if (updatedDriver.rating) dbUpdate.rating = updatedDriver.rating
-        if (updatedDriver.cnh) dbUpdate.cnh = updatedDriver.cnh
-        if (updatedDriver.cpf) dbUpdate.cpf = updatedDriver.cpf
-        if (updatedDriver.photo) dbUpdate.avatar_url = updatedDriver.photo
-
-        const { error } = await supabase
-            .from('drivers')
-            .update(dbUpdate)
-            .eq('id', id)
-
-        if (error) {
-            console.error('Error updating driver:', error)
-        }
+    addDriver: async (_driver) => {
+        console.log('Add driver not implemented for local API yet')
+        // TODO: Implement when needed
     },
 
-    deleteDriver: async (id) => {
-        // Optimistic update
-        set((state) => ({
-            drivers: state.drivers.filter((driver) => driver.id !== id),
-        }))
+    updateDriver: async (_id, _updatedDriver) => {
+        console.log('Update driver not implemented for local API yet')
+        // TODO: Implement when needed
+    },
 
-        const { error } = await supabase
-            .from('drivers')
-            .delete()
-            .eq('id', id)
-
-        if (error) {
-            console.error('Error deleting driver:', error)
-        }
+    deleteDriver: async (_id) => {
+        console.log('Delete driver not implemented for local API yet')
+        // TODO: Implement when needed
     },
 
     subscribeToDrivers: () => {
-        const subscription = supabase
-            .channel('drivers_channel')
-            .on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table: 'drivers' },
-                (payload) => {
-                    console.log('Real-time drivers update:', payload)
-                    useDriversStore.getState().fetchDrivers()
-                }
-            )
-            .subscribe()
-
+        console.log('Real-time subscriptions disabled for local API')
         return () => {
-            supabase.removeChannel(subscription)
+            // No-op
         }
     }
 }))

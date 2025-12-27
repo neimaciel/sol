@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { supabase } from '@/lib/supabase'
+import { api } from '@/lib/api'
 
 export interface Group {
     id: string
@@ -27,20 +27,18 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
     fetchGroups: async () => {
         set({ isLoading: true })
         try {
-            const { data, error } = await supabase
-                .from('groups')
-                .select('*')
-                .order('created_at', { ascending: false })
-
-            if (error) throw error
+            const response = await api.getGroups()
+            
+            // Handle both array and object response formats
+            const groups = Array.isArray(response) ? response : response.data || []
 
             set({
-                groups: data.map(g => ({
+                groups: groups.map((g: any) => ({
                     id: g.id,
                     name: g.name,
                     type: g.type,
                     description: g.description,
-                    membersCount: g.members_count,
+                    membersCount: g.members_count || 0,
                     region: g.region,
                     whatsappLink: g.whatsapp_link,
                     whatsappId: g.whatsapp_id
@@ -49,7 +47,7 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
             })
         } catch (error) {
             console.error('Error fetching groups:', error)
-            set({ isLoading: false })
+            set({ isLoading: false, groups: [] })
         }
     },
     addGroup: async (newGroup) => {
@@ -84,20 +82,17 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
                 }
             }
 
-            const { error } = await supabase
-                .from('groups')
-                .insert([{
-                    name: newGroup.name,
-                    type: newGroup.type,
-                    description: newGroup.description,
-                    region: newGroup.region,
-                    whatsapp_link: newGroup.whatsappLink || null,
-                    whatsapp_id: whatsappId,
-                    members_count: 0
-                }])
+            const groupData = {
+                name: newGroup.name,
+                type: newGroup.type,
+                description: newGroup.description,
+                region: newGroup.region,
+                whatsapp_link: newGroup.whatsappLink || null,
+                whatsapp_id: whatsappId,
+                members_count: 0
+            }
 
-            if (error) throw error
-
+            await api.createGroup(groupData)
             await get().fetchGroups()
         } catch (error) {
             console.error('Error adding group:', error)
@@ -149,13 +144,7 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
                 updateData.whatsapp_id = whatsappId
             }
 
-            const { error } = await supabase
-                .from('groups')
-                .update(updateData)
-                .eq('id', id)
-
-            if (error) throw error
-
+            await api.updateGroup(id, updateData)
             await get().fetchGroups()
         } catch (error) {
             console.error('Error updating group:', error)
@@ -165,13 +154,7 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
     deleteGroup: async (id) => {
         set({ isLoading: true })
         try {
-            const { error } = await supabase
-                .from('groups')
-                .delete()
-                .eq('id', id)
-
-            if (error) throw error
-
+            await api.deleteGroup(id)
             await get().fetchGroups()
         } catch (error) {
             console.error('Error deleting group:', error)

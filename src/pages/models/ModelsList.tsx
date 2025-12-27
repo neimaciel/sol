@@ -276,15 +276,15 @@ export default function ModelsList() {
                                     </div>
 
                                     <div className="flex items-center gap-2 mb-6">
-                                        <span className="px-2.5 py-1 rounded-md bg-secondary text-xs font-bold text-muted-foreground flex items-center gap-1.5 border border-border/50">
+                                        <span className="px-2.5 py-1 rounded-md bg-secondary text-xs font-bold text-secondary-foreground flex items-center gap-1.5 border border-border">
                                             {getIcon(model.type)}
                                             {model.vehicleType}
                                         </span>
-                                        <span className="text-xs text-muted-foreground/40">•</span>
+                                        <span className="text-xs text-muted-foreground/60">•</span>
                                         <span className="text-xs text-muted-foreground">Criado em {model.createdAt}</span>
                                     </div>
 
-                                    <div className="flex items-center justify-between pt-4 border-t border-border/40">
+                                    <div className="flex items-center justify-between pt-4 border-t border-border/60">
                                         <span className="text-xs font-medium text-muted-foreground">
                                             Usado {model.usageCount} vezes
                                         </span>
@@ -343,14 +343,14 @@ export default function ModelsList() {
                                         <span className="px-2.5 py-1 rounded-md bg-emerald-500/10 text-xs font-bold text-emerald-600 border border-emerald-200/50">
                                             {template.product_type}
                                         </span>
-                                        <span className="text-xs text-muted-foreground/40">•</span>
+                                        <span className="text-xs text-muted-foreground/60">•</span>
                                         <span className={`text-xs font-bold ${template.is_active ? 'text-emerald-600' : 'text-muted-foreground'}`}>
                                             {template.is_active ? 'Ativo' : 'Inativo'}
                                         </span>
                                     </div>
 
-                                    <div className="pt-4 border-t border-border/40">
-                                        <p className="text-xs text-muted-foreground font-mono bg-secondary/50 p-2 rounded truncate border border-border/50">
+                                    <div className="pt-4 border-t border-border/60">
+                                        <p className="text-xs text-secondary-foreground font-mono bg-secondary/50 p-2 rounded truncate border border-border">
                                             {template.requirements ? template.requirements.substring(0, 50) + '...' : 'Sem requisitos específicos'}
                                         </p>
                                     </div>
@@ -401,14 +401,14 @@ export default function ModelsList() {
                                         <span className="px-2.5 py-1 rounded-md bg-blue-500/10 text-xs font-bold text-blue-600 border border-blue-200/50">
                                             {template.category || 'Geral'}
                                         </span>
-                                        <span className="text-xs text-muted-foreground/40">•</span>
+                                        <span className="text-xs text-muted-foreground/60">•</span>
                                         <span className={`text-xs font-bold ${template.is_active ? 'text-emerald-600' : 'text-muted-foreground'}`}>
                                             {template.is_active ? 'Ativo' : 'Inativo'}
                                         </span>
                                     </div>
 
-                                    <div className="pt-4 border-t border-border/40">
-                                        <p className="text-xs text-muted-foreground font-mono bg-secondary/50 p-2 rounded truncate border border-border/50">
+                                    <div className="pt-4 border-t border-border/60">
+                                        <p className="text-xs text-secondary-foreground font-mono bg-secondary/50 p-2 rounded truncate border border-border">
                                             {template.content.substring(0, 50)}...
                                         </p>
                                     </div>

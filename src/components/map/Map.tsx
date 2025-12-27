@@ -28,7 +28,7 @@ export function MapComponent({
 }: MapComponentProps) {
     if (!MAPBOX_TOKEN) {
         return (
-            <div className={`flex items-center justify-center bg-gray-100 text-gray-500 ${className}`}>
+            <div className={`flex items-center justify-center bg-muted text-muted-foreground ${className}`}>
                 Mapbox Token not configured
             </div>
         )

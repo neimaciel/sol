@@ -28,7 +28,7 @@ export default function HistoryList() {
             case 'Atendimento': return 'bg-purple-100 text-purple-700 border-purple-200'
             case 'Documentação': return 'bg-amber-100 text-amber-700 border-amber-200'
             case 'Finalizada': return 'bg-emerald-100 text-emerald-700 border-emerald-200'
-            default: return 'bg-gray-100 text-gray-700 border-gray-200'
+            default: return 'bg-muted text-muted-foreground border-border'
         }
     }
 
@@ -74,7 +74,7 @@ export default function HistoryList() {
                             variant="ghost"
                             size="icon"
                             onClick={() => navigate('/')}
-                            className="bg-background border-2 border-muted-foreground/20 hover:border-foreground hover:bg-accent text-muted-foreground hover:text-foreground transition-all rounded-none h-10 w-10"
+                            className="bg-background border-2 border-muted-foreground/40 hover:border-foreground hover:bg-accent text-muted-foreground hover:text-foreground transition-all rounded-none h-10 w-10"
                         >
                             <ArrowLeft className="w-5 h-5" />
                         </Button>
@@ -104,23 +104,23 @@ export default function HistoryList() {
                     <div className="relative flex-1 min-w-[300px] group">
                         <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" />
                         <Input
-                            className="input-soft pl-11 h-10 border-2 border-muted-foreground/20 bg-muted/10 focus:bg-background focus:border-primary transition-all rounded-none"
+                            className="input-soft pl-11 h-10 border-2 border-muted-foreground/40 bg-muted/10 focus:bg-background focus:border-primary transition-all rounded-none"
                             placeholder="Buscar cargas..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
 
-                    <div className="flex items-center gap-2 bg-muted/10 border-2 border-muted-foreground/20 p-1">
+                    <div className="flex items-center gap-2 bg-muted/10 border-2 border-muted-foreground/40 p-1">
                         <Button variant="ghost" size="sm" className="text-xs font-bold text-muted-foreground hover:text-foreground h-8 rounded-none">Mais recentes</Button>
                     </div>
 
-                    <div className="flex items-center gap-2 bg-muted/10 border-2 border-muted-foreground/20 px-3 py-2 min-w-[200px] h-10">
+                    <div className="flex items-center gap-2 bg-muted/10 border-2 border-muted-foreground/40 px-3 py-2 min-w-[200px] h-10">
                         <Calendar className="w-4 h-4 text-muted-foreground" />
                         <span className="text-xs text-muted-foreground font-medium">Selecione o período</span>
                     </div>
 
-                    <Button variant="outline" size="icon" className="bg-background border-2 border-muted-foreground/20 hover:border-primary hover:text-primary h-10 w-10 rounded-none shadow-brutal-sm hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all">
+                    <Button variant="outline" size="icon" className="bg-background border-2 border-muted-foreground/40 hover:border-primary hover:text-primary h-10 w-10 rounded-none shadow-brutal-sm hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all">
                         <Filter className="w-4 h-4" />
                     </Button>
 
@@ -158,7 +158,7 @@ export default function HistoryList() {
                                             <span className="text-sm font-mono font-bold text-foreground bg-secondary px-2 py-1 border-2 border-border">
                                                 {item.loadId}
                                             </span>
-                                            <Badge variant="secondary" className="bg-secondary text-muted-foreground border-2 border-border font-bold text-[10px] uppercase tracking-wider rounded-none">
+                                            <Badge variant="secondary" className="bg-secondary text-secondary-foreground border-2 border-border font-bold text-[10px] uppercase tracking-wider rounded-none">
                                                 {item.type}
                                             </Badge>
                                             <Badge className={`${getStatusColor(item.status)} border-2 font-bold shadow-sm rounded-none`}>

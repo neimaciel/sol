@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from core.database import get_db
 from core.config import get_settings
+from core.exceptions import setup_exception_handlers
 
 settings = get_settings()
 
@@ -126,6 +127,27 @@ async def run_migrations_startup():
         # Migration 006: Add sent_groups to loads
         "ALTER TABLE loads ADD COLUMN IF NOT EXISTS sent_groups JSONB DEFAULT '[]'::jsonb;",
         
+        # Migration 008: Create groups table and add missing columns
+        """
+        CREATE TABLE IF NOT EXISTS groups (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            type TEXT NOT NULL DEFAULT 'Frota Própria',
+            description TEXT,
+            region TEXT,
+            whatsapp_link TEXT,
+            whatsapp_id TEXT,
+            members_count INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        );
+        """,
+        "ALTER TABLE groups ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'Frota Própria';",
+        "ALTER TABLE groups ADD COLUMN IF NOT EXISTS description TEXT;",
+        "ALTER TABLE groups ADD COLUMN IF NOT EXISTS region TEXT;",
+        "ALTER TABLE groups ADD COLUMN IF NOT EXISTS members_count INTEGER DEFAULT 0;",
+        "ALTER TABLE groups ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();",
+        
         # Migration 007: Fix FK missing between loads and drivers
         """
         DO $$ BEGIN
@@ -173,6 +195,9 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# Setup exception handlers
+setup_exception_handlers(app)
+
 # CORS
 app.add_middleware(
     CORSMiddleware,
@@ -190,12 +215,16 @@ async def root():
 async def health_check():
     return {"status": "healthy"}
 
-from routers import whatsapp, admin, candidates, drivers
+from routers import whatsapp, admin, candidates, drivers, payments, operators, loads, groups
 
 app.include_router(whatsapp.router, prefix=f"{settings.API_V1_STR}/whatsapp", tags=["whatsapp"])
 app.include_router(admin.router, prefix=f"{settings.API_V1_STR}/admin", tags=["admin"])
 app.include_router(candidates.router, prefix="/api/v1/candidates", tags=["Candidates"])
 app.include_router(drivers.router, prefix="/api/v1/drivers", tags=["Drivers"])
+app.include_router(loads.router, prefix="/api/v1/loads", tags=["Loads"])
+app.include_router(payments.router, prefix="/api/v1/payments", tags=["Payments"])
+app.include_router(operators.router, prefix="/api/v1/operators", tags=["Operators"])
+app.include_router(groups.router, prefix="/api/v1/groups", tags=["Groups"])
 
 # Keep manual endpoint just in case, reusing the logic?
 # Or remove it to clean up? Let's keep it but make it call the same function if possible, 
@@ -262,3 +291,6 @@ async def check_db_connection():
         results["parsing_error"] = str(e)
         
     return results
+
+# Vercel handler
+handler = app

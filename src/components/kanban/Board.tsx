@@ -79,7 +79,7 @@ export function KanbanBoard({ searchTerm = '' }: KanbanBoardProps) {
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="flex gap-6 h-full items-start perspective-1000"
+                className="flex gap-3 sm:gap-6 h-full items-start perspective-1000 overflow-x-auto pb-4 snap-x snap-mandatory min-h-[50vh]"
             >
                 {columns.map((column) => (
                     <Column

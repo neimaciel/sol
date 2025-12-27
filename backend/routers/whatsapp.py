@@ -360,6 +360,20 @@ async def logout_instance():
         raise HTTPException(status_code=500, detail="Failed to logout instance")
     return result
 
+@router.post("/restart")
+async def restart_instance():
+    """
+    Restart the WhatsApp instance (delete + recreate + connect).
+    """
+    result = await whatsapp_service.restart_instance()
+    if not result:
+        raise HTTPException(status_code=500, detail="Failed to restart instance")
+        
+    if "error" in result:
+        raise HTTPException(status_code=502, detail=result["error"])
+        
+    return result
+
 @router.get("/system-phone")
 async def get_system_phone():
     """

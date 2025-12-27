@@ -9,6 +9,56 @@ from pydantic import BaseModel
 
 router = APIRouter()
 
+# Basic CRUD endpoints
+@router.get("/")
+async def list_drivers(db: AsyncSession = Depends(get_db)):
+    """List all drivers"""
+    try:
+        result = await db.execute(select(Driver))
+        drivers = result.scalars().all()
+        
+        return {
+            "drivers": [
+                {
+                    "id": driver.id,
+                    "name": driver.name,
+                    "phone": driver.phone,
+                    "vehicle_type": driver.vehicle_type,
+                    "vehicle_plate": driver.vehicle_plate,
+                    "cpf_cnpj": driver.cpf_cnpj,
+                    "photo": driver.photo,
+                    "created_at": driver.created_at
+                }
+                for driver in drivers
+            ]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/{driver_id}")
+async def get_driver(driver_id: str, db: AsyncSession = Depends(get_db)):
+    """Get specific driver"""
+    try:
+        result = await db.execute(select(Driver).where(Driver.id == driver_id))
+        driver = result.scalars().first()
+        
+        if not driver:
+            raise HTTPException(status_code=404, detail="Driver not found")
+            
+        return {
+            "id": driver.id,
+            "name": driver.name,
+            "phone": driver.phone,
+            "vehicle_type": driver.vehicle_type,
+            "vehicle_plate": driver.vehicle_plate,
+            "cpf_cnpj": driver.cpf_cnpj,
+            "photo": driver.photo,
+            "created_at": driver.created_at,
+            "updated_at": driver.updated_at
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 class LoadSchema(BaseModel):
     id: str
     title: Optional[str] = "Sem título"

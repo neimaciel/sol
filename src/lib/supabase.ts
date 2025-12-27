@@ -1,8 +1,14 @@
-// Supabase disabled for local development
-// Using local API backend instead
+import { createClient } from '@supabase/supabase-js'
 
-// Mock supabase client to prevent errors
-export const supabase = {
+// Use Supabase for production
+const supabaseUrl = 'https://ekimcihxrnigghnappjv.supabase.co'
+const supabaseKey = 'sb_publishable_U-l0teyfrl6UbZysrj_WzQ_7MYuIxkV'
+
+// Create Supabase client
+export const supabase = createClient(supabaseUrl, supabaseKey)
+
+// Mock fallback for development
+export const supabaseMock = {
   auth: {
     getSession: () => Promise.resolve({ data: { session: null }, error: null }),
     signInWithPassword: () => Promise.resolve({ error: { message: 'Using local API' } }),

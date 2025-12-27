@@ -12,7 +12,7 @@ import HistoryList from '@/pages/history/HistoryList'
 import OperatorsList from '@/pages/operators/OperatorsList'
 import AgentAdmin from '@/pages/AgentAdmin'
 import Login from '@/pages/Login'
-import DriverPortal from './pages/driver/DriverPortal'
+import PublicLoadView from './pages/driver/PublicLoadView'
 import DriversList from './pages/drivers/DriversList'
 import DriverProfile from './pages/drivers/DriverProfile'
 import WhatsAppSettings from './pages/admin/WhatsAppSettings'
@@ -33,7 +33,7 @@ function AnimatedRoutes() {
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route path="/login" element={<Login />} />
-        <Route path="/motorista/carga/:id" element={<DriverPortal />} />
+        <Route path="/motorista/carga/:loadId" element={<PublicLoadView />} />
         <Route path="/motoristas/:id" element={<DriverProfile />} />
         <Route
           path="/drivers"

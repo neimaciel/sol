@@ -1,29 +1,59 @@
 import { useParams } from 'react-router-dom'
-import { mockLoad } from '@/lib/mock-data'
+import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { MapPin, DollarSign, Truck, Calendar, ArrowRight, MessageCircle, CheckCircle } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export default function PublicLoadView() {
   const { loadId } = useParams<{ loadId: string }>()
   const [isInterested, setIsInterested] = useState(false)
   const [driverData, setDriverData] = useState({ name: '', phone: '', experience: '' })
+  const [load, setLoad] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Em produção, aqui buscaria os dados do Supabase
-  // Por agora, usar dados mockados
-  const load = loadId === 'load-example-1' ? mockLoad : null
+  useEffect(() => {
+    const fetchLoad = async () => {
+      if (!loadId) return
+      
+      try {
+        setLoading(true)
+        const data = await api.getLoad(loadId)
+        setLoad(data)
+      } catch (error) {
+        console.error('Erro ao carregar dados da carga:', error)
+        setError('Não foi possível carregar os dados da carga')
+      } finally {
+        setLoading(false)
+      }
+    }
 
-  if (!load) {
+    fetchLoad()
+  }, [loadId])
+
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center p-4">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">Carga não encontrada</h1>
-          <p className="text-gray-600">Esta carga pode ter sido removida ou o link está incorreto.</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando dados da carga...</p>
         </div>
       </div>
     )
   }
+
+  if (error || !load) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center p-4">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">Carga não encontrada</h1>
+          <p className="text-gray-600">{error || 'Esta carga pode ter sido removida ou o link está incorreto.'}</p>
+        </div>
+      </div>
+    )
+  }
+
 
   const handleInterest = () => {
     if (!driverData.name || !driverData.phone) {
@@ -36,7 +66,10 @@ export default function PublicLoadView() {
   }
 
   const handleWhatsApp = () => {
-    const message = `Olá! Tenho interesse na carga ${load.origin} → ${load.destination} (${load.value}). Meu nome é ${driverData.name}, telefone: ${driverData.phone}`
+    const origin = `${load.origin_city}/${load.origin_state}`
+    const destination = `${load.destination_city}/${load.destination_state}`
+    const value = `R$ ${load.price?.toLocaleString('pt-BR')}`
+    const message = `Olá! Tenho interesse na carga ${origin} → ${destination} (${value}). Meu nome é ${driverData.name}, telefone: ${driverData.phone}`
     const whatsappUrl = `https://wa.me/5511999999999?text=${encodeURIComponent(message)}`
     window.open(whatsappUrl, '_blank')
   }

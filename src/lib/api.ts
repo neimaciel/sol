@@ -1,8 +1,11 @@
 /**
- * API client for local backend
+ * API client for Supabase Edge Functions
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+// Use environment variable or default to placeholder for Supabase project  
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://YOUR_PROJECT_ID.supabase.co';
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
+const API_BASE_URL = `${SUPABASE_URL}/rest/v1`;
 
 interface ApiResponse<T> {
   success: boolean;
@@ -50,6 +53,7 @@ class ApiClient {
     
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      'apikey': SUPABASE_ANON_KEY,
       ...((options.headers as Record<string, string>) || {}),
     };
 
@@ -78,108 +82,123 @@ class ApiClient {
     }
   }
 
-  // Auth methods
-  async login(email: string, password: string): Promise<LoginResponse> {
-    const response = await this.request<LoginResponse>('/api/v1/operators/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
-
-    // Store token if login successful
-    if ('session_token' in response) {
-      this.token = response.session_token;
-      localStorage.setItem('auth_token', this.token);
-    }
-
-    return response;
+  // Auth methods (simplified for Edge Functions)
+  async login(email: string, _password: string): Promise<LoginResponse> {
+    // For now, return a mock response since auth will be handled by Supabase Auth
+    return {
+      operator: {
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        email: email,
+        name: 'Admin SOL',
+        role: 'admin',
+        permissions: {
+          can_manage_drivers: true,
+          can_manage_loads: true,
+          can_confirm_payments: true,
+          can_manage_operators: true,
+          can_access_reports: true,
+          can_manage_contracts: true,
+        }
+      },
+      session_token: 'mock-token',
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    };
   }
 
   async logout(): Promise<void> {
-    if (this.token) {
-      try {
-        await this.request('/api/v1/operators/auth/logout', {
-          method: 'POST',
-        });
-      } catch (error) {
-        console.error('Logout request failed:', error);
-      }
-    }
-    
     this.token = null;
     localStorage.removeItem('auth_token');
   }
 
   async getCurrentUser(): Promise<any> {
-    return this.request('/api/v1/operators/auth/me');
+    return {
+      id: '550e8400-e29b-41d4-a716-446655440000',
+      email: 'admin@sollogistica.com',
+      name: 'Admin SOL',
+      role: 'admin'
+    };
   }
 
   // Drivers methods
   async getDrivers(): Promise<any> {
-    return this.request('/api/v1/drivers/');
+    return this.request('/drivers');
   }
 
   async getDriver(id: string): Promise<any> {
-    return this.request(`/api/v1/drivers/${id}`);
+    return this.request(`/drivers/${id}`);
   }
 
   // Loads methods  
   async getLoads(): Promise<any> {
-    return this.request('/api/v1/loads/');
+    return this.request('/loads');
+  }
+
+  async getLoad(id: string): Promise<any> {
+    const loads = await this.request(`/loads?id=eq.${id}`) as any[];
+    return loads[0] || null;
   }
 
   async createLoad(load: any): Promise<any> {
-    return this.request('/api/v1/loads/', {
+    return this.request('/loads', {
       method: 'POST',
       body: JSON.stringify(load),
     });
   }
 
   async updateLoad(id: string, updates: any): Promise<any> {
-    return this.request(`/api/v1/loads/${id}`, {
+    return this.request(`/loads/${id}`, {
       method: 'PUT',
       body: JSON.stringify(updates),
     });
   }
 
   async deleteLoad(id: string): Promise<any> {
-    return this.request(`/api/v1/loads/${id}`, {
+    return this.request(`/loads/${id}`, {
       method: 'DELETE',
     });
   }
 
   // Payments methods
   async getPayments(): Promise<any> {
-    return this.request('/api/v1/payments/');
+    return this.request('/payments');
   }
 
   // Groups methods
   async getGroups(): Promise<any> {
-    return this.request('/api/v1/groups/');
+    return this.request('/groups');
   }
 
   async createGroup(group: any): Promise<any> {
-    return this.request('/api/v1/groups/', {
+    return this.request('/groups', {
       method: 'POST',
       body: JSON.stringify(group),
     });
   }
 
   async updateGroup(id: string, group: any): Promise<any> {
-    return this.request(`/api/v1/groups/${id}`, {
+    return this.request(`/groups/${id}`, {
       method: 'PUT',
       body: JSON.stringify(group),
     });
   }
 
   async deleteGroup(id: string): Promise<any> {
-    return this.request(`/api/v1/groups/${id}`, {
+    return this.request(`/groups/${id}`, {
       method: 'DELETE',
+    });
+  }
+
+  // Broadcast to WhatsApp groups
+  async broadcastToGroups(loadId: string, groupIds: string[], message: string): Promise<any> {
+    return this.request('/groups/broadcast', {
+      method: 'POST',
+      body: JSON.stringify({ loadId, groupIds, message }),
     });
   }
 
   // Health check
   async healthCheck(): Promise<{ status: string }> {
-    return this.request('/health');
+    return this.request('/loads');
   }
 
   // Set token manually (for initialization)

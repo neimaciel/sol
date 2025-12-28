@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Supabase Table Creator</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Creating Supabase Tables...</h1>
+    <div id="status"></div>
+    
+    <script>
+        const { createClient } = supabase;
+        
+        const supabaseUrl = 'https://ekimcihxrnigghnappjv.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVraW1jaWh4cm5pZ2dobmFwcGp2Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NjgwMTM2OCwiZXhwIjoyMDgyMzc3MzY4fQ.krPxL5WPgrppk3qYn9lLD95QHA3dR29MalihbXv3kHY';
+        
+        const client = createClient(supabaseUrl, supabaseKey);
+        
+        const status = document.getElementById('status');
+        
+        async function createTables() {
+            status.innerHTML = '<p>Creating UUID extension...</p>';
+            
+            // Create extension
+            try {
+                await client.rpc('exec_sql', { 
+                    sql: 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";' 
+                });
+                status.innerHTML += '<p>✅ UUID extension created</p>';
+            } catch (e) {
+                status.innerHTML += '<p>❌ Extension error: ' + e.message + '</p>';
+            }
+            
+            // Create tables using REST API
+            const tables = [
+                {
+                    name: 'drivers',
+                    sql: `CREATE TABLE IF NOT EXISTS drivers (
+                        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                        name VARCHAR(255) NOT NULL,
+                        email VARCHAR(255) UNIQUE,
+                        phone VARCHAR(50) NOT NULL,
+                        license_number VARCHAR(100),
+                        vehicle_type VARCHAR(100),
+                        vehicle_plate VARCHAR(20),
+                        status VARCHAR(50) DEFAULT 'active',
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+                    );`
+                },
+                {
+                    name: 'operators',
+                    sql: `CREATE TABLE IF NOT EXISTS operators (
+                        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                        name VARCHAR(255) NOT NULL,
+                        email VARCHAR(255) UNIQUE NOT NULL,
+                        role VARCHAR(50) DEFAULT 'operator',
+                        status VARCHAR(50) DEFAULT 'active',
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+                    );`
+                }
+            ];
+            
+            for (const table of tables) {
+                try {
+                    status.innerHTML += '<p>Creating ' + table.name + '...</p>';
+                    await client.rpc('exec_sql', { sql: table.sql });
+                    status.innerHTML += '<p>✅ ' + table.name + ' created</p>';
+                } catch (e) {
+                    status.innerHTML += '<p>❌ ' + table.name + ' error: ' + e.message + '</p>';
+                }
+            }
+        }
+        
+        createTables();
+    </script>
+</body>
+</html>

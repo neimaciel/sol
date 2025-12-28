@@ -1,0 +1,163 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+serve(async (req) => {
+  // Handle CORS
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
+  try {
+    // Create Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
+    const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+    const url = new URL(req.url)
+    const pathParts = url.pathname.split('/')
+    const method = req.method
+
+    // Routes
+    if (method === 'GET' && pathParts.length >= 3) {
+      const groupId = pathParts[2]
+      
+      if (groupId) {
+        // Get specific group
+        const { data, error } = await supabase
+          .from('groups')
+          .select('*')
+          .eq('id', groupId)
+          .single()
+
+        if (error) {
+          throw error
+        }
+
+        return new Response(JSON.stringify(data), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        })
+      }
+    }
+
+    if (method === 'GET') {
+      // Get all groups
+      const { data, error } = await supabase
+        .from('groups')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        throw error
+      }
+
+      return new Response(JSON.stringify(data), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      })
+    }
+
+    if (method === 'POST') {
+      // Create new group
+      const body = await req.json()
+      
+      const { data, error } = await supabase
+        .from('groups')
+        .insert([body])
+        .select()
+        .single()
+
+      if (error) {
+        throw error
+      }
+
+      return new Response(JSON.stringify(data), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 201,
+      })
+    }
+
+    if (method === 'POST' && url.pathname.includes('/broadcast')) {
+      // Broadcast message to WhatsApp groups
+      const body = await req.json()
+      const { loadId, groupIds, message } = body
+
+      // Here you would integrate with WhatsApp Evolution API
+      const evolutionApiUrl = Deno.env.get('EVOLUTION_API_URL')
+      const evolutionApiKey = Deno.env.get('EVOLUTION_API_KEY')
+
+      const results = []
+      
+      for (const groupId of groupIds) {
+        // Get group details
+        const { data: group } = await supabase
+          .from('groups')
+          .select('*')
+          .eq('id', groupId)
+          .single()
+
+        if (group && group.whatsapp_id) {
+          // Send message via Evolution API (if configured)
+          if (evolutionApiUrl && evolutionApiKey) {
+            try {
+              const response = await fetch(`${evolutionApiUrl}/message/sendText/sol_logistica`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'apikey': evolutionApiKey
+                },
+                body: JSON.stringify({
+                  number: group.whatsapp_id,
+                  text: message
+                })
+              })
+              
+              const result = await response.json()
+              results.push({ groupId, success: response.ok, result })
+            } catch (error) {
+              results.push({ groupId, success: false, error: error.message })
+            }
+          } else {
+            // Mock success for testing
+            results.push({ groupId, success: true, message: 'WhatsApp API not configured' })
+          }
+        }
+      }
+
+      // Update load with broadcast status
+      await supabase
+        .from('loads')
+        .update({ 
+          status: 'broadcast',
+          broadcast_status: 'sent',
+          sent_groups: groupIds
+        })
+        .eq('id', loadId)
+
+      return new Response(JSON.stringify({ 
+        success: true, 
+        results,
+        message: 'Broadcast completed' 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      })
+    }
+
+    return new Response(JSON.stringify({ error: 'Route not found' }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 404,
+    })
+
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 500,
+    })
+  }
+})

@@ -7,6 +7,8 @@ import { useNavigate } from 'react-router-dom'
 
 
 export default function Login() {
+    console.log('Login component rendering...')
+    
     const [isLogin, setIsLogin] = useState(true)
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
@@ -15,6 +17,8 @@ export default function Login() {
     const navigate = useNavigate()
 
     const isDev = import.meta.env.DEV
+    
+    console.log('Login component state:', { isLogin, email, isLoading, isDev })
 
     useEffect(() => {
         if (isDev) {
@@ -26,6 +30,9 @@ export default function Login() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsLoading(true)
+        
+        console.log('Login form submitted!')
+        console.log('Form data:', { email, password: '***', isLogin })
 
         if (isLogin) {
             console.log('Starting login with:', email)
@@ -33,18 +40,17 @@ export default function Login() {
                 const { error } = await signIn(email, password)
                 console.log('Login result:', error)
                 if (error) {
+                    console.error('Login failed:', error)
                     alert('Erro ao fazer login: ' + error.message)
+                    setIsLoading(false)
                 } else {
-                    console.log('Login successful, navigating to /')
-                    // Add delay to ensure state is updated
-                    setTimeout(() => {
-                        navigate('/')
-                    }, 100)
+                    console.log('Login successful! Redirecting...')
+                    // Force immediate navigation
+                    window.location.href = '/'
                 }
             } catch (err) {
                 console.error('Login exception:', err)
-                alert('Erro interno no login')
-            } finally {
+                alert('Erro interno no login: ' + (err as Error).message)
                 setIsLoading(false)
             }
         } else {

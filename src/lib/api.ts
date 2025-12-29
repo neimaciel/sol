@@ -85,7 +85,7 @@ class ApiClient {
   // Auth methods (simplified for Edge Functions)
   async login(email: string, _password: string): Promise<LoginResponse> {
     // For now, return a mock response since auth will be handled by Supabase Auth
-    return {
+    const response = {
       operator: {
         id: '550e8400-e29b-41d4-a716-446655440000',
         email: email,
@@ -103,6 +103,11 @@ class ApiClient {
       session_token: 'mock-token',
       expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
     };
+
+    // Set the token in the API client
+    this.setToken(response.session_token);
+    
+    return response;
   }
 
   async logout(): Promise<void> {
@@ -115,7 +120,15 @@ class ApiClient {
       id: '550e8400-e29b-41d4-a716-446655440000',
       email: 'admin@sollogistica.com',
       name: 'Admin SOL',
-      role: 'admin'
+      role: 'admin',
+      permissions: {
+        can_manage_drivers: true,
+        can_manage_loads: true,
+        can_confirm_payments: true,
+        can_manage_operators: true,
+        can_access_reports: true,
+        can_manage_contracts: true,
+      }
     };
   }
 

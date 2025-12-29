@@ -66,6 +66,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     },
     signIn: async (email, password) => {
         try {
+            set({ loading: true })
             const response = await api.login(email, password)
             
             set({ 
@@ -76,6 +77,7 @@ export const useAuthStore = create<AuthState>((set) => ({
             return { error: null }
         } catch (error: any) {
             console.error('Login error:', error)
+            set({ loading: false })
             return { 
                 error: {
                     message: error.message || 'Erro ao fazer login'

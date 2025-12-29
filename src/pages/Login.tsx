@@ -28,12 +28,24 @@ export default function Login() {
         setIsLoading(true)
 
         if (isLogin) {
-            const { error } = await signIn(email, password)
-            if (error) {
-                alert('Erro ao fazer login: ' + error.message)
+            console.log('Starting login with:', email)
+            try {
+                const { error } = await signIn(email, password)
+                console.log('Login result:', error)
+                if (error) {
+                    alert('Erro ao fazer login: ' + error.message)
+                } else {
+                    console.log('Login successful, navigating to /')
+                    // Add delay to ensure state is updated
+                    setTimeout(() => {
+                        navigate('/')
+                    }, 100)
+                }
+            } catch (err) {
+                console.error('Login exception:', err)
+                alert('Erro interno no login')
+            } finally {
                 setIsLoading(false)
-            } else {
-                navigate('/')
             }
         } else {
             const { error } = await signUp(email, password, 'User')

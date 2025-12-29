@@ -3,11 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Truck, Users, Package, TrendingUp } from 'lucide-react'
 
 export default function SimpleDashboard() {
-    console.log('SimpleDashboard rendering...')
-    
     const { user, signOut } = useAuthStore()
-    
-    console.log('Dashboard user:', user)
     
     if (!user) {
         return (

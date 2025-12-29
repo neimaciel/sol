@@ -7,8 +7,6 @@ import { useNavigate } from 'react-router-dom'
 
 
 export default function Login() {
-    console.log('Login component rendering...')
-    
     const [isLogin, setIsLogin] = useState(true)
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
@@ -17,13 +15,11 @@ export default function Login() {
     const navigate = useNavigate()
 
     const isDev = import.meta.env.DEV
-    
-    console.log('Login component state:', { isLogin, email, isLoading, isDev })
 
     useEffect(() => {
         if (isDev) {
-            setEmail('test_brutal_123@example.com')
-            setPassword('password123')
+            setEmail('admin@sollogistica.com')
+            setPassword('admin123')
         }
     }, [isDev])
 
@@ -31,26 +27,14 @@ export default function Login() {
         e.preventDefault()
         setIsLoading(true)
         
-        console.log('Login form submitted!')
-        console.log('Form data:', { email, password: '***', isLogin })
 
         if (isLogin) {
-            console.log('Starting login with:', email)
-            try {
-                const { error } = await signIn(email, password)
-                console.log('Login result:', error)
-                if (error) {
-                    console.error('Login failed:', error)
-                    alert('Erro ao fazer login: ' + error.message)
-                    setIsLoading(false)
-                } else {
-                    console.log('Login successful! Redirecting...')
-                    // Force immediate navigation
-                    window.location.href = '/'
-                }
-            } catch (err) {
-                console.error('Login exception:', err)
-                alert('Erro interno no login: ' + (err as Error).message)
+            const { error } = await signIn(email, password)
+            if (error) {
+                alert('Erro ao fazer login: ' + error.message)
+                setIsLoading(false)
+            } else {
+                navigate('/')
                 setIsLoading(false)
             }
         } else {
@@ -68,20 +52,13 @@ export default function Login() {
 
     const handleQuickAccess = async () => {
         setIsLoading(true)
-        const { error } = await signIn('test_brutal_123@example.com', 'password123')
+        const { error } = await signIn('admin@sollogistica.com', 'admin123')
         if (error) {
-            // Fallback to signup if user doesn't exist in this env
-            const { error: signUpError } = await signUp('test_brutal_123@example.com', 'password123', 'Test User')
-            if (signUpError) {
-                alert('Quick Access Failed: ' + signUpError.message)
-                setIsLoading(false)
-            } else {
-                // Auto login after signup
-                await signIn('test_brutal_123@example.com', 'password123')
-                navigate('/')
-            }
+            alert('Quick Access Failed: ' + error.message)
+            setIsLoading(false)
         } else {
             navigate('/')
+            setIsLoading(false)
         }
     }
 

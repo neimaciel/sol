@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug SOL TMS</title>
+    <style>
+        body { font-family: monospace; background: #111; color: #fff; padding: 20px; }
+        .debug { background: #222; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        button { background: #0066cc; color: white; border: none; padding: 10px 20px; cursor: pointer; }
+        input { padding: 8px; margin: 5px; background: #333; color: white; border: 1px solid #666; }
+    </style>
+</head>
+<body>
+    <h1>SOL TMS - Debug Login</h1>
+    
+    <div class="debug">
+        <h3>Sistema Funcionando ✓</h3>
+        <p>Se você está vendo esta página, o servidor está OK.</p>
+    </div>
+
+    <div class="debug">
+        <h3>Teste de Login Direto</h3>
+        <form id="loginForm">
+            <input type="email" id="email" placeholder="admin@sollogistica.com" value="admin@sollogistica.com">
+            <input type="password" id="password" placeholder="senha" value="123456">
+            <button type="submit">LOGIN DIRETO</button>
+        </form>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        console.log('🚀 Debug page loaded!');
+        
+        // Test Supabase connection
+        const SUPABASE_URL = 'https://ekimcihxrnigghnappjv.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVraW1jaWh4cm5pZ2dobmFwcGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4MDEzNjgsImV4cCI6MjA4MjM3NzM2OH0.0Ig35iloZLzSUQnvmj9oVSQ2mYmSeWjpdaRudEU5qOo';
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            console.log('Direct login attempt...');
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<p>🔄 Testando conexão...</p>';
+            
+            try {
+                // Test API connection
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/loads`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+                
+                if (response.ok) {
+                    localStorage.setItem('auth_token', 'mock-token');
+                    localStorage.setItem('user', JSON.stringify({
+                        id: '550e8400-e29b-41d4-a716-446655440000',
+                        email: 'admin@sollogistica.com',
+                        name: 'Admin SOL',
+                        role: 'admin'
+                    }));
+                    
+                    resultDiv.innerHTML = '<p>✅ Login OK! Redirecionando...</p>';
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1000);
+                } else {
+                    resultDiv.innerHTML = '<p>❌ Erro na API: ' + response.status + '</p>';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                resultDiv.innerHTML = '<p>❌ Erro: ' + error.message + '</p>';
+            }
+        });
+        
+        // Test if we can access the loads
+        async function testAPI() {
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/loads`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY
+                    }
+                });
+                console.log('API test response:', response.status);
+            } catch (error) {
+                console.error('API test failed:', error);
+            }
+        }
+        
+        testAPI();
+    </script>
+</body>
+</html>

@@ -1,1 +1,9 @@
 backend/
+*.py
+__pycache__/
+*.pyc
+requirements.txt
+Procfile
+render.yaml
+setup_production.py
+*.db

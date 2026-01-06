@@ -7,3 +7,4 @@ Procfile
 render.yaml
 setup_production.py
 *.db
+supabase-setup.sql

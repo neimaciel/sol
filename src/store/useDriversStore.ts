@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { api } from '@/lib/api'
+import { api } from '@/lib/apiClient'
 
 export interface Driver {
     id: string

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
-import { api } from '@/lib/api'
-// import type { LoginResponse } from '@/lib/api'
+import { api } from '@/lib/apiClient'
+// import type { LoginResponse } from '@/lib/apiClient'
 
 interface Operator {
     id: string

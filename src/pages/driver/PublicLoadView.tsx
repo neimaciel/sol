@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom'
-import { api } from '@/lib/api'
+import { api } from '@/lib/apiClient'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { MapPin, DollarSign, Truck, Calendar, ArrowRight, MessageCircle, CheckCircle } from 'lucide-react'

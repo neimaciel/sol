@@ -59,7 +59,7 @@ export default function DriverPortal() {
     useEffect(() => {
         const fetchSystemPhone = async () => {
             try {
-                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+                const apiUrl = 'https://ekimcihxrnigghnappjv.supabase.co/functions/v1'
                 const response = await fetch(`${apiUrl}/api/v1/whatsapp/system-phone`)
                 const data = await response.json()
                 if (data.phone) {
@@ -78,7 +78,7 @@ export default function DriverPortal() {
         setError(null)
 
         try {
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+            const apiUrl = 'https://ekimcihxrnigghnappjv.supabase.co/functions/v1'
 
             const response = await fetch(`${apiUrl}/api/v1/candidates/apply`, {
                 method: 'POST',

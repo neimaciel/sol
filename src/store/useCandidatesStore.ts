@@ -35,7 +35,7 @@ export const useCandidatesStore = create<CandidatesStore>((set) => ({
     fetchCandidates: async (loadId: string) => {
         set({ loading: true, error: null })
         try {
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+            const apiUrl = 'https://ekimcihxrnigghnappjv.supabase.co/functions/v1'
 
             // Add timeout to prevent infinite loading
             const controller = new AbortController()
@@ -64,7 +64,7 @@ export const useCandidatesStore = create<CandidatesStore>((set) => ({
 
     selectCandidate: async (candidateId: string) => {
         try {
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+            const apiUrl = 'https://ekimcihxrnigghnappjv.supabase.co/functions/v1'
             const response = await fetch(`${apiUrl}/api/v1/candidates/${candidateId}/select`, {
                 method: 'POST'
             })

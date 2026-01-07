@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Save, Upload, Bot, BrainCircuit, ArrowLeft } from 'lucide-react'
 
 // Mock API calls - in real app, use axios/fetch to call backend
-const API_URL = 'http://localhost:8000/api/v1/admin'
+const API_URL = 'https://ekimcihxrnigghnappjv.supabase.co/functions/v1/api/v1/admin'
 
 export default function AgentAdmin() {
     const navigate = useNavigate()

@@ -55,7 +55,7 @@ export function GroupFormModal({ isOpen, onClose, groupToEdit }: GroupFormModalP
             // Extract JID if link is provided and different from existing (or new group)
             if (formData.whatsappLink && (!groupToEdit || formData.whatsappLink !== groupToEdit.whatsappLink)) {
                 try {
-                    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+                    const apiUrl = 'https://ekimcihxrnigghnappjv.supabase.co/functions/v1'
                     const response = await fetch(`${apiUrl}/api/v1/whatsapp/extract-group-jid`, {
                         method: 'POST',
                         headers: {

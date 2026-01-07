@@ -14,7 +14,7 @@ export default function WhatsAppSettings() {
     const [isLoading, setIsLoading] = useState(false)
     const [useAsSystemPhone, setUseAsSystemPhone] = useState(false)
 
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+    const apiUrl = 'https://ekimcihxrnigghnappjv.supabase.co/functions/v1'
 
     const fetchStatus = async () => {
         try {

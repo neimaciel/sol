@@ -113,7 +113,7 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
     const fetchGroups = async () => {
         try {
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+            const apiUrl = 'https://ekimcihxrnigghnappjv.supabase.co/functions/v1'
             const response = await fetch(`${apiUrl}/api/v1/groups/`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
@@ -142,7 +142,7 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
         if (newGroupLink) {
             try {
-                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+                const apiUrl = 'https://ekimcihxrnigghnappjv.supabase.co/functions/v1'
                 const response = await fetch(`${apiUrl}/api/v1/whatsapp/extract-group-jid`, {
                     method: 'POST',
                     headers: {
@@ -168,7 +168,7 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
         }
 
         try {
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+            const apiUrl = 'https://ekimcihxrnigghnappjv.supabase.co/functions/v1'
             const response = await fetch(`${apiUrl}/api/v1/groups`, {
                 method: 'POST',
                 headers: {
@@ -504,7 +504,7 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
                                                                 setIsBroadcasting(true)
                                                                 try {
-                                                                    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+                                                                    const apiUrl = 'https://ekimcihxrnigghnappjv.supabase.co/functions/v1'
                                                                     const sentGroups = [...(card.sent_groups || [])]
                                                                     let successCount = 0
 
@@ -924,7 +924,7 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                     setChatMessage('')
 
                                                     try {
-                                                        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+                                                        const apiUrl = 'https://ekimcihxrnigghnappjv.supabase.co/functions/v1'
                                                         const response = await fetch(`${apiUrl}/api/v1/whatsapp/send-message`, {
                                                             method: 'POST',
                                                             headers: { 'Content-Type': 'application/json' },

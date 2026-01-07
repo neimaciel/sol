@@ -58,7 +58,7 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
             // If user provided a WhatsApp link AND no ID was passed, try to extract the JID automatically
             if (newGroup.whatsappLink && !whatsappId) {
                 try {
-                    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+                    const apiUrl = 'https://ekimcihxrnigghnappjv.supabase.co/functions/v1'
                     const response = await fetch(`${apiUrl}/api/v1/whatsapp/extract-group-jid`, {
                         method: 'POST',
                         headers: {
@@ -107,7 +107,7 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
             // If user updated the WhatsApp link AND no ID was passed, try to extract the JID automatically
             if (updatedGroup.whatsappLink && whatsappId === undefined) {
                 try {
-                    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+                    const apiUrl = 'https://ekimcihxrnigghnappjv.supabase.co/functions/v1'
                     const response = await fetch(`${apiUrl}/api/v1/whatsapp/extract-group-jid`, {
                         method: 'POST',
                         headers: {

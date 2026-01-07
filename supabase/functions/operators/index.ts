@@ -4,6 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
 }
 
 serve(async (req) => {
@@ -19,6 +20,55 @@ serve(async (req) => {
     const url = new URL(req.url)
     const pathParts = url.pathname.split('/')
     const method = req.method
+
+    // Login endpoint: POST /auth/login
+    if (method === 'POST' && url.pathname.includes('/auth/login')) {
+      const { email, password } = await req.json()
+
+      // Authenticate with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (authError) {
+        return new Response(JSON.stringify({ error: authError.message }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401,
+        })
+      }
+
+      // Get operator data
+      const { data: operator, error: operatorError } = await supabase
+        .from('operators')
+        .select('*')
+        .eq('email', email)
+        .single()
+
+      if (operatorError || !operator) {
+        return new Response(JSON.stringify({ error: 'Operator not found' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 404,
+        })
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'Login realizado com sucesso',
+        access_token: authData.session?.access_token,
+        refresh_token: authData.session?.refresh_token,
+        user: authData.user,
+        operator: {
+          id: operator.id,
+          email: operator.email,
+          name: operator.name,
+          role: operator.role,
+        }
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      })
+    }
 
     if (method === 'GET' && pathParts.length >= 3) {
       const operatorId = pathParts[2]

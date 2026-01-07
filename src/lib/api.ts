@@ -82,32 +82,54 @@ class ApiClient {
     }
   }
 
-  // Auth methods (simplified for Edge Functions)
-  async login(email: string, _password: string): Promise<LoginResponse> {
-    // For now, return a mock response since auth will be handled by Supabase Auth
-    const response = {
+  // Auth methods - Call Supabase Edge Function
+  async login(email: string, password: string): Promise<LoginResponse> {
+    const LOGIN_URL = `${SUPABASE_URL}/functions/v1/operators/auth/login`;
+
+    const response = await fetch(LOGIN_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'apikey': SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify({ email, password })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || errorData.message || 'Falha no login');
+    }
+
+    const data = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.message || 'Falha na autenticação');
+    }
+
+    const loginResponse: LoginResponse = {
       operator: {
-        id: '550e8400-e29b-41d4-a716-446655440000',
-        email: email,
-        name: 'Admin SOL',
-        role: 'admin',
+        id: data.operator.id,
+        email: data.operator.email,
+        name: data.operator.name,
+        role: data.operator.role,
         permissions: {
-          can_manage_drivers: true,
-          can_manage_loads: true,
-          can_confirm_payments: true,
-          can_manage_operators: true,
-          can_access_reports: true,
-          can_manage_contracts: true,
+          can_manage_drivers: data.operator.permissions?.can_manage_drivers || false,
+          can_manage_loads: data.operator.permissions?.can_manage_loads || false,
+          can_confirm_payments: data.operator.permissions?.can_confirm_payments || false,
+          can_manage_operators: data.operator.permissions?.can_manage_operators || false,
+          can_access_reports: data.operator.permissions?.can_access_reports || false,
+          can_manage_contracts: data.operator.permissions?.can_manage_contracts || false,
         }
       },
-      session_token: 'mock-token',
-      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      session_token: data.access_token,
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
     };
 
     // Set the token in the API client
-    this.setToken(response.session_token);
-    
-    return response;
+    this.setToken(loginResponse.session_token);
+
+    return loginResponse;
   }
 
   async logout(): Promise<void> {

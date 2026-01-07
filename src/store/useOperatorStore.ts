@@ -51,16 +51,24 @@ export const useOperatorStore = create<OperatorState>()(
             login: async (email: string, password: string) => {
                 set({ loading: true, error: null })
                 try {
-                    const response = await fetch('/api/v1/operators/auth/login', {
+                    // Supabase Edge Function Authentication - v2.0
+                    const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVraW1jaWh4cm5pZ2dobmFwcGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4MDEzNjgsImV4cCI6MjA4MjM3NzM2OH0.0Ig35iloZLzSUQnvmj9oVSQ2mYmSeWjpdaRudEU5qOo'
+                    const API_URL = 'https://ekimcihxrnigghnappjv.supabase.co/functions/v1/operators/auth/login'
+
+                    const response = await fetch(API_URL, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${ANON_KEY}`,
+                            'apikey': ANON_KEY
+                        },
                         body: JSON.stringify({ email, password })
                     })
 
                     const data = await response.json()
 
                     if (!response.ok) {
-                        throw new Error(data.detail || 'Erro no login')
+                        throw new Error(data.error || data.detail || 'Erro no login')
                     }
 
                     if (!data.success) {
@@ -69,8 +77,8 @@ export const useOperatorStore = create<OperatorState>()(
 
                     set({
                         operator: data.operator,
-                        sessionToken: data.session_token,
-                        expiresAt: data.expires_at,
+                        sessionToken: data.access_token,
+                        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
                         loading: false
                     })
 

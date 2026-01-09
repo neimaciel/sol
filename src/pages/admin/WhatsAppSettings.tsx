@@ -63,27 +63,42 @@ export default function WhatsAppSettings() {
         setQrCode(null)
         try {
             const response = await fetch(`${apiUrl}/api/v1/whatsapp/connect`)
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`)
+            }
+
             const data = await response.json()
+            console.log('QR Code response:', data)
 
             // Evolution API returns the QR code in different formats
             if (data.base64) {
                 // Most common: direct base64 field
-                setQrCode(data.base64.replace('data:image/png;base64,', ''))
+                const cleanBase64 = data.base64.replace('data:image/png;base64,', '')
+                console.log('Setting QR Code from data.base64')
+                setQrCode(cleanBase64)
             } else if (data.qrcode && data.qrcode.base64) {
                 // Alternative: nested qrcode object
-                const base64 = data.qrcode.base64.replace('data:image/png;base64,', '')
-                setQrCode(base64)
+                const cleanBase64 = data.qrcode.base64.replace('data:image/png;base64,', '')
+                console.log('Setting QR Code from data.qrcode.base64')
+                setQrCode(cleanBase64)
             } else if (data.code) {
                 // Sometimes it returns just the code string for QR generation
+                console.log('Setting QR Code from data.code')
                 setQrCode(data.code)
+            } else if (data.qr) {
+                // Another possible format
+                console.log('Setting QR Code from data.qr')
+                setQrCode(data.qr)
             } else {
-                console.warn('No QR code data found in response:', data)
+                console.warn('No QR code data found in response. Available keys:', Object.keys(data))
+                alert('Erro: QR Code não encontrado na resposta da API. Verifique o console para mais detalhes.')
             }
 
             setStatus('connecting')
         } catch (error) {
             console.error('Error connecting:', error)
-            alert('Erro ao iniciar conexão')
+            alert(`Erro ao iniciar conexão: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
         } finally {
             setIsLoading(false)
         }

@@ -151,7 +151,9 @@ class APIClient {
       throw new Error('Failed to fetch drivers')
     }
 
-    return await response.json()
+    const data = await response.json()
+    // Edge function returns array directly, wrap it for consistency
+    return { drivers: Array.isArray(data) ? data : [] }
   }
 
   async createDriver(driver: any): Promise<any> {
@@ -172,14 +174,15 @@ class APIClient {
       throw new Error(errorData.error || errorData.message || 'Failed to create driver')
     }
 
-    return await response.json()
+    const data = await response.json()
+    return { success: true, driver: data }
   }
 
   async updateDriver(id: string, updates: any): Promise<any> {
     const url = `${SUPABASE_URL}/functions/v1/drivers/${id}`
 
     const response = await fetch(url, {
-      method: 'PATCH',
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${this.token}`,
@@ -193,7 +196,8 @@ class APIClient {
       throw new Error(errorData.error || errorData.message || 'Failed to update driver')
     }
 
-    return await response.json()
+    const data = await response.json()
+    return { success: true, driver: data }
   }
 
   async deleteDriver(id: string): Promise<any> {
@@ -232,7 +236,9 @@ class APIClient {
       throw new Error('Failed to fetch loads')
     }
 
-    return await response.json()
+    const data = await response.json()
+    // Edge function returns array directly, wrap it for consistency
+    return { loads: Array.isArray(data) ? data : [] }
   }
 
   async getLoad(id: string): Promise<any> {
@@ -272,14 +278,15 @@ class APIClient {
       throw new Error(errorData.error || errorData.message || 'Failed to create load')
     }
 
-    return await response.json()
+    const data = await response.json()
+    return { success: true, load: data }
   }
 
   async updateLoad(id: string, updates: any): Promise<any> {
     const url = `${SUPABASE_URL}/functions/v1/loads/${id}`
 
     const response = await fetch(url, {
-      method: 'PATCH',
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${this.token}`,
@@ -293,7 +300,8 @@ class APIClient {
       throw new Error(errorData.error || errorData.message || 'Failed to update load')
     }
 
-    return await response.json()
+    const data = await response.json()
+    return { success: true, load: data }
   }
 
   async deleteLoad(id: string): Promise<any> {
@@ -313,6 +321,7 @@ class APIClient {
       throw new Error(errorData.error || errorData.message || 'Failed to delete load')
     }
 
+    // DELETE returns {success: true} directly from edge function
     return await response.json()
   }
 
@@ -332,7 +341,9 @@ class APIClient {
       throw new Error('Failed to fetch groups')
     }
 
-    return await response.json()
+    const data = await response.json()
+    // Edge function returns array directly
+    return Array.isArray(data) ? data : []
   }
 
   async createGroup(group: any): Promise<any> {
@@ -353,14 +364,15 @@ class APIClient {
       throw new Error(errorData.error || errorData.message || 'Failed to create group')
     }
 
-    return await response.json()
+    const data = await response.json()
+    return { success: true, group: data }
   }
 
   async updateGroup(id: string, group: any): Promise<any> {
     const url = `${SUPABASE_URL}/functions/v1/groups/${id}`
 
     const response = await fetch(url, {
-      method: 'PATCH',
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${this.token}`,
@@ -374,7 +386,8 @@ class APIClient {
       throw new Error(errorData.error || errorData.message || 'Failed to update group')
     }
 
-    return await response.json()
+    const data = await response.json()
+    return { success: true, group: data }
   }
 
   async deleteGroup(id: string): Promise<any> {
@@ -394,6 +407,7 @@ class APIClient {
       throw new Error(errorData.error || errorData.message || 'Failed to delete group')
     }
 
+    // DELETE returns {success: true} directly from edge function
     return await response.json()
   }
 }

@@ -27,13 +27,11 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
     fetchGroups: async () => {
         set({ isLoading: true })
         try {
-            const response = await api.getGroups()
-            
-            // Handle both array and object response formats
-            const groups = Array.isArray(response) ? response : response.data || []
+            const groups = await api.getGroups()
 
+            // getGroups now returns array directly
             set({
-                groups: groups.map((g: any) => ({
+                groups: (Array.isArray(groups) ? groups : []).map((g: any) => ({
                     id: g.id,
                     name: g.name,
                     type: g.type,

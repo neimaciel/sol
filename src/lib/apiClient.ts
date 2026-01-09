@@ -136,43 +136,203 @@ class APIClient {
   }
 
   async getDrivers(): Promise<any> {
-    return []
+    const url = `${SUPABASE_URL}/functions/v1/drivers`
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.token}`,
+        'apikey': SUPABASE_ANON_KEY
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch drivers')
+    }
+
+    return await response.json()
   }
 
   async getLoads(): Promise<any> {
-    return []
+    const url = `${SUPABASE_URL}/functions/v1/loads`
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.token}`,
+        'apikey': SUPABASE_ANON_KEY
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch loads')
+    }
+
+    return await response.json()
   }
 
-  async getLoad(_id: string): Promise<any> {
-    return null
+  async getLoad(id: string): Promise<any> {
+    const url = `${SUPABASE_URL}/functions/v1/loads/${id}`
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.token}`,
+        'apikey': SUPABASE_ANON_KEY
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch load')
+    }
+
+    return await response.json()
   }
 
   async createLoad(load: any): Promise<any> {
-    return load
+    const url = `${SUPABASE_URL}/functions/v1/loads`
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.token}`,
+        'apikey': SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify(load)
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || errorData.message || 'Failed to create load')
+    }
+
+    return await response.json()
   }
 
   async updateLoad(id: string, updates: any): Promise<any> {
-    return { ...updates, id }
+    const url = `${SUPABASE_URL}/functions/v1/loads/${id}`
+
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.token}`,
+        'apikey': SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify(updates)
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || errorData.message || 'Failed to update load')
+    }
+
+    return await response.json()
   }
 
-  async deleteLoad(_id: string): Promise<any> {
-    return { success: true }
+  async deleteLoad(id: string): Promise<any> {
+    const url = `${SUPABASE_URL}/functions/v1/loads/${id}`
+
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.token}`,
+        'apikey': SUPABASE_ANON_KEY
+      }
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || errorData.message || 'Failed to delete load')
+    }
+
+    return await response.json()
   }
 
   async getGroups(): Promise<any> {
-    return []
+    const url = `${SUPABASE_URL}/functions/v1/groups`
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.token}`,
+        'apikey': SUPABASE_ANON_KEY
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch groups')
+    }
+
+    return await response.json()
   }
 
   async createGroup(group: any): Promise<any> {
-    return group
+    const url = `${SUPABASE_URL}/functions/v1/groups`
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.token}`,
+        'apikey': SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify(group)
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || errorData.message || 'Failed to create group')
+    }
+
+    return await response.json()
   }
 
   async updateGroup(id: string, group: any): Promise<any> {
-    return { ...group, id }
+    const url = `${SUPABASE_URL}/functions/v1/groups/${id}`
+
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.token}`,
+        'apikey': SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify(group)
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || errorData.message || 'Failed to update group')
+    }
+
+    return await response.json()
   }
 
-  async deleteGroup(_id: string): Promise<any> {
-    return { success: true }
+  async deleteGroup(id: string): Promise<any> {
+    const url = `${SUPABASE_URL}/functions/v1/groups/${id}`
+
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.token}`,
+        'apikey': SUPABASE_ANON_KEY
+      }
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || errorData.message || 'Failed to delete group')
+    }
+
+    return await response.json()
   }
 }
 

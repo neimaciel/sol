@@ -52,4 +52,4 @@ npm run build
 - ✅ WhatsApp broadcast integration
 - ✅ Public load viewing for drivers
 - ✅ Payment tracking system
-- ✅ Supabase Edge Functions backend
+- ✅ Supabase Edge Functions backend# Force redeploy Fri Jan  9 14:39:07 -03 2026

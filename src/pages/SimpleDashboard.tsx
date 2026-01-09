@@ -119,18 +119,6 @@ export default function SimpleDashboard() {
                             </Button>
                         </div>
                     </div>
-
-                    {/* Debug Info */}
-                    <div className="mt-8 bg-muted/20 border border-border rounded-lg p-4">
-                        <h4 className="text-sm font-medium text-muted-foreground mb-2">Debug Info:</h4>
-                        <pre className="text-xs text-muted-foreground">
-                            {JSON.stringify({ 
-                                user: user,
-                                timestamp: new Date().toISOString(),
-                                status: 'Dashboard carregado com sucesso!'
-                            }, null, 2)}
-                        </pre>
-                    </div>
                 </div>
             </main>
         </div>

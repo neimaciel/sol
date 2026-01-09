@@ -5,6 +5,7 @@ import { queryClient } from '@/lib/query-client'
 import { useAuthStore } from '@/store/useAuthStore'
 import { AnimatePresence } from 'framer-motion'
 
+import Dashboard from '@/pages/Dashboard'
 import SimpleDashboard from '@/pages/SimpleDashboard'
 import GroupsList from '@/pages/groups/GroupsList'
 import ModelsList from '@/pages/models/ModelsList'
@@ -92,10 +93,26 @@ function AnimatedRoutes() {
           }
         />
         <Route
-          path="/*"
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/simple"
           element={
             <ProtectedRoute>
               <SimpleDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/*"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
             </ProtectedRoute>
           }
         />

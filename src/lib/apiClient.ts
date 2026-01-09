@@ -73,6 +73,7 @@ class APIClient {
 
     this.token = result.session_token
     localStorage.setItem('auth_token', this.token)
+    localStorage.setItem('auth_user', JSON.stringify(result.operator))
 
     return result
   }
@@ -80,6 +81,7 @@ class APIClient {
   async logout(): Promise<void> {
     this.token = null
     localStorage.removeItem('auth_token')
+    localStorage.removeItem('auth_user')
   }
 
   setToken(token: string) {
@@ -94,9 +96,21 @@ class APIClient {
   clearToken() {
     this.token = null
     localStorage.removeItem('auth_token')
+    localStorage.removeItem('auth_user')
   }
 
   async getCurrentUser(): Promise<any> {
+    // Try to get user from localStorage first (cached from login)
+    const cachedUser = localStorage.getItem('auth_user')
+    if (cachedUser) {
+      try {
+        return JSON.parse(cachedUser)
+      } catch (e) {
+        console.error('Failed to parse cached user', e)
+      }
+    }
+
+    // If no cached user, try to fetch from API
     const url = `${SUPABASE_URL}/functions/v1/operators/auth/me`
 
     const response = await fetch(url, {
@@ -113,7 +127,12 @@ class APIClient {
     }
 
     const data = await response.json()
-    return data.operator
+    const user = data.operator
+
+    // Cache the user data
+    localStorage.setItem('auth_user', JSON.stringify(user))
+
+    return user
   }
 
   async getDrivers(): Promise<any> {

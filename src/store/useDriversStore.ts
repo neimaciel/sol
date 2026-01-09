@@ -55,19 +55,65 @@ export const useDriversStore = create<DriversState>((set) => ({
         }
     },
 
-    addDriver: async (_driver) => {
-        console.log('Add driver not implemented for local API yet')
-        // TODO: Implement when needed
+    addDriver: async (driver) => {
+        try {
+            const driverData = {
+                name: driver.name,
+                phone: driver.phone,
+                cpf_cnpj: driver.cpf || driver.cnh,
+                vehicle_type: driver.vehicle,
+                photo: driver.photo
+            }
+
+            const response = await api.createDriver(driverData)
+
+            if (response.success) {
+                // Refresh drivers to get the latest data
+                await useDriversStore.getState().fetchDrivers()
+            }
+        } catch (error) {
+            console.error('Error adding driver:', error)
+            throw error
+        }
     },
 
-    updateDriver: async (_id, _updatedDriver) => {
-        console.log('Update driver not implemented for local API yet')
-        // TODO: Implement when needed
+    updateDriver: async (id, updatedDriver) => {
+        try {
+            const updateData: any = {}
+            if (updatedDriver.name) updateData.name = updatedDriver.name
+            if (updatedDriver.phone) updateData.phone = updatedDriver.phone
+            if (updatedDriver.cpf || updatedDriver.cnh) updateData.cpf_cnpj = updatedDriver.cpf || updatedDriver.cnh
+            if (updatedDriver.vehicle) updateData.vehicle_type = updatedDriver.vehicle
+            if (updatedDriver.photo) updateData.photo = updatedDriver.photo
+
+            const response = await api.updateDriver(id, updateData)
+
+            if (response.success) {
+                // Refresh drivers to get the latest data
+                await useDriversStore.getState().fetchDrivers()
+            }
+        } catch (error) {
+            console.error('Error updating driver:', error)
+            throw error
+        }
     },
 
-    deleteDriver: async (_id) => {
-        console.log('Delete driver not implemented for local API yet')
-        // TODO: Implement when needed
+    deleteDriver: async (id) => {
+        try {
+            const response = await api.deleteDriver(id)
+
+            if (response.success) {
+                // Optimistically remove from local state
+                set((state) => ({
+                    drivers: state.drivers.filter((d) => d.id !== id)
+                }))
+            }
+        } catch (error) {
+            console.error('Error deleting driver:', error)
+            // Refresh to revert optimistic update on error
+            await useDriversStore.getState().fetchDrivers()
+            throw error
+        }
     },
 
     subscribeToDrivers: () => {

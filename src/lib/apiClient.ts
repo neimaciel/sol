@@ -154,6 +154,68 @@ class APIClient {
     return await response.json()
   }
 
+  async createDriver(driver: any): Promise<any> {
+    const url = `${SUPABASE_URL}/functions/v1/drivers`
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.token}`,
+        'apikey': SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify(driver)
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || errorData.message || 'Failed to create driver')
+    }
+
+    return await response.json()
+  }
+
+  async updateDriver(id: string, updates: any): Promise<any> {
+    const url = `${SUPABASE_URL}/functions/v1/drivers/${id}`
+
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.token}`,
+        'apikey': SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify(updates)
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || errorData.message || 'Failed to update driver')
+    }
+
+    return await response.json()
+  }
+
+  async deleteDriver(id: string): Promise<any> {
+    const url = `${SUPABASE_URL}/functions/v1/drivers/${id}`
+
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.token}`,
+        'apikey': SUPABASE_ANON_KEY
+      }
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || errorData.message || 'Failed to delete driver')
+    }
+
+    return await response.json()
+  }
+
   async getLoads(): Promise<any> {
     const url = `${SUPABASE_URL}/functions/v1/loads`
 

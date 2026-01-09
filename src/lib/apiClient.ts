@@ -97,20 +97,23 @@ class APIClient {
   }
 
   async getCurrentUser(): Promise<any> {
-    return {
-      id: '550e8400-e29b-41d4-a716-446655440000',
-      email: 'admin@sollogistica.com',
-      name: 'Admin SOL',
-      role: 'admin',
-      permissions: {
-        can_manage_drivers: true,
-        can_manage_loads: true,
-        can_confirm_payments: true,
-        can_manage_operators: true,
-        can_access_reports: true,
-        can_manage_contracts: true,
+    const url = `${SUPABASE_URL}/functions/v1/operators/auth/me`
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.token}`,
+        'apikey': SUPABASE_ANON_KEY
       }
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to get current user')
     }
+
+    const data = await response.json()
+    return data.operator
   }
 
   async getDrivers(): Promise<any> {

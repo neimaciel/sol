@@ -142,11 +142,13 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
         if (newGroupLink) {
             try {
-                const apiUrl = 'https://ekimcihxrnigghnappjv.supabase.co/functions/v1'
-                const response = await fetch(`${apiUrl}/api/v1/whatsapp/extract-group-jid`, {
+                const evolutionApiUrl = 'https://api.ampler.me'
+                const evolutionApiKey = '52f13a23eee6e422dc718d4df667326c21168c2e7b2b777aa8d4b29c038acafb'
+                const response = await fetch(`${evolutionApiUrl}/api/v1/whatsapp/extract-group-jid`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'apikey': evolutionApiKey
                     },
                     body: JSON.stringify({ invite_link: newGroupLink })
                 })

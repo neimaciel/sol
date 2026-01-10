@@ -14,11 +14,16 @@ export default function WhatsAppSettings() {
     const [isLoading, setIsLoading] = useState(false)
     const [useAsSystemPhone, setUseAsSystemPhone] = useState(false)
 
-    const apiUrl = 'https://ekimcihxrnigghnappjv.supabase.co/functions/v1'
+    const apiUrl = 'https://api.ampler.me'
+    const apiKey = '52f13a23eee6e422dc718d4df667326c21168c2e7b2b777aa8d4b29c038acafb'
 
     const fetchStatus = async () => {
         try {
-            const response = await fetch(`${apiUrl}/api/v1/whatsapp/status`)
+            const response = await fetch(`${apiUrl}/api/v1/whatsapp/status`, {
+                headers: {
+                    'apikey': apiKey
+                }
+            })
             const data = await response.json()
 
             let state = data.state
@@ -33,7 +38,11 @@ export default function WhatsAppSettings() {
                 if (state === 'open') {
                     // Fetch connected number
                     try {
-                        const phoneResponse = await fetch(`${apiUrl}/api/v1/whatsapp/system-phone`)
+                        const phoneResponse = await fetch(`${apiUrl}/api/v1/whatsapp/system-phone`, {
+                            headers: {
+                                'apikey': apiKey
+                            }
+                        })
                         const phoneData = await phoneResponse.json()
                         if (phoneData.phone) {
                             setConnectedNumber(phoneData.phone)
@@ -62,7 +71,11 @@ export default function WhatsAppSettings() {
         setIsLoading(true)
         setQrCode(null)
         try {
-            const response = await fetch(`${apiUrl}/api/v1/whatsapp/connect`)
+            const response = await fetch(`${apiUrl}/api/v1/whatsapp/connect`, {
+                headers: {
+                    'apikey': apiKey
+                }
+            })
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`)
@@ -109,7 +122,12 @@ export default function WhatsAppSettings() {
 
         setIsLoading(true)
         try {
-            await fetch(`${apiUrl}/api/v1/whatsapp/logout`, { method: 'POST' })
+            await fetch(`${apiUrl}/api/v1/whatsapp/logout`, {
+                method: 'POST',
+                headers: {
+                    'apikey': apiKey
+                }
+            })
             setStatus('close')
             setQrCode(null)
             setConnectedNumber(null)
@@ -127,7 +145,12 @@ export default function WhatsAppSettings() {
         setIsLoading(true)
         setQrCode(null)
         try {
-            const response = await fetch(`${apiUrl}/api/v1/whatsapp/restart`, { method: 'POST' })
+            const response = await fetch(`${apiUrl}/api/v1/whatsapp/restart`, {
+                method: 'POST',
+                headers: {
+                    'apikey': apiKey
+                }
+            })
             const data = await response.json()
 
             if (data.base64) {

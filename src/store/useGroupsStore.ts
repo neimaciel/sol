@@ -56,11 +56,13 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
             // If user provided a WhatsApp link AND no ID was passed, try to extract the JID automatically
             if (newGroup.whatsappLink && !whatsappId) {
                 try {
-                    const apiUrl = 'https://ekimcihxrnigghnappjv.supabase.co/functions/v1'
-                    const response = await fetch(`${apiUrl}/api/v1/whatsapp/extract-group-jid`, {
+                    const evolutionApiUrl = 'https://api.ampler.me'
+                    const evolutionApiKey = '52f13a23eee6e422dc718d4df667326c21168c2e7b2b777aa8d4b29c038acafb'
+                    const response = await fetch(`${evolutionApiUrl}/api/v1/whatsapp/extract-group-jid`, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'apikey': evolutionApiKey
                         },
                         body: JSON.stringify({
                             invite_link: newGroup.whatsappLink
@@ -105,11 +107,13 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
             // If user updated the WhatsApp link AND no ID was passed, try to extract the JID automatically
             if (updatedGroup.whatsappLink && whatsappId === undefined) {
                 try {
-                    const apiUrl = 'https://ekimcihxrnigghnappjv.supabase.co/functions/v1'
-                    const response = await fetch(`${apiUrl}/api/v1/whatsapp/extract-group-jid`, {
+                    const evolutionApiUrl = 'https://api.ampler.me'
+                    const evolutionApiKey = '52f13a23eee6e422dc718d4df667326c21168c2e7b2b777aa8d4b29c038acafb'
+                    const response = await fetch(`${evolutionApiUrl}/api/v1/whatsapp/extract-group-jid`, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'apikey': evolutionApiKey
                         },
                         body: JSON.stringify({
                             invite_link: updatedGroup.whatsappLink

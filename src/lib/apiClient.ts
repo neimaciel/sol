@@ -404,6 +404,89 @@ class APIClient {
     // DELETE returns {success: true} directly from edge function
     return await response.json()
   }
+
+  // Payments Methods
+  async getPayment(loadId: string): Promise<any> {
+    const url = `${SUPABASE_URL}/functions/v1/payments/load/${loadId}`
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.getStoredToken()}`,
+        'apikey': SUPABASE_ANON_KEY
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch payment')
+    }
+
+    return await response.json()
+  }
+
+  async createPayment(payment: any): Promise<any> {
+    const url = `${SUPABASE_URL}/functions/v1/payments`
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.getStoredToken()}`,
+        'apikey': SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify(payment)
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || errorData.message || 'Failed to create payment')
+    }
+
+    const data = await response.json()
+    return { success: true, payment: data }
+  }
+
+  async confirmManualPayment(paymentId: string, confirmation: any): Promise<any> {
+    const url = `${SUPABASE_URL}/functions/v1/payments/${paymentId}/confirm`
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.getStoredToken()}`,
+        'apikey': SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify(confirmation)
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || errorData.message || 'Failed to confirm payment')
+    }
+
+    const data = await response.json()
+    return { success: true, ...data }
+  }
+
+  async getPaymentMethods(): Promise<any> {
+    const url = `${SUPABASE_URL}/functions/v1/payments/methods`
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.getStoredToken()}`,
+        'apikey': SUPABASE_ANON_KEY
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch payment methods')
+    }
+
+    return await response.json()
+  }
 }
 
 export const api = new APIClient()

@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { api } from '@/lib/apiClient'
 
 interface Payment {
     id: string
@@ -60,14 +61,8 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
     fetchPayment: async (loadId: string) => {
         set({ loading: true, error: null })
         try {
-            const response = await fetch(`/api/v1/payments/load/${loadId}`)
-            
-            if (!response.ok) {
-                throw new Error(`Erro ${response.status}: ${response.statusText}`)
-            }
+            const data = await api.getPayment(loadId)
 
-            const data = await response.json()
-            
             if (data.payment) {
                 set(state => ({
                     payments: { ...state.payments, [loadId]: data.payment },
@@ -88,32 +83,21 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
     createPayment: async (loadId: string, driverId: string, amount: number, method = 'MANUAL') => {
         set({ loading: true, error: null })
         try {
-            const response = await fetch('/api/v1/payments/create', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    load_id: loadId,
-                    driver_id: driverId,
-                    amount,
-                    payment_method: method
-                })
+            const result = await api.createPayment({
+                load_id: loadId,
+                driver_id: driverId,
+                amount,
+                payment_method: method
             })
 
-            if (!response.ok) {
-                const errorData = await response.json()
-                throw new Error(errorData.detail || `Erro ${response.status}`)
-            }
-
-            const result = await response.json()
-            
             if (!result.success) {
-                throw new Error(result.message || 'Erro ao criar pagamento')
+                throw new Error('Erro ao criar pagamento')
             }
 
             // Buscar o pagamento completo criado
             const payment = await get().fetchPayment(loadId)
             set({ loading: false })
-            
+
             if (!payment) {
                 throw new Error('Pagamento criado mas não foi possível recuperar os dados')
             }
@@ -128,31 +112,20 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
     confirmManualPayment: async (paymentId: string, notes?: string, receiptUrl?: string) => {
         set({ loading: true, error: null })
         try {
-            const response = await fetch(`/api/v1/payments/${paymentId}/confirm-manual`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    confirmed_by: 'admin', // TODO: usar ID do usuário logado
-                    notes,
-                    receipt_url: receiptUrl
-                })
+            const result = await api.confirmManualPayment(paymentId, {
+                confirmed_by: 'admin', // TODO: usar ID do usuário logado
+                notes,
+                receipt_url: receiptUrl
             })
 
-            if (!response.ok) {
-                const errorData = await response.json()
-                throw new Error(errorData.detail || `Erro ${response.status}`)
-            }
-
-            const result = await response.json()
-            
             if (!result.success) {
-                throw new Error(result.message || 'Erro ao confirmar pagamento')
+                throw new Error('Erro ao confirmar pagamento')
             }
 
             // Atualizar o pagamento no estado
             const currentPayments = get().payments
             const updatedPayments = { ...currentPayments }
-            
+
             // Encontrar e atualizar o pagamento
             for (const [loadId, payment] of Object.entries(currentPayments)) {
                 if (payment.id === paymentId) {
@@ -169,7 +142,7 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
             }
 
             set({ payments: updatedPayments, loading: false })
-            return updatedPayments[Object.keys(updatedPayments).find(loadId => 
+            return updatedPayments[Object.keys(updatedPayments).find(loadId =>
                 updatedPayments[loadId].id === paymentId
             )!]
         } catch (error: any) {
@@ -180,13 +153,7 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
 
     fetchPaymentMethods: async () => {
         try {
-            const response = await fetch('/api/v1/payments/methods')
-            
-            if (!response.ok) {
-                throw new Error(`Erro ${response.status}: ${response.statusText}`)
-            }
-
-            const data = await response.json()
+            const data = await api.getPaymentMethods()
             set({ paymentMethods: data.methods || [] })
         } catch (error: any) {
             set({ error: error.message })
@@ -194,26 +161,11 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
         }
     },
 
-    updateDriverBankData: async (driverId: string, bankData: any) => {
+    updateDriverBankData: async (_driverId: string, _bankData: any) => {
         set({ loading: true, error: null })
         try {
-            const response = await fetch(`/api/v1/payments/driver/${driverId}/bank-data`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(bankData)
-            })
-
-            if (!response.ok) {
-                const errorData = await response.json()
-                throw new Error(errorData.detail || `Erro ${response.status}`)
-            }
-
-            const result = await response.json()
-            
-            if (!result.success) {
-                throw new Error(result.message || 'Erro ao atualizar dados bancários')
-            }
-
+            // TODO: Implement API endpoint for bank data update
+            console.warn('updateDriverBankData not implemented yet')
             set({ loading: false })
         } catch (error: any) {
             set({ error: error.message, loading: false })
@@ -221,30 +173,13 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
         }
     },
 
-    uploadReceipt: async (paymentId: string, file: File) => {
+    uploadReceipt: async (_paymentId: string, _file: File) => {
         set({ loading: true, error: null })
         try {
-            const formData = new FormData()
-            formData.append('file', file)
-
-            const response = await fetch(`/api/v1/payments/${paymentId}/upload-receipt`, {
-                method: 'POST',
-                body: formData
-            })
-
-            if (!response.ok) {
-                const errorData = await response.json()
-                throw new Error(errorData.detail || `Erro ${response.status}`)
-            }
-
-            const result = await response.json()
-            
-            if (!result.success) {
-                throw new Error(result.message || 'Erro ao fazer upload do comprovante')
-            }
-
+            // TODO: Implement API endpoint for receipt upload
+            console.warn('uploadReceipt not implemented yet')
             set({ loading: false })
-            return result.receipt_url
+            return ''
         } catch (error: any) {
             set({ error: error.message, loading: false })
             throw error

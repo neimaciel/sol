@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 
 // Use Supabase for production
 const supabaseUrl = 'https://ekimcihxrnigghnappjv.supabase.co'
-const supabaseKey = 'sb_publishable_U-l0teyfrl6UbZysrj_WzQ_7MYuIxkV'
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVraW1jaWh4cm5pZ2dobmFwcGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4MDEzNjgsImV4cCI6MjA4MjM3NzM2OH0.0Ig35iloZLzSUQnvmj9oVSQ2mYmSeWjpdaRudEU5qOo'
 
 // Create Supabase client
 export const supabase = createClient(supabaseUrl, supabaseKey)

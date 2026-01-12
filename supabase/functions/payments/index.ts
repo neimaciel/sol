@@ -45,10 +45,62 @@ serve(async (req) => {
     const pathParts = url.pathname.split('/')
     const method = req.method
 
+    // GET /load/{loadId} - Get payment by load_id
+    if (method === 'GET' && pathParts[2] === 'load' && pathParts.length >= 4) {
+      const loadId = pathParts[3]
+
+      const { data, error } = await supabase
+        .from('payments')
+        .select(`
+          *,
+          load:loads(*),
+          driver:drivers(*)
+        `)
+        .eq('load_id', loadId)
+        .maybeSingle()
+
+      if (error) {
+        throw error
+      }
+
+      return new Response(JSON.stringify({ payment: data }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      })
+    }
+
+    // GET /methods - Get payment methods
+    if (method === 'GET' && pathParts[2] === 'methods') {
+      const methods = [
+        {
+          id: 'MANUAL',
+          name: 'Transferência Manual',
+          type: 'MANUAL',
+          requires_bank_data: true,
+          supports_instant: false,
+          processing_time: '1-3 dias úteis'
+        },
+        {
+          id: 'PIX',
+          name: 'PIX',
+          type: 'PIX',
+          requires_bank_data: true,
+          supports_instant: true,
+          processing_time: 'Instantâneo'
+        }
+      ]
+
+      return new Response(JSON.stringify({ methods }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      })
+    }
+
+    // GET /{paymentId} - Get specific payment
     if (method === 'GET' && pathParts.length >= 3) {
       const paymentId = pathParts[2]
-      
-      if (paymentId) {
+
+      if (paymentId && paymentId !== 'load' && paymentId !== 'methods') {
         const { data, error } = await supabase
           .from('payments')
           .select(`
@@ -90,12 +142,52 @@ serve(async (req) => {
       })
     }
 
-    if (method === 'POST') {
+    // POST /{paymentId}/confirm - Confirm manual payment
+    if (method === 'POST' && pathParts.length >= 4 && pathParts[3] === 'confirm') {
+      const paymentId = pathParts[2]
       const body = await req.json()
-      
+
+      const now = new Date().toISOString()
+
       const { data, error } = await supabase
         .from('payments')
-        .insert([body])
+        .update({
+          status: 'MANUAL_CONFIRMED',
+          manual_confirmed_by: body.confirmed_by || user.id,
+          manual_confirmed_at: now,
+          manual_confirmation_notes: body.notes,
+          receipt_url: body.receipt_url,
+          processed_at: now
+        })
+        .eq('id', paymentId)
+        .select()
+        .single()
+
+      if (error) {
+        throw error
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        confirmed_at: now,
+        payment: data
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      })
+    }
+
+    // POST - Create new payment
+    if (method === 'POST') {
+      const body = await req.json()
+
+      const { data, error } = await supabase
+        .from('payments')
+        .insert([{
+          ...body,
+          created_at: new Date().toISOString(),
+          status: body.status || 'PENDING'
+        }])
         .select()
         .single()
 

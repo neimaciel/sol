@@ -52,33 +52,9 @@ export function GroupFormModal({ isOpen, onClose, groupToEdit }: GroupFormModalP
         try {
             let whatsappId = null
 
-            // Extract JID if link is provided and different from existing (or new group)
+            // Note: Automatic JID extraction is disabled - Evolution API endpoint not available
             if (formData.whatsappLink && (!groupToEdit || formData.whatsappLink !== groupToEdit.whatsappLink)) {
-                try {
-                    const evolutionApiUrl = 'https://api.ampler.me'
-                    const evolutionApiKey = '52f13a23eee6e422dc718d4df667326c21168c2e7b2b777aa8d4b29c038acafb'
-                    const response = await fetch(`${evolutionApiUrl}/api/v1/whatsapp/extract-group-jid`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'apikey': evolutionApiKey
-                        },
-                        body: JSON.stringify({ invite_link: formData.whatsappLink })
-                    })
-
-                    if (response.ok) {
-                        const data = await response.json()
-                        if (data.success && data.jid) {
-                            whatsappId = data.jid
-                        }
-                    } else {
-                        const errorData = await response.json().catch(() => ({}))
-                        console.warn('Failed to extract WhatsApp ID from link', errorData)
-                        alert(`Aviso: Não foi possível extrair o ID do grupo. Erro: ${errorData.detail || 'Erro desconhecido'}. Verifique o link e tente novamente.`)
-                    }
-                } catch (error) {
-                    console.error('Error extracting WhatsApp ID:', error)
-                }
+                console.log('ℹ️ WhatsApp link provided. User should add the ID manually if needed.');
             } else if (groupToEdit && formData.whatsappLink === groupToEdit.whatsappLink) {
                 // Keep existing ID if link hasn't changed
                 whatsappId = groupToEdit.whatsappId
@@ -86,7 +62,7 @@ export function GroupFormModal({ isOpen, onClose, groupToEdit }: GroupFormModalP
 
             const groupData = {
                 ...formData,
-                whatsappId: whatsappId // Add the extracted ID to the data being saved
+                whatsappId: whatsappId || undefined // Convert null to undefined for type safety
             }
 
             if (groupToEdit) {

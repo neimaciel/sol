@@ -53,33 +53,10 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
         try {
             let whatsappId = newGroup.whatsappId || null
 
-            // If user provided a WhatsApp link AND no ID was passed, try to extract the JID automatically
+            // Note: Automatic JID extraction is disabled - Evolution API endpoint not available
+            // Users should provide the WhatsApp ID manually if needed
             if (newGroup.whatsappLink && !whatsappId) {
-                try {
-                    const evolutionApiUrl = 'https://api.ampler.me'
-                    const evolutionApiKey = '52f13a23eee6e422dc718d4df667326c21168c2e7b2b777aa8d4b29c038acafb'
-                    const response = await fetch(`${evolutionApiUrl}/api/v1/whatsapp/extract-group-jid`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'apikey': evolutionApiKey
-                        },
-                        body: JSON.stringify({
-                            invite_link: newGroup.whatsappLink
-                        })
-                    })
-
-                    if (response.ok) {
-                        const data = await response.json()
-                        whatsappId = data.jid
-                        console.log('✅ Automatically extracted WhatsApp ID:', whatsappId)
-                    } else {
-                        console.warn('⚠️ Could not extract WhatsApp ID from link. Group will be saved without JID.')
-                    }
-                } catch (extractError) {
-                    console.warn('⚠️ Error extracting WhatsApp ID:', extractError)
-                    // Continue saving even if extraction fails
-                }
+                console.log('ℹ️ WhatsApp link provided without ID. Users can add the ID manually later if needed.')
             }
 
             const groupData = {
@@ -104,32 +81,10 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
         try {
             let whatsappId = updatedGroup.whatsappId
 
-            // If user updated the WhatsApp link AND no ID was passed, try to extract the JID automatically
+            // Note: Automatic JID extraction is disabled - Evolution API endpoint not available
+            // Users should provide the WhatsApp ID manually if needed
             if (updatedGroup.whatsappLink && whatsappId === undefined) {
-                try {
-                    const evolutionApiUrl = 'https://api.ampler.me'
-                    const evolutionApiKey = '52f13a23eee6e422dc718d4df667326c21168c2e7b2b777aa8d4b29c038acafb'
-                    const response = await fetch(`${evolutionApiUrl}/api/v1/whatsapp/extract-group-jid`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'apikey': evolutionApiKey
-                        },
-                        body: JSON.stringify({
-                            invite_link: updatedGroup.whatsappLink
-                        })
-                    })
-
-                    if (response.ok) {
-                        const data = await response.json()
-                        whatsappId = data.jid
-                        console.log('✅ Automatically extracted WhatsApp ID:', whatsappId)
-                    } else {
-                        console.warn('⚠️ Could not extract WhatsApp ID from link.')
-                    }
-                } catch (extractError) {
-                    console.warn('⚠️ Error extracting WhatsApp ID:', extractError)
-                }
+                console.log('ℹ️ WhatsApp link updated without ID. Users can add the ID manually if needed.')
             }
 
             const updateData: any = {

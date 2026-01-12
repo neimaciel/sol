@@ -140,33 +140,10 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
         let whatsappId = null
 
+        // Note: Automatic JID extraction is disabled - Evolution API endpoint not available
+        // User can provide WhatsApp ID manually if needed
         if (newGroupLink) {
-            try {
-                const evolutionApiUrl = 'https://api.ampler.me'
-                const evolutionApiKey = '52f13a23eee6e422dc718d4df667326c21168c2e7b2b777aa8d4b29c038acafb'
-                const response = await fetch(`${evolutionApiUrl}/api/v1/whatsapp/extract-group-jid`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': evolutionApiKey
-                    },
-                    body: JSON.stringify({ invite_link: newGroupLink })
-                })
-
-                if (response.ok) {
-                    const data = await response.json()
-                    if (data.success && data.jid) {
-                        whatsappId = data.jid
-                    }
-                } else {
-                    console.warn('Failed to extract WhatsApp ID from link')
-                    // Optional: Alert user but allow creation? Or block?
-                    // Let's alert but proceed, user can edit later or it might be a manual group.
-                    // Actually, the error message says "Please recadastre...", so maybe we should warn.
-                }
-            } catch (error) {
-                console.error('Error extracting WhatsApp ID:', error)
-            }
+            console.log('ℹ️ WhatsApp link provided. User should add the ID manually if needed.')
         }
 
         try {

@@ -22,10 +22,8 @@ export interface LoginResponse {
 }
 
 class APIClient {
-  private token: string | null = null
-
-  constructor() {
-    this.token = localStorage.getItem('auth_token')
+  private getStoredToken(): string | null {
+    return localStorage.getItem('auth_token')
   }
 
   async login(email: string, password: string): Promise<LoginResponse> {
@@ -71,30 +69,26 @@ class APIClient {
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
     }
 
-    this.token = result.session_token
-    localStorage.setItem('auth_token', this.token)
+    localStorage.setItem('auth_token', result.session_token)
     localStorage.setItem('auth_user', JSON.stringify(result.operator))
 
     return result
   }
 
   async logout(): Promise<void> {
-    this.token = null
     localStorage.removeItem('auth_token')
     localStorage.removeItem('auth_user')
   }
 
   setToken(token: string) {
-    this.token = token
     localStorage.setItem('auth_token', token)
   }
 
   getToken() {
-    return this.token
+    return this.getStoredToken()
   }
 
   clearToken() {
-    this.token = null
     localStorage.removeItem('auth_token')
     localStorage.removeItem('auth_user')
   }
@@ -117,7 +111,7 @@ class APIClient {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.token}`,
+        'Authorization': `Bearer ${this.getStoredToken()}`,
         'apikey': SUPABASE_ANON_KEY
       }
     })
@@ -142,7 +136,7 @@ class APIClient {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.token}`,
+        'Authorization': `Bearer ${this.getStoredToken()}`,
         'apikey': SUPABASE_ANON_KEY
       }
     })
@@ -163,7 +157,7 @@ class APIClient {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.token}`,
+        'Authorization': `Bearer ${this.getStoredToken()}`,
         'apikey': SUPABASE_ANON_KEY
       },
       body: JSON.stringify(driver)
@@ -185,7 +179,7 @@ class APIClient {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.token}`,
+        'Authorization': `Bearer ${this.getStoredToken()}`,
         'apikey': SUPABASE_ANON_KEY
       },
       body: JSON.stringify(updates)
@@ -207,7 +201,7 @@ class APIClient {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.token}`,
+        'Authorization': `Bearer ${this.getStoredToken()}`,
         'apikey': SUPABASE_ANON_KEY
       }
     })
@@ -227,7 +221,7 @@ class APIClient {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.token}`,
+        'Authorization': `Bearer ${this.getStoredToken()}`,
         'apikey': SUPABASE_ANON_KEY
       }
     })
@@ -248,7 +242,7 @@ class APIClient {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.token}`,
+        'Authorization': `Bearer ${this.getStoredToken()}`,
         'apikey': SUPABASE_ANON_KEY
       }
     })
@@ -267,7 +261,7 @@ class APIClient {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.token}`,
+        'Authorization': `Bearer ${this.getStoredToken()}`,
         'apikey': SUPABASE_ANON_KEY
       },
       body: JSON.stringify(load)
@@ -289,7 +283,7 @@ class APIClient {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.token}`,
+        'Authorization': `Bearer ${this.getStoredToken()}`,
         'apikey': SUPABASE_ANON_KEY
       },
       body: JSON.stringify(updates)
@@ -311,7 +305,7 @@ class APIClient {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.token}`,
+        'Authorization': `Bearer ${this.getStoredToken()}`,
         'apikey': SUPABASE_ANON_KEY
       }
     })
@@ -332,7 +326,7 @@ class APIClient {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.token}`,
+        'Authorization': `Bearer ${this.getStoredToken()}`,
         'apikey': SUPABASE_ANON_KEY
       }
     })
@@ -353,7 +347,7 @@ class APIClient {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.token}`,
+        'Authorization': `Bearer ${this.getStoredToken()}`,
         'apikey': SUPABASE_ANON_KEY
       },
       body: JSON.stringify(group)
@@ -375,7 +369,7 @@ class APIClient {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.token}`,
+        'Authorization': `Bearer ${this.getStoredToken()}`,
         'apikey': SUPABASE_ANON_KEY
       },
       body: JSON.stringify(group)
@@ -397,7 +391,7 @@ class APIClient {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.token}`,
+        'Authorization': `Bearer ${this.getStoredToken()}`,
         'apikey': SUPABASE_ANON_KEY
       }
     })

@@ -16,16 +16,18 @@ export default function WhatsAppSettings() {
 
     const apiUrl = 'https://api.ampler.me'
     const apiKey = '52f13a23eee6e422dc718d4df667326c21168c2e7b2b777aa8d4b29c038acafb'
+    const instanceName = 'SOL'
 
     const fetchStatus = async () => {
         try {
-            const response = await fetch(`${apiUrl}/api/v1/whatsapp/status`, {
+            const response = await fetch(`${apiUrl}/instance/connectionState/${instanceName}`, {
                 headers: {
                     'apikey': apiKey
                 }
             })
             const data = await response.json()
 
+            // Evolution API /instance/connectionState returns { state: 'open' | 'close' | 'connecting' }
             let state = data.state
             if (!state && data.instance && data.instance.state) {
                 state = data.instance.state
@@ -35,20 +37,11 @@ export default function WhatsAppSettings() {
                 // Evolution API returns 'open', 'close', 'connecting'
                 setStatus(state)
 
-                if (state === 'open') {
-                    // Fetch connected number
-                    try {
-                        const phoneResponse = await fetch(`${apiUrl}/api/v1/whatsapp/system-phone`, {
-                            headers: {
-                                'apikey': apiKey
-                            }
-                        })
-                        const phoneData = await phoneResponse.json()
-                        if (phoneData.phone) {
-                            setConnectedNumber(phoneData.phone)
-                        }
-                    } catch (e) {
-                        console.error('Error fetching phone:', e)
+                if (state === 'open' && data.instance) {
+                    // Extract phone number from instance data if available
+                    // Evolution API might return instance.owner or instance.profilePictureUrl with number
+                    if (data.instance.owner) {
+                        setConnectedNumber(data.instance.owner.replace('@s.whatsapp.net', ''))
                     }
                 }
             } else if (data.status) {
@@ -71,7 +64,7 @@ export default function WhatsAppSettings() {
         setIsLoading(true)
         setQrCode(null)
         try {
-            const response = await fetch(`${apiUrl}/api/v1/whatsapp/connect`, {
+            const response = await fetch(`${apiUrl}/instance/connect/${instanceName}`, {
                 headers: {
                     'apikey': apiKey
                 }
@@ -122,8 +115,8 @@ export default function WhatsAppSettings() {
 
         setIsLoading(true)
         try {
-            await fetch(`${apiUrl}/api/v1/whatsapp/logout`, {
-                method: 'POST',
+            await fetch(`${apiUrl}/instance/logout/${instanceName}`, {
+                method: 'DELETE',
                 headers: {
                     'apikey': apiKey
                 }
@@ -145,8 +138,8 @@ export default function WhatsAppSettings() {
         setIsLoading(true)
         setQrCode(null)
         try {
-            const response = await fetch(`${apiUrl}/api/v1/whatsapp/restart`, {
-                method: 'POST',
+            const response = await fetch(`${apiUrl}/instance/restart/${instanceName}`, {
+                method: 'PUT',
                 headers: {
                     'apikey': apiKey
                 }

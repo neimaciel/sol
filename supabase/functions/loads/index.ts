@@ -13,10 +13,34 @@ serve(async (req) => {
   }
 
   try {
-    // Create Supabase client
+    // Get JWT token from Authorization header
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(JSON.stringify({ code: 401, message: 'Missing Authorization header' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 401,
+      })
+    }
+
+    const token = authHeader.replace('Bearer ', '')
+
+    // Create Supabase client with user's JWT token
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
-    const supabase = createClient(supabaseUrl, supabaseAnonKey)
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    })
+
+    // Verify the JWT token is valid by getting the user
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token)
+    if (userError || !user) {
+      return new Response(JSON.stringify({ code: 401, message: 'Invalid JWT' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 401,
+      })
+    }
 
     const url = new URL(req.url)
     const pathParts = url.pathname.split('/')

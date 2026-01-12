@@ -52,9 +52,39 @@ export function GroupFormModal({ isOpen, onClose, groupToEdit }: GroupFormModalP
         try {
             let whatsappId = null
 
-            // Note: Automatic JID extraction is disabled - Evolution API endpoint not available
+            // Extract JID from WhatsApp invite link if provided and changed
             if (formData.whatsappLink && (!groupToEdit || formData.whatsappLink !== groupToEdit.whatsappLink)) {
-                console.log('ℹ️ WhatsApp link provided. User should add the ID manually if needed.');
+                try {
+                    // Extract invite code from link (last 22 characters after last /)
+                    const linkParts = formData.whatsappLink.split('/')
+                    const inviteCode = linkParts[linkParts.length - 1]?.trim()
+
+                    if (inviteCode && inviteCode.length === 22 && /^[a-zA-Z0-9]{22}$/.test(inviteCode)) {
+                        const evolutionApiUrl = 'https://api.ampler.me'
+                        const evolutionApiKey = '52f13a23eee6e422dc718d4df667326c21168c2e7b2b777aa8d4b29c038acafb'
+
+                        const response = await fetch(`${evolutionApiUrl}/group/inviteInfo/SOL?inviteCode=${inviteCode}`, {
+                            method: 'GET',
+                            headers: {
+                                'apikey': evolutionApiKey,
+                                'Content-Type': 'application/json'
+                            }
+                        })
+
+                        if (response.ok) {
+                            const data = await response.json()
+                            whatsappId = data.id || data.jid
+                            console.log('✅ Extracted WhatsApp Group JID:', whatsappId)
+                        } else {
+                            const error = await response.json()
+                            console.warn('⚠️ Could not extract WhatsApp ID:', error)
+                        }
+                    } else {
+                        console.warn('⚠️ Invalid invite code format. Expected 22 alphanumeric characters.')
+                    }
+                } catch (extractError) {
+                    console.error('⚠️ Error extracting WhatsApp ID:', extractError)
+                }
             } else if (groupToEdit && formData.whatsappLink === groupToEdit.whatsappLink) {
                 // Keep existing ID if link hasn't changed
                 whatsappId = groupToEdit.whatsappId

@@ -3,21 +3,30 @@ import { KanbanBoard } from '@/components/kanban/Board'
 import { CardModal } from '@/components/card/CardModal'
 import { CardFormModal } from '@/components/kanban/CardFormModal'
 import { useKanbanStore } from '@/store/useKanbanStore'
+import { useAuthStore } from '@/store/useAuthStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Bell, Settings, User, Plus, LayoutGrid, Truck, Users as UsersIcon, TrendingUp, Search, ChevronLeft, ChevronRight, Bot, Smartphone, Menu, X } from 'lucide-react'
+import { Bell, Settings, User, Plus, LayoutGrid, Truck, Users as UsersIcon, TrendingUp, Search, ChevronLeft, ChevronRight, Bot, Smartphone, Menu, X, LogOut } from 'lucide-react'
 import { StatsCards } from '@/components/dashboard/StatsCards'
 import { RevenueChart, TripsChart, FunnelChart } from '@/components/dashboard/Charts'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ModeToggle } from '@/components/mode-toggle'
+import { useNavigate } from 'react-router-dom'
 
 export default function Dashboard() {
     const { selectedCard, setSelectedCard, activeTab, fetchCards } = useKanbanStore()
+    const { signOut } = useAuthStore()
+    const navigate = useNavigate()
     const [showCardForm, setShowCardForm] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const [isCollapsed, setIsCollapsed] = useState(true)
     const [isAnalyticsExpanded, setIsAnalyticsExpanded] = useState(true)
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+    const handleLogout = async () => {
+        await signOut()
+        navigate('/login')
+    }
 
     useEffect(() => {
         fetchCards()
@@ -137,6 +146,27 @@ export default function Dashboard() {
                             </div>
                         )}
                     </div>
+
+                    <button
+                        onClick={handleLogout}
+                        className={`
+                            flex items-center transition-all duration-200 group
+                            ${isCollapsed ? 'w-12 h-12 justify-center' : 'w-full h-12 px-4 gap-3'}
+                            hover:bg-destructive/10 hover:text-destructive text-muted-foreground border-2 border-transparent hover:border-destructive/50
+                        `}
+                        title={isCollapsed ? 'Sair' : undefined}
+                    >
+                        <LogOut className="w-5 h-5 shrink-0" strokeWidth={2} />
+                        {!isCollapsed && (
+                            <motion.span
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className="font-medium whitespace-nowrap overflow-hidden text-sm"
+                            >
+                                Sair
+                            </motion.span>
+                        )}
+                    </button>
                 </div>
             </motion.aside>
 
@@ -217,7 +247,7 @@ export default function Dashboard() {
                             </nav>
 
                             {/* Mobile Menu Footer */}
-                            <div className="border-t border-border pt-4">
+                            <div className="border-t border-border pt-4 space-y-2">
                                 <div className="flex items-center gap-3 p-3 bg-muted border-2 border-border">
                                     <div className="w-8 h-8 border-2 border-border bg-card flex items-center justify-center">
                                         <User className="w-4 h-4" />
@@ -227,6 +257,13 @@ export default function Dashboard() {
                                         <span className="text-xs text-muted-foreground font-mono block truncate">admin@sol.com</span>
                                     </div>
                                 </div>
+                                <button
+                                    onClick={handleLogout}
+                                    className="flex items-center gap-3 w-full h-12 px-4 hover:bg-destructive/10 hover:text-destructive text-muted-foreground border-2 border-transparent hover:border-destructive/50"
+                                >
+                                    <LogOut className="w-5 h-5" strokeWidth={2} />
+                                    <span className="font-medium">Sair</span>
+                                </button>
                             </div>
                         </motion.div>
                     </>

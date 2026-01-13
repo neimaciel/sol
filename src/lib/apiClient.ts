@@ -46,8 +46,15 @@ class APIClient {
 
     const data = await response.json()
 
+    console.log('🔐 Login response:', data)
+
     if (!data.success) {
       throw new Error(data.message || 'Authentication failed')
+    }
+
+    if (!data.access_token) {
+      console.error('❌ No access_token in response!', data)
+      throw new Error('No access token returned from server')
     }
 
     const result: LoginResponse = {
@@ -69,8 +76,13 @@ class APIClient {
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
     }
 
+    console.log('💾 Saving token to localStorage:', result.session_token.substring(0, 50) + '...')
     localStorage.setItem('auth_token', result.session_token)
     localStorage.setItem('auth_user', JSON.stringify(result.operator))
+
+    console.log('✅ Token saved. Testing retrieval...')
+    const savedToken = localStorage.getItem('auth_token')
+    console.log('📦 Retrieved token:', savedToken?.substring(0, 50) + '...')
 
     return result
   }
@@ -321,12 +333,15 @@ class APIClient {
 
   async getGroups(): Promise<any> {
     const url = `${SUPABASE_URL}/functions/v1/groups`
+    const token = this.getStoredToken()
+
+    console.log('🔍 getGroups - Token being used:', token ? token.substring(0, 50) + '...' : 'NO TOKEN!')
 
     const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.getStoredToken()}`,
+        'Authorization': `Bearer ${token}`,
         'apikey': SUPABASE_ANON_KEY
       }
     })

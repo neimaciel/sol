@@ -21,8 +21,11 @@ serve(async (req) => {
     const pathParts = url.pathname.split('/')
     const method = req.method
 
-    // Login endpoint: POST /auth/login
+    console.log('Request:', method, url.pathname)
+
+    // Login endpoint: POST /auth/login - NO JWT REQUIRED
     if (method === 'POST' && url.pathname.includes('/auth/login')) {
+      console.log('Login route matched!')
       const { email, password } = await req.json()
 
       // Authenticate with Supabase Auth
@@ -70,11 +73,41 @@ serve(async (req) => {
       })
     }
 
+    // ===== JWT VALIDATION FOR ALL OTHER ROUTES =====
+    // Get JWT token from Authorization header
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(JSON.stringify({ code: 401, message: 'Missing authorization header' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 401,
+      })
+    }
+
+    const token = authHeader.replace('Bearer ', '')
+
+    // Create Supabase client with user's JWT token
+    const supabaseWithAuth = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    })
+
+    // Verify the JWT token is valid by getting the user
+    const { data: { user }, error: userError } = await supabaseWithAuth.auth.getUser(token)
+    if (userError || !user) {
+      return new Response(JSON.stringify({ code: 401, message: 'Invalid JWT' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 401,
+      })
+    }
+
+    // ===== PROTECTED ROUTES (REQUIRE JWT) =====
+
     if (method === 'GET' && pathParts.length >= 3) {
       const operatorId = pathParts[2]
-      
+
       if (operatorId) {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseWithAuth
           .from('operators')
           .select('*')
           .eq('id', operatorId)
@@ -92,7 +125,7 @@ serve(async (req) => {
     }
 
     if (method === 'GET') {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseWithAuth
         .from('operators')
         .select('*')
         .order('created_at', { ascending: false })
@@ -109,8 +142,8 @@ serve(async (req) => {
 
     if (method === 'POST') {
       const body = await req.json()
-      
-      const { data, error } = await supabase
+
+      const { data, error } = await supabaseWithAuth
         .from('operators')
         .insert([body])
         .select()
@@ -129,8 +162,8 @@ serve(async (req) => {
     if (method === 'PUT' && pathParts.length >= 3) {
       const operatorId = pathParts[2]
       const body = await req.json()
-      
-      const { data, error } = await supabase
+
+      const { data, error } = await supabaseWithAuth
         .from('operators')
         .update(body)
         .eq('id', operatorId)
@@ -149,8 +182,8 @@ serve(async (req) => {
 
     if (method === 'DELETE' && pathParts.length >= 3) {
       const operatorId = pathParts[2]
-      
-      const { error } = await supabase
+
+      const { error } = await supabaseWithAuth
         .from('operators')
         .delete()
         .eq('id', operatorId)

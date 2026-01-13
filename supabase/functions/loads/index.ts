@@ -33,14 +33,7 @@ serve(async (req) => {
       }
     })
 
-    // Verify the JWT token is valid by getting the user
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token)
-    if (userError || !user) {
-      return new Response(JSON.stringify({ code: 401, message: 'Invalid JWT' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 401,
-      })
-    }
+    // RLS (Row Level Security) will validate the JWT token automatically
 
     const url = new URL(req.url)
     const pathParts = url.pathname.split('/')

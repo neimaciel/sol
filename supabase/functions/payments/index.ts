@@ -142,6 +142,15 @@ serve(async (req) => {
 
       const now = new Date().toISOString()
 
+      // Get authenticated user from JWT
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      if (authError || !user) {
+        return new Response(JSON.stringify({ code: 401, message: 'Unauthorized' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401,
+        })
+      }
+
       const { data, error } = await supabase
         .from('payments')
         .update({

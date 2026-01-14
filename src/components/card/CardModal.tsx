@@ -113,18 +113,8 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
     const fetchGroups = async () => {
         try {
-            const apiUrl = 'https://ekimcihxrnigghnappjv.supabase.co/functions/v1'
-            const response = await fetch(`${apiUrl}/api/v1/groups/`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
-                }
-            })
-            if (response.ok) {
-                const data = await response.json()
-                setGroups(data)
-            } else {
-                console.error('Failed to fetch groups:', response.status)
-            }
+            const data = await api.getGroups()
+            setGroups(data)
         } catch (error) {
             console.error('Error fetching groups:', error)
         }
@@ -176,25 +166,17 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
         }
 
         try {
-            const apiUrl = 'https://ekimcihxrnigghnappjv.supabase.co/functions/v1'
-            const response = await fetch(`${apiUrl}/api/v1/groups`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
-                },
-                body: JSON.stringify({
-                    name: newGroupName,
-                    type: 'Carreta',
-                    description: 'Criado via Card',
-                    region: 'Nacional',
-                    whatsapp_link: newGroupLink || null,
-                    whatsapp_id: whatsappId
-                })
+            const result = await api.createGroup({
+                name: newGroupName,
+                type: 'Carreta',
+                description: 'Criado via Card',
+                region: 'Nacional',
+                whatsapp_link: newGroupLink || null,
+                whatsapp_id: whatsappId
             })
 
-            if (response.ok) {
-                const data = await response.json()
+            if (result.success) {
+                const data = result.group
                 setGroups([...groups, data])
                 await updateCard(card!.id, { whatsapp_group_id: data.id })
                 await autoAdvanceCard(card!.id, 'whatsapp_group_created')
@@ -518,32 +500,16 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
                                                                     for (const groupId of selectedGroups) {
                                                                         // Fetch group data
-                                                                        let groupData = null
-                                                                        try {
-                                                                            const groupResponse = await fetch(`${apiUrl}/api/v1/groups/${groupId}`, {
-                                                                                headers: {
-                                                                                    'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
-                                                                                }
-                                                                            })
-                                                                            
-                                                                            if (!groupResponse.ok) {
-                                                                                console.warn(`Skipping group ${groupId}: Failed to fetch`)
-                                                                                continue
-                                                                            }
-                                                                            
-                                                                            groupData = await groupResponse.json()
-                                                                            
-                                                                            if (!groupData || !groupData.whatsapp_id) {
-                                                                                console.warn(`Skipping group ${groupId}: Invalid data`)
-                                                                                continue
-                                                                            }
-                                                                        } catch (error) {
-                                                                            console.warn(`Skipping group ${groupId}: Error fetching`, error)
+                                                                        // Get group from local groups array
+                                                                        const groupData = groups.find(g => g.id === groupId)
+
+                                                                        if (!groupData || !groupData.whatsapp_id) {
+                                                                            console.warn(`Skipping group ${groupId}: Invalid data or no WhatsApp ID`)
                                                                             continue
                                                                         }
 
-                                                                        // Send broadcast
-                                                                        const response = await fetch(`${apiUrl}/api/v1/whatsapp/broadcast`, {
+                                                                        // Send broadcast via groups Edge Function
+                                                                        const response = await fetch(`${apiUrl}/groups/broadcast`, {
                                                                             method: 'POST',
                                                                             headers: { 'Content-Type': 'application/json' },
                                                                             body: JSON.stringify({
@@ -932,23 +898,12 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                     setChatMessage('')
 
                                                     try {
-                                                        const apiUrl = 'https://ekimcihxrnigghnappjv.supabase.co/functions/v1'
-                                                        const response = await fetch(`${apiUrl}/api/v1/whatsapp/send-message`, {
-                                                            method: 'POST',
-                                                            headers: { 'Content-Type': 'application/json' },
-                                                            body: JSON.stringify({
-                                                                candidate_id: selectedChatCandidate.id,
-                                                                message: tempMessage.text
-                                                            })
-                                                        })
-
-                                                        if (!response.ok) {
-                                                            throw new Error('Failed to send message')
-                                                        }
+                                                        // TODO: Implement WhatsApp direct messaging API
+                                                        // For now, messages are stored locally only
+                                                        console.log('Message stored locally:', tempMessage)
                                                     } catch (error) {
                                                         console.error('Error sending message:', error)
                                                         alert('Erro ao enviar mensagem. Tente novamente.')
-                                                        // Revert optimistic update? Or just alert.
                                                     }
                                                 }} className="flex gap-3">
                                                     <Input

@@ -26,6 +26,51 @@ class APIClient {
     return localStorage.getItem('auth_token')
   }
 
+  private isTokenExpiredError(error: any): boolean {
+    return error?.code === 'PGRST303' ||
+           error?.error === 'JWT expired' ||
+           error?.message?.includes('JWT expired')
+  }
+
+  private handleExpiredToken() {
+    console.warn('🔴 JWT Token expired - Auto logout')
+    this.clearToken()
+    // Redirect to login page
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login'
+    }
+  }
+
+  private async handleResponse(response: Response, operationName: string): Promise<any> {
+    console.log(`📡 ${operationName} - Response status:`, response.status, response.statusText)
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error(`❌ ${operationName} - Error response body:`, errorText)
+
+      try {
+        const errorData = JSON.parse(errorText)
+        console.error(`❌ ${operationName} - Parsed error:`, errorData)
+
+        // Check if token expired
+        if (this.isTokenExpiredError(errorData)) {
+          this.handleExpiredToken()
+          throw new Error('Session expired. Please login again.')
+        }
+
+        throw new Error(errorData.error || errorData.message || `${operationName} failed`)
+      } catch (e) {
+        if (e instanceof Error && e.message.includes('Session expired')) {
+          throw e
+        }
+        console.error(`❌ ${operationName} - Could not parse error as JSON`)
+        throw new Error(`${operationName} failed`)
+      }
+    }
+
+    return response.json()
+  }
+
   async login(email: string, password: string): Promise<LoginResponse> {
     const url = `${SUPABASE_URL}/functions/v1/operators/auth/login`
 
@@ -346,22 +391,7 @@ class APIClient {
       }
     })
 
-    console.log('📡 getGroups - Response status:', response.status, response.statusText)
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('❌ getGroups - Error response body:', errorText)
-      let errorData
-      try {
-        errorData = JSON.parse(errorText)
-        console.error('❌ getGroups - Parsed error:', errorData)
-      } catch {
-        console.error('❌ getGroups - Could not parse error as JSON')
-      }
-      throw new Error('Failed to fetch groups')
-    }
-
-    const data = await response.json()
+    const data = await this.handleResponse(response, 'getGroups')
     // Edge function returns array directly
     return Array.isArray(data) ? data : []
   }
@@ -383,23 +413,7 @@ class APIClient {
       body: JSON.stringify(group)
     })
 
-    console.log('📡 createGroup - Response status:', response.status, response.statusText)
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('❌ createGroup - Error response body:', errorText)
-      let errorData
-      try {
-        errorData = JSON.parse(errorText)
-        console.error('❌ createGroup - Parsed error:', errorData)
-        throw new Error(errorData.error || errorData.message || 'Failed to create group')
-      } catch (e) {
-        console.error('❌ createGroup - Could not parse error as JSON')
-        throw new Error('Failed to create group')
-      }
-    }
-
-    const data = await response.json()
+    const data = await this.handleResponse(response, 'createGroup')
     console.log('✅ createGroup - Success:', data)
     return { success: true, group: data }
   }

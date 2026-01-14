@@ -15,7 +15,10 @@ serve(async (req) => {
   try {
     // Get JWT token from Authorization header
     const authHeader = req.headers.get('Authorization')
+    console.log('🔍 [GROUPS] Authorization header:', authHeader ? 'Present' : 'Missing')
+
     if (!authHeader) {
+      console.error('❌ [GROUPS] Missing Authorization header')
       return new Response(JSON.stringify({ code: 401, message: 'Missing Authorization header' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 401,
@@ -23,15 +26,21 @@ serve(async (req) => {
     }
 
     const token = authHeader.replace('Bearer ', '')
+    console.log('🔑 [GROUPS] Token extracted:', token.substring(0, 50) + '...')
 
     // Create Supabase client with user's JWT token
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
+    console.log('🌐 [GROUPS] Supabase URL:', supabaseUrl)
+    console.log('🔐 [GROUPS] Using ANON key:', supabaseAnonKey.substring(0, 30) + '...')
+
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: {
         headers: { Authorization: `Bearer ${token}` }
       }
     })
+
+    console.log('✅ [GROUPS] Supabase client created successfully')
 
     // RLS (Row Level Security) will validate the JWT token automatically
 
@@ -64,15 +73,30 @@ serve(async (req) => {
 
     if (method === 'GET') {
       // Get all groups
+      console.log('📋 [GROUPS] Fetching all groups...')
       const { data, error } = await supabase
         .from('groups')
         .select('*')
         .order('created_at', { ascending: false })
 
       if (error) {
-        throw error
+        console.error('❌ [GROUPS] Error fetching groups:', error)
+        console.error('❌ [GROUPS] Error code:', error.code)
+        console.error('❌ [GROUPS] Error message:', error.message)
+        console.error('❌ [GROUPS] Error details:', error.details)
+        console.error('❌ [GROUPS] Error hint:', error.hint)
+        return new Response(JSON.stringify({
+          error: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401,
+        })
       }
 
+      console.log('✅ [GROUPS] Successfully fetched', data?.length || 0, 'groups')
       return new Response(JSON.stringify(data), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
@@ -81,8 +105,10 @@ serve(async (req) => {
 
     if (method === 'POST') {
       // Create new group
+      console.log('➕ [GROUPS] Creating new group...')
       const body = await req.json()
-      
+      console.log('📝 [GROUPS] Request body:', JSON.stringify(body))
+
       const { data, error } = await supabase
         .from('groups')
         .insert([body])
@@ -90,9 +116,23 @@ serve(async (req) => {
         .single()
 
       if (error) {
-        throw error
+        console.error('❌ [GROUPS] Error creating group:', error)
+        console.error('❌ [GROUPS] Error code:', error.code)
+        console.error('❌ [GROUPS] Error message:', error.message)
+        console.error('❌ [GROUPS] Error details:', error.details)
+        console.error('❌ [GROUPS] Error hint:', error.hint)
+        return new Response(JSON.stringify({
+          error: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401,
+        })
       }
 
+      console.log('✅ [GROUPS] Group created successfully:', data?.id)
       return new Response(JSON.stringify(data), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 201,
@@ -172,6 +212,9 @@ serve(async (req) => {
     })
 
   } catch (error) {
+    console.error('💥 [GROUPS] Unhandled error:', error)
+    console.error('💥 [GROUPS] Error stack:', error.stack)
+    console.error('💥 [GROUPS] Error details:', JSON.stringify(error, null, 2))
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,

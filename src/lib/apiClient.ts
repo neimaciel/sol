@@ -346,7 +346,18 @@ class APIClient {
       }
     })
 
+    console.log('📡 getGroups - Response status:', response.status, response.statusText)
+
     if (!response.ok) {
+      const errorText = await response.text()
+      console.error('❌ getGroups - Error response body:', errorText)
+      let errorData
+      try {
+        errorData = JSON.parse(errorText)
+        console.error('❌ getGroups - Parsed error:', errorData)
+      } catch {
+        console.error('❌ getGroups - Could not parse error as JSON')
+      }
       throw new Error('Failed to fetch groups')
     }
 
@@ -357,23 +368,39 @@ class APIClient {
 
   async createGroup(group: any): Promise<any> {
     const url = `${SUPABASE_URL}/functions/v1/groups`
+    const token = this.getStoredToken()
+
+    console.log('➕ createGroup - Token being used:', token ? token.substring(0, 50) + '...' : 'NO TOKEN!')
+    console.log('📝 createGroup - Group data:', group)
 
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.getStoredToken()}`,
+        'Authorization': `Bearer ${token}`,
         'apikey': SUPABASE_ANON_KEY
       },
       body: JSON.stringify(group)
     })
 
+    console.log('📡 createGroup - Response status:', response.status, response.statusText)
+
     if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(errorData.error || errorData.message || 'Failed to create group')
+      const errorText = await response.text()
+      console.error('❌ createGroup - Error response body:', errorText)
+      let errorData
+      try {
+        errorData = JSON.parse(errorText)
+        console.error('❌ createGroup - Parsed error:', errorData)
+        throw new Error(errorData.error || errorData.message || 'Failed to create group')
+      } catch (e) {
+        console.error('❌ createGroup - Could not parse error as JSON')
+        throw new Error('Failed to create group')
+      }
     }
 
     const data = await response.json()
+    console.log('✅ createGroup - Success:', data)
     return { success: true, group: data }
   }
 

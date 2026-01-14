@@ -207,6 +207,67 @@ serve(async (req) => {
       })
     }
 
+    // PUT /{groupId} - Update group
+    if (method === 'PUT' && pathParts.length >= 3) {
+      const groupId = pathParts[2]
+      console.log('🔄 [GROUPS] Updating group:', groupId)
+      const body = await req.json()
+      console.log('📝 [GROUPS] Update data:', JSON.stringify(body))
+
+      const { data, error } = await supabase
+        .from('groups')
+        .update(body)
+        .eq('id', groupId)
+        .select()
+        .single()
+
+      if (error) {
+        console.error('❌ [GROUPS] Error updating group:', error)
+        return new Response(JSON.stringify({
+          error: error.message,
+          code: error.code,
+          details: error.details
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        })
+      }
+
+      console.log('✅ [GROUPS] Group updated successfully')
+      return new Response(JSON.stringify(data), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      })
+    }
+
+    // DELETE /{groupId} - Delete group
+    if (method === 'DELETE' && pathParts.length >= 3) {
+      const groupId = pathParts[2]
+      console.log('🗑️ [GROUPS] Deleting group:', groupId)
+
+      const { error } = await supabase
+        .from('groups')
+        .delete()
+        .eq('id', groupId)
+
+      if (error) {
+        console.error('❌ [GROUPS] Error deleting group:', error)
+        return new Response(JSON.stringify({
+          error: error.message,
+          code: error.code
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        })
+      }
+
+      console.log('✅ [GROUPS] Group deleted successfully')
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      })
+    }
+
     return new Response(JSON.stringify({ error: 'Route not found' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 404,

@@ -61,10 +61,16 @@ serve(async (req) => {
     }
 
     if (method === 'GET') {
+      // Get drivers with pagination
+      const url = new URL(req.url)
+      const limit = parseInt(url.searchParams.get('limit') || '50')
+      const offset = parseInt(url.searchParams.get('offset') || '0')
+
       const { data, error } = await supabase
         .from('drivers')
         .select('*')
         .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1)
 
       if (error) {
         throw error

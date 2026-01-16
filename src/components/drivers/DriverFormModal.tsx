@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useDriversStore, type Driver } from '@/store/useDriversStore'
 import { useState, useEffect } from 'react'
+import { validateForm, validateCPF, validatePhone } from '@/lib/validation'
 
 interface DriverFormModalProps {
     isOpen: boolean
@@ -14,6 +15,7 @@ interface DriverFormModalProps {
 
 export function DriverFormModal({ isOpen, onClose, driver }: DriverFormModalProps) {
     const { addDriver, updateDriver } = useDriversStore()
+    const [errors, setErrors] = useState<Record<string, string>>({})
     const [formData, setFormData] = useState({
         name: '',
         phone: '',
@@ -57,6 +59,23 @@ export function DriverFormModal({ isOpen, onClose, driver }: DriverFormModalProp
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
 
+        // Validate form
+        const { isValid, errors: validationErrors } = validateForm(formData, [
+            { field: 'name', required: true, minLength: 3, message: 'Nome completo é obrigatório (mínimo 3 caracteres)' },
+            { field: 'phone', required: true, custom: validatePhone },
+            { field: 'cpf', custom: validateCPF }, // Optional but validated if provided
+            { field: 'cnh', required: true, message: 'CNH é obrigatória' },
+            { field: 'vehicle', required: true, message: 'Veículo é obrigatório' }
+        ])
+
+        if (!isValid) {
+            setErrors(validationErrors)
+            return
+        }
+
+        // Clear errors if validation passed
+        setErrors({})
+
         if (driver) {
             updateDriver(driver.id, formData)
         } else {
@@ -80,12 +99,15 @@ export function DriverFormModal({ isOpen, onClose, driver }: DriverFormModalProp
                         <Label htmlFor="name" className="text-sm font-medium text-muted-foreground">Nome Completo</Label>
                         <Input
                             id="name"
+                            name="name"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             placeholder="Ex: João Silva"
-                            className="input-soft bg-white/50 border-white/40 focus:bg-white/80"
-                            required
+                            className={`input-soft bg-white/50 border-white/40 focus:bg-white/80 ${errors.name ? 'border-red-500' : ''}`}
                         />
+                        {errors.name && (
+                            <p className="text-xs text-red-500 mt-1">{errors.name}</p>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -93,12 +115,15 @@ export function DriverFormModal({ isOpen, onClose, driver }: DriverFormModalProp
                             <Label htmlFor="phone" className="text-sm font-medium text-muted-foreground">Telefone</Label>
                             <Input
                                 id="phone"
+                                name="phone"
                                 value={formData.phone}
                                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                 placeholder="(00) 00000-0000"
-                                className="input-soft bg-white/50 border-white/40 focus:bg-white/80"
-                                required
+                                className={`input-soft bg-white/50 border-white/40 focus:bg-white/80 ${errors.phone ? 'border-red-500' : ''}`}
                             />
+                            {errors.phone && (
+                                <p className="text-xs text-red-500 mt-1">{errors.phone}</p>
+                            )}
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="location" className="text-sm font-medium text-muted-foreground">Localização Atual</Label>
@@ -117,12 +142,15 @@ export function DriverFormModal({ isOpen, onClose, driver }: DriverFormModalProp
                         <Label htmlFor="vehicle" className="text-sm font-medium text-muted-foreground">Veículo</Label>
                         <Input
                             id="vehicle"
+                            name="vehicle"
                             value={formData.vehicle}
                             onChange={(e) => setFormData({ ...formData, vehicle: e.target.value })}
                             placeholder="Ex: Volvo FH 540"
-                            className="input-soft bg-white/50 border-white/40 focus:bg-white/80"
-                            required
+                            className={`input-soft bg-white/50 border-white/40 focus:bg-white/80 ${errors.vehicle ? 'border-red-500' : ''}`}
                         />
+                        {errors.vehicle && (
+                            <p className="text-xs text-red-500 mt-1">{errors.vehicle}</p>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -130,23 +158,29 @@ export function DriverFormModal({ isOpen, onClose, driver }: DriverFormModalProp
                             <Label htmlFor="cpf" className="text-sm font-medium text-muted-foreground">CPF</Label>
                             <Input
                                 id="cpf"
+                                name="cpf"
                                 value={formData.cpf}
                                 onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
                                 placeholder="000.000.000-00"
-                                className="input-soft bg-white/50 border-white/40 focus:bg-white/80"
-                                required
+                                className={`input-soft bg-white/50 border-white/40 focus:bg-white/80 ${errors.cpf ? 'border-red-500' : ''}`}
                             />
+                            {errors.cpf && (
+                                <p className="text-xs text-red-500 mt-1">{errors.cpf}</p>
+                            )}
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="cnh" className="text-sm font-medium text-muted-foreground">CNH</Label>
                             <Input
                                 id="cnh"
+                                name="cnh"
                                 value={formData.cnh}
                                 onChange={(e) => setFormData({ ...formData, cnh: e.target.value })}
                                 placeholder="00000000000"
-                                className="input-soft bg-white/50 border-white/40 focus:bg-white/80"
-                                required
+                                className={`input-soft bg-white/50 border-white/40 focus:bg-white/80 ${errors.cnh ? 'border-red-500' : ''}`}
                             />
+                            {errors.cnh && (
+                                <p className="text-xs text-red-500 mt-1">{errors.cnh}</p>
+                            )}
                         </div>
                     </div>
 

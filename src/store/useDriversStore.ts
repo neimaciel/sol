@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import { api } from '@/lib/apiClient'
+import { toast } from '@/lib/toast'
+import { logger } from '@/lib/logger'
 
 export interface Driver {
     id: string
@@ -32,7 +34,7 @@ export const useDriversStore = create<DriversState>((set) => ({
             const data = response.drivers
 
             if (!data) {
-                console.warn('No drivers data received')
+                logger.warn('No drivers data received')
                 return
             }
 
@@ -51,7 +53,9 @@ export const useDriversStore = create<DriversState>((set) => ({
 
             set({ drivers: mappedDrivers })
         } catch (error) {
-            console.error('Error fetching drivers:', error)
+            logger.error('Error fetching drivers:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao buscar motoristas'
+            toast.error(message)
         }
     },
 
@@ -70,9 +74,12 @@ export const useDriversStore = create<DriversState>((set) => ({
             if (response.success) {
                 // Refresh drivers to get the latest data
                 await useDriversStore.getState().fetchDrivers()
+                toast.success('Motorista criado com sucesso!')
             }
         } catch (error) {
-            console.error('Error adding driver:', error)
+            logger.error('Error adding driver:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao criar motorista'
+            toast.error(message)
             throw error
         }
     },
@@ -91,9 +98,12 @@ export const useDriversStore = create<DriversState>((set) => ({
             if (response.success) {
                 // Refresh drivers to get the latest data
                 await useDriversStore.getState().fetchDrivers()
+                toast.success('Motorista atualizado com sucesso!')
             }
         } catch (error) {
-            console.error('Error updating driver:', error)
+            logger.error('Error updating driver:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao atualizar motorista'
+            toast.error(message)
             throw error
         }
     },
@@ -107,9 +117,12 @@ export const useDriversStore = create<DriversState>((set) => ({
                 set((state) => ({
                     drivers: state.drivers.filter((d) => d.id !== id)
                 }))
+                toast.success('Motorista excluído com sucesso!')
             }
         } catch (error) {
-            console.error('Error deleting driver:', error)
+            logger.error('Error deleting driver:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao excluir motorista'
+            toast.error(message)
             // Refresh to revert optimistic update on error
             await useDriversStore.getState().fetchDrivers()
             throw error

@@ -1,4 +1,7 @@
 import { create } from 'zustand'
+import { supabase } from '@/lib/supabase'
+import { toast } from '@/lib/toast'
+import { logger } from '@/lib/logger'
 
 export interface HistoryItem {
     id: string
@@ -19,10 +22,6 @@ interface HistoryState {
     isLoading: boolean
     fetchHistory: () => Promise<void>
 }
-
-
-
-import { supabase } from '@/lib/supabase'
 
 export const useHistoryStore = create<HistoryState>((set) => ({
     history: [],
@@ -54,7 +53,9 @@ export const useHistoryStore = create<HistoryState>((set) => ({
 
             set({ history: mappedHistory, isLoading: false })
         } catch (error) {
-            console.error('Error fetching history:', error)
+            logger.error('Error fetching history:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao buscar histórico'
+            toast.error(message)
             set({ isLoading: false })
         }
     }

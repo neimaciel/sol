@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
+import { toast } from '@/lib/toast'
+import { logger } from '@/lib/logger'
 
 export interface CardEvent {
     id: string
@@ -22,7 +24,7 @@ export const useCardEventsStore = create<CardEventsState>((set) => ({
     isLoading: false,
 
     fetchEvents: async (cardId) => {
-        console.log('📥 fetchEvents called for cardId:', cardId)
+        logger.log('📥 fetchEvents called for cardId:', cardId)
         set({ isLoading: true })
         try {
             const { data, error } = await supabase
@@ -32,11 +34,11 @@ export const useCardEventsStore = create<CardEventsState>((set) => ({
                 .order('created_at', { ascending: false })
 
             if (error) {
-                console.error('❌ Error fetching events:', error)
+                logger.error('❌ Error fetching events:', error)
                 throw error
             }
 
-            console.log('✅ Fetched events:', data)
+            logger.log('✅ Fetched events:', data)
 
             const mappedEvents = data.map((item: any) => ({
                 id: item.id,
@@ -47,23 +49,25 @@ export const useCardEventsStore = create<CardEventsState>((set) => ({
                 createdAt: item.created_at
             }))
 
-            console.log('✅ Mapped events:', mappedEvents)
+            logger.log('✅ Mapped events:', mappedEvents)
             set({ events: mappedEvents, isLoading: false })
         } catch (error) {
-            console.error('❌ Error fetching events:', error)
+            logger.error('❌ Error fetching events:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao buscar eventos'
+            toast.error(message)
             set({ isLoading: false })
         }
     },
 
     logEvent: async (cardId, action, details = {}) => {
-        console.log('📝 logEvent called:', { cardId, action, details })
+        logger.log('📝 logEvent called:', { cardId, action, details })
         try {
             const insertData = {
                 card_id: cardId,
                 action,
                 details
             }
-            console.log('📝 Inserting:', insertData)
+            logger.log('📝 Inserting:', insertData)
 
             const { data, error } = await supabase
                 .from('card_events')
@@ -71,13 +75,15 @@ export const useCardEventsStore = create<CardEventsState>((set) => ({
                 .select()
 
             if (error) {
-                console.error('❌ Supabase insert error:', error)
+                logger.error('❌ Supabase insert error:', error)
                 throw error
             }
 
-            console.log('✅ Event logged successfully:', data)
+            logger.log('✅ Event logged successfully:', data)
         } catch (error) {
-            console.error('❌ Error logging event:', error)
+            logger.error('❌ Error logging event:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao registrar evento'
+            toast.error(message)
         }
     }
 }))

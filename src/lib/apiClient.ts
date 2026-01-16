@@ -1,6 +1,12 @@
-// Supabase Configuration - FORCED HARDCODED
-const SUPABASE_URL = 'https://ekimcihxrnigghnappjv.supabase.co'
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVraW1jaWh4cm5pZ2dobmFwcGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4MDEzNjgsImV4cCI6MjA4MjM3NzM2OH0.0Ig35iloZLzSUQnvmj9oVSQ2mYmSeWjpdaRudEU5qOo'
+import { logger } from './logger'
+
+// Supabase Configuration from Environment Variables
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  throw new Error('Missing Supabase environment variables. Check .env file.')
+}
 
 export interface LoginResponse {
   operator: {
@@ -33,7 +39,7 @@ class APIClient {
   }
 
   private handleExpiredToken() {
-    console.warn('🔴 JWT Token expired - Auto logout')
+    logger.warn('🔴 JWT Token expired - Auto logout')
     this.clearToken()
     // Redirect to login page
     if (typeof window !== 'undefined') {
@@ -42,15 +48,15 @@ class APIClient {
   }
 
   private async handleResponse(response: Response, operationName: string): Promise<any> {
-    console.log(`📡 ${operationName} - Response status:`, response.status, response.statusText)
+    logger.log(`📡 ${operationName} - Response status:`, response.status, response.statusText)
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error(`❌ ${operationName} - Error response body:`, errorText)
+      logger.error(`❌ ${operationName} - Error response body:`, errorText)
 
       try {
         const errorData = JSON.parse(errorText)
-        console.error(`❌ ${operationName} - Parsed error:`, errorData)
+        logger.error(`❌ ${operationName} - Parsed error:`, errorData)
 
         // Check if token expired
         if (this.isTokenExpiredError(errorData)) {
@@ -63,7 +69,7 @@ class APIClient {
         if (e instanceof Error && e.message.includes('Session expired')) {
           throw e
         }
-        console.error(`❌ ${operationName} - Could not parse error as JSON`)
+        logger.error(`❌ ${operationName} - Could not parse error as JSON`)
         throw new Error(`${operationName} failed`)
       }
     }
@@ -91,14 +97,14 @@ class APIClient {
 
     const data = await response.json()
 
-    console.log('🔐 Login response:', data)
+    logger.log('🔐 Login response:', data)
 
     if (!data.success) {
       throw new Error(data.message || 'Authentication failed')
     }
 
     if (!data.access_token) {
-      console.error('❌ No access_token in response!', data)
+      logger.error('❌ No access_token in response!', data)
       throw new Error('No access token returned from server')
     }
 
@@ -121,13 +127,13 @@ class APIClient {
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
     }
 
-    console.log('💾 Saving token to localStorage:', result.session_token.substring(0, 50) + '...')
+    logger.log('💾 Saving token to localStorage:', result.session_token.substring(0, 50) + '...')
     localStorage.setItem('auth_token', result.session_token)
     localStorage.setItem('auth_user', JSON.stringify(result.operator))
 
-    console.log('✅ Token saved. Testing retrieval...')
+    logger.log('✅ Token saved. Testing retrieval...')
     const savedToken = localStorage.getItem('auth_token')
-    console.log('📦 Retrieved token:', savedToken?.substring(0, 50) + '...')
+    logger.log('📦 Retrieved token:', savedToken?.substring(0, 50) + '...')
 
     return result
   }
@@ -157,7 +163,7 @@ class APIClient {
       try {
         return JSON.parse(cachedUser)
       } catch (e) {
-        console.error('Failed to parse cached user', e)
+        logger.error('Failed to parse cached user', e)
       }
     }
 
@@ -186,8 +192,8 @@ class APIClient {
     return user
   }
 
-  async getDrivers(): Promise<any> {
-    const url = `${SUPABASE_URL}/functions/v1/drivers`
+  async getDrivers(limit: number = 50, offset: number = 0): Promise<any> {
+    const url = `${SUPABASE_URL}/functions/v1/drivers?limit=${limit}&offset=${offset}`
 
     const response = await fetch(url, {
       method: 'GET',
@@ -271,8 +277,8 @@ class APIClient {
     return await response.json()
   }
 
-  async getLoads(): Promise<any> {
-    const url = `${SUPABASE_URL}/functions/v1/loads`
+  async getLoads(limit: number = 100, offset: number = 0): Promise<any> {
+    const url = `${SUPABASE_URL}/functions/v1/loads?limit=${limit}&offset=${offset}`
 
     const response = await fetch(url, {
       method: 'GET',
@@ -376,11 +382,11 @@ class APIClient {
     return await response.json()
   }
 
-  async getGroups(): Promise<any> {
-    const url = `${SUPABASE_URL}/functions/v1/groups`
+  async getGroups(limit: number = 50, offset: number = 0): Promise<any> {
+    const url = `${SUPABASE_URL}/functions/v1/groups?limit=${limit}&offset=${offset}`
     const token = this.getStoredToken()
 
-    console.log('🔍 getGroups - Token being used:', token ? token.substring(0, 50) + '...' : 'NO TOKEN!')
+    logger.log('🔍 getGroups - Token being used:', token ? token.substring(0, 50) + '...' : 'NO TOKEN!')
 
     const response = await fetch(url, {
       method: 'GET',
@@ -400,8 +406,8 @@ class APIClient {
     const url = `${SUPABASE_URL}/functions/v1/groups`
     const token = this.getStoredToken()
 
-    console.log('➕ createGroup - Token being used:', token ? token.substring(0, 50) + '...' : 'NO TOKEN!')
-    console.log('📝 createGroup - Group data:', group)
+    logger.log('➕ createGroup - Token being used:', token ? token.substring(0, 50) + '...' : 'NO TOKEN!')
+    logger.log('📝 createGroup - Group data:', group)
 
     const response = await fetch(url, {
       method: 'POST',
@@ -414,7 +420,7 @@ class APIClient {
     })
 
     const data = await this.handleResponse(response, 'createGroup')
-    console.log('✅ createGroup - Success:', data)
+    logger.log('✅ createGroup - Success:', data)
     return { success: true, group: data }
   }
 
@@ -539,6 +545,180 @@ class APIClient {
 
     if (!response.ok) {
       throw new Error('Failed to fetch payment methods')
+    }
+
+    return await response.json()
+  }
+
+  // Candidates Methods
+  async getCandidatesByLoad(loadId: string): Promise<any> {
+    const url = `${SUPABASE_URL}/functions/v1/candidates/by-load/${loadId}`
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.getStoredToken()}`,
+        'apikey': SUPABASE_ANON_KEY
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch candidates')
+    }
+
+    return await response.json()
+  }
+
+  async createCandidate(candidate: any): Promise<any> {
+    const url = `${SUPABASE_URL}/functions/v1/candidates`
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.getStoredToken()}`,
+        'apikey': SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify(candidate)
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || errorData.message || 'Failed to create candidate')
+    }
+
+    return await response.json()
+  }
+
+  async selectCandidate(candidateId: string): Promise<any> {
+    const url = `${SUPABASE_URL}/functions/v1/candidates/${candidateId}/select`
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.getStoredToken()}`,
+        'apikey': SUPABASE_ANON_KEY
+      }
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || errorData.message || 'Failed to select candidate')
+    }
+
+    return await response.json()
+  }
+
+  async updateCandidate(id: string, updates: any): Promise<any> {
+    const url = `${SUPABASE_URL}/functions/v1/candidates/${id}`
+
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.getStoredToken()}`,
+        'apikey': SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify(updates)
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || errorData.message || 'Failed to update candidate')
+    }
+
+    return await response.json()
+  }
+
+  async deleteCandidate(id: string): Promise<any> {
+    const url = `${SUPABASE_URL}/functions/v1/candidates/${id}`
+
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.getStoredToken()}`,
+        'apikey': SUPABASE_ANON_KEY
+      }
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || errorData.message || 'Failed to delete candidate')
+    }
+
+    return await response.json()
+  }
+
+  // Load Auto-Advance
+  async autoAdvanceLoad(loadId: string): Promise<any> {
+    const url = `${SUPABASE_URL}/functions/v1/loads/${loadId}/auto-advance`
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.getStoredToken()}`,
+        'apikey': SUPABASE_ANON_KEY
+      }
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || errorData.message || 'Failed to auto-advance load')
+    }
+
+    return await response.json()
+  }
+
+  // File Upload
+  async uploadFile(file: File, path: string): Promise<any> {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('path', path)
+
+    const url = `${SUPABASE_URL}/functions/v1/files/upload`
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.getStoredToken()}`,
+        'apikey': SUPABASE_ANON_KEY
+      },
+      body: formData
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || errorData.message || 'Failed to upload file')
+    }
+
+    return await response.json()
+  }
+
+  // WhatsApp Broadcast
+  async broadcastToGroups(groupIds: string[], message: string, loadData?: any): Promise<any> {
+    const url = `${SUPABASE_URL}/functions/v1/groups/broadcast`
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.getStoredToken()}`,
+        'apikey': SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify({
+        group_ids: groupIds,
+        message,
+        load_data: loadData
+      })
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || errorData.message || 'Failed to broadcast to groups')
     }
 
     return await response.json()

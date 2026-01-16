@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { api } from '@/lib/apiClient'
 
 interface Driver {
     id: string
@@ -35,27 +36,11 @@ export const useCandidatesStore = create<CandidatesStore>((set) => ({
     fetchCandidates: async (loadId: string) => {
         set({ loading: true, error: null })
         try {
-            const apiUrl = 'https://ekimcihxrnigghnappjv.supabase.co/functions/v1'
-
-            // Add timeout to prevent infinite loading
-            const controller = new AbortController()
-            const timeoutId = setTimeout(() => controller.abort(), 15000) // 15s timeout
-
-            const response = await fetch(`${apiUrl}/api/v1/candidates/by-load/${loadId}`, {
-                signal: controller.signal
-            })
-
-            clearTimeout(timeoutId)
-
-            if (!response.ok) throw new Error('Failed to fetch candidates')
-
-            const data = await response.json()
+            const data = await api.getCandidatesByLoad(loadId)
             set({ candidates: data })
         } catch (err) {
             console.error('Error fetching candidates:', err)
-            const errorMessage = err instanceof Error
-                ? (err.name === 'AbortError' ? 'Tempo limite excedido. O servidor pode estar reiniciando.' : err.message)
-                : 'Failed to fetch candidates'
+            const errorMessage = err instanceof Error ? err.message : 'Failed to fetch candidates'
             set({ error: errorMessage })
         } finally {
             set({ loading: false })
@@ -64,12 +49,7 @@ export const useCandidatesStore = create<CandidatesStore>((set) => ({
 
     selectCandidate: async (candidateId: string) => {
         try {
-            const apiUrl = 'https://ekimcihxrnigghnappjv.supabase.co/functions/v1'
-            const response = await fetch(`${apiUrl}/api/v1/candidates/${candidateId}/select`, {
-                method: 'POST'
-            })
-
-            if (!response.ok) throw new Error('Failed to select candidate')
+            await api.selectCandidate(candidateId)
 
             // Optimistic update
             set((state) => ({

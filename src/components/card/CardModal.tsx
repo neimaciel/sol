@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import type { KanbanCard } from '@/store/useKanbanStore'
 import { useKanbanStore } from '@/store/useKanbanStore'
 import { supabase } from '@/lib/supabase'
+import { api } from '@/lib/apiClient'
 import { Calendar, DollarSign, X, Paperclip, Send, Check, AlertTriangle, FileCheck, Truck, Upload, Shield, FileSignature, ArrowRight, Box, History, MapPin, Clock, FileText, MessageCircle, QrCode } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import CandidateList from "./CandidateList"
@@ -188,7 +189,7 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                     alert('Grupo criado, mas não foi possível extrair o ID do WhatsApp automaticamente. Verifique o link e tente novamente se necessário.')
                 }
             } else {
-                console.error('Failed to create group:', response.status)
+                console.error('Failed to create group')
                 alert('Erro ao criar grupo.')
             }
         } catch (error) {

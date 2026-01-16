@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
+import { toast } from '@/lib/toast'
+import { logger } from '@/lib/logger'
 
 export interface ProductTemplate {
     id: string
@@ -36,7 +38,9 @@ export const useProductTemplatesStore = create<ProductTemplatesState>((set, get)
 
             set({ templates: data as ProductTemplate[], isLoading: false })
         } catch (error) {
-            console.error('Error fetching templates:', error)
+            logger.error('Error fetching templates:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao buscar templates'
+            toast.error(message)
             set({ isLoading: false })
         }
     },
@@ -51,8 +55,11 @@ export const useProductTemplatesStore = create<ProductTemplatesState>((set, get)
             if (error) throw error
 
             await get().fetchTemplates()
+            toast.success('Template adicionado com sucesso!')
         } catch (error) {
-            console.error('Error adding template:', error)
+            logger.error('Error adding template:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao adicionar template'
+            toast.error(message)
             set({ isLoading: false })
         }
     },
@@ -68,8 +75,11 @@ export const useProductTemplatesStore = create<ProductTemplatesState>((set, get)
             if (error) throw error
 
             await get().fetchTemplates()
+            toast.success('Template atualizado com sucesso!')
         } catch (error) {
-            console.error('Error updating template:', error)
+            logger.error('Error updating template:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao atualizar template'
+            toast.error(message)
             set({ isLoading: false })
         }
     },
@@ -85,8 +95,11 @@ export const useProductTemplatesStore = create<ProductTemplatesState>((set, get)
             if (error) throw error
 
             await get().fetchTemplates()
+            toast.success('Template excluído com sucesso!')
         } catch (error) {
-            console.error('Error deleting template:', error)
+            logger.error('Error deleting template:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao excluir template'
+            toast.error(message)
             set({ isLoading: false })
         }
     }

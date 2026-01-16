@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import { api } from '@/lib/apiClient'
+import { toast } from '@/lib/toast'
+import { logger } from '@/lib/logger'
 
 interface Payment {
     id: string
@@ -74,8 +76,10 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
                 return null
             }
         } catch (error: any) {
-            set({ error: error.message, loading: false })
-            console.error('Erro ao buscar pagamento:', error)
+            const message = error.message || 'Erro ao buscar pagamento'
+            set({ error: message, loading: false })
+            logger.error('Erro ao buscar pagamento:', error)
+            toast.error(message)
             return null
         }
     },
@@ -102,9 +106,13 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
                 throw new Error('Pagamento criado mas não foi possível recuperar os dados')
             }
 
+            toast.success('Pagamento criado com sucesso!')
             return payment
         } catch (error: any) {
-            set({ error: error.message, loading: false })
+            const message = error.message || 'Erro ao criar pagamento'
+            set({ error: message, loading: false })
+            logger.error('Erro ao criar pagamento:', error)
+            toast.error(message)
             throw error
         }
     },
@@ -142,11 +150,15 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
             }
 
             set({ payments: updatedPayments, loading: false })
+            toast.success('Pagamento confirmado com sucesso!')
             return updatedPayments[Object.keys(updatedPayments).find(loadId =>
                 updatedPayments[loadId].id === paymentId
             )!]
         } catch (error: any) {
-            set({ error: error.message, loading: false })
+            const message = error.message || 'Erro ao confirmar pagamento'
+            set({ error: message, loading: false })
+            logger.error('Erro ao confirmar pagamento:', error)
+            toast.error(message)
             throw error
         }
     },
@@ -156,8 +168,10 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
             const data = await api.getPaymentMethods()
             set({ paymentMethods: data.methods || [] })
         } catch (error: any) {
-            set({ error: error.message })
-            console.error('Erro ao buscar métodos de pagamento:', error)
+            const message = error.message || 'Erro ao buscar métodos de pagamento'
+            set({ error: message })
+            logger.error('Erro ao buscar métodos de pagamento:', error)
+            toast.error(message)
         }
     },
 
@@ -165,10 +179,13 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
         set({ loading: true, error: null })
         try {
             // TODO: Implement API endpoint for bank data update
-            console.warn('updateDriverBankData not implemented yet')
+            logger.warn('updateDriverBankData not implemented yet')
             set({ loading: false })
         } catch (error: any) {
-            set({ error: error.message, loading: false })
+            const message = error.message || 'Erro ao atualizar dados bancários'
+            set({ error: message, loading: false })
+            logger.error('Erro ao atualizar dados bancários:', error)
+            toast.error(message)
             throw error
         }
     },
@@ -177,11 +194,14 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
         set({ loading: true, error: null })
         try {
             // TODO: Implement API endpoint for receipt upload
-            console.warn('uploadReceipt not implemented yet')
+            logger.warn('uploadReceipt not implemented yet')
             set({ loading: false })
             return ''
         } catch (error: any) {
-            set({ error: error.message, loading: false })
+            const message = error.message || 'Erro ao fazer upload do comprovante'
+            set({ error: message, loading: false })
+            logger.error('Erro ao fazer upload do comprovante:', error)
+            toast.error(message)
             throw error
         }
     },

@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { toast } from '@/lib/toast'
+import { logger } from '@/lib/logger'
 
 interface Operator {
     id: string
@@ -82,9 +84,13 @@ export const useOperatorStore = create<OperatorState>()(
                         loading: false
                     })
 
+                    toast.success('Login realizado com sucesso!')
                     return true
                 } catch (error: any) {
-                    set({ error: error.message, loading: false })
+                    const message = error.message || 'Erro ao fazer login'
+                    set({ error: message, loading: false })
+                    logger.error('Login error:', error)
+                    toast.error(message)
                     return false
                 }
             },
@@ -102,7 +108,7 @@ export const useOperatorStore = create<OperatorState>()(
                             }
                         })
                     } catch (error) {
-                        console.warn('Erro ao fazer logout no servidor:', error)
+                        logger.warn('Erro ao fazer logout no servidor:', error)
                     }
                 }
 
@@ -112,6 +118,7 @@ export const useOperatorStore = create<OperatorState>()(
                     expiresAt: null,
                     error: null
                 })
+                toast.success('Logout realizado com sucesso!')
             },
 
             getCurrentOperator: async () => {
@@ -146,7 +153,10 @@ export const useOperatorStore = create<OperatorState>()(
                     const operatorData = await response.json()
                     set({ operator: operatorData, loading: false })
                 } catch (error: any) {
-                    set({ error: error.message, loading: false })
+                    const message = error.message || 'Erro ao buscar dados do operador'
+                    set({ error: message, loading: false })
+                    logger.error('Error fetching operator:', error)
+                    toast.error(message)
                 }
             },
 

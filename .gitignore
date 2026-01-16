@@ -38,3 +38,6 @@ dist-ssr
 
 # Auto Claude data directory
 .auto-claude/
+
+# Supabase
+supabase/.temp/

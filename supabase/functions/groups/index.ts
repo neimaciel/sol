@@ -75,10 +75,15 @@ serve(async (req) => {
     if (method === 'GET') {
       // Get all groups
       console.log('📋 [GROUPS] Fetching all groups...')
+      // Get groups with pagination
+      const limit = parseInt(url.searchParams.get('limit') || '50')
+      const offset = parseInt(url.searchParams.get('offset') || '0')
+
       const { data, error } = await supabase
         .from('groups')
         .select('*')
         .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1)
 
       if (error) {
         console.error('❌ [GROUPS] Error fetching groups:', error)

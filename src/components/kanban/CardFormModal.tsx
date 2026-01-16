@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { useKanbanStore, type KanbanCard } from '@/store/useKanbanStore'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { validateForm, validatePositiveNumber } from '@/lib/validation'
 
 interface CardFormModalProps {
     isOpen: boolean
@@ -29,6 +30,7 @@ export function CardFormModal({ isOpen, onClose, card }: CardFormModalProps) {
     const [isLoadingModels, setIsLoadingModels] = useState(false)
     const [saveAsModel, setSaveAsModel] = useState(false)
     const [modelName, setModelName] = useState('')
+    const [errors, setErrors] = useState<Record<string, string>>({})
 
     const [formData, setFormData] = useState({
         title: '',
@@ -78,16 +80,30 @@ export function CardFormModal({ isOpen, onClose, card }: CardFormModalProps) {
             // Check if there's a preselected model from ModelsList
             const preselectedModel = localStorage.getItem('selectedLoadModel')
             if (preselectedModel) {
-                const model = JSON.parse(preselectedModel)
-                setFormData({
-                    title: model.title || '',
-                    origin: model.origin || '',
-                    destination: model.destination || '',
-                    value: '',
-                    date: '',
-                    priority: 'normal',
-                    columnId: 'registration',
-                })
+                try {
+                    const model = JSON.parse(preselectedModel)
+                    setFormData({
+                        title: model.title || '',
+                        origin: model.origin || '',
+                        destination: model.destination || '',
+                        value: '',
+                        date: '',
+                        priority: 'normal',
+                        columnId: 'registration',
+                    })
+                } catch (e) {
+                    console.error('Failed to parse load model from localStorage:', e)
+                    // Fall back to empty form if parsing fails
+                    setFormData({
+                        title: '',
+                        origin: '',
+                        destination: '',
+                        value: '',
+                        date: new Date().toLocaleDateString('pt-BR'),
+                        priority: 'normal',
+                        columnId: 'registration',
+                    })
+                }
                 // Clear the stored model after using it
                 localStorage.removeItem('selectedLoadModel')
             } else {
@@ -120,6 +136,22 @@ export function CardFormModal({ isOpen, onClose, card }: CardFormModalProps) {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+
+        // Validate form
+        const { isValid, errors: validationErrors } = validateForm(formData, [
+            { field: 'title', required: true, message: 'Título é obrigatório' },
+            { field: 'origin', required: true, message: 'Origem é obrigatória' },
+            { field: 'destination', required: true, message: 'Destino é obrigatório' },
+            { field: 'value', required: true, custom: validatePositiveNumber }
+        ])
+
+        if (!isValid) {
+            setErrors(validationErrors)
+            return
+        }
+
+        // Clear errors if validation passed
+        setErrors({})
 
         if (card) {
             updateCard(card.id, formData)
@@ -176,23 +208,29 @@ export function CardFormModal({ isOpen, onClose, card }: CardFormModalProps) {
                                 <Label htmlFor="origin" className="text-sm font-medium text-muted-foreground">Origem</Label>
                                 <Input
                                     id="origin"
+                                    name="origin"
                                     value={formData.origin}
                                     onChange={(e) => setFormData({ ...formData, origin: e.target.value })}
                                     placeholder="São Paulo, SP"
-                                    className="input-soft bg-white/50 border-white/40 focus:bg-white/80"
-                                    required
+                                    className={`input-soft bg-white/50 border-white/40 focus:bg-white/80 ${errors.origin ? 'border-red-500' : ''}`}
                                 />
+                                {errors.origin && (
+                                    <p className="text-xs text-red-500 mt-1">{errors.origin}</p>
+                                )}
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="destination" className="text-sm font-medium text-muted-foreground">Destino</Label>
                                 <Input
                                     id="destination"
+                                    name="destination"
                                     value={formData.destination}
                                     onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
                                     placeholder="Campinas, SP"
-                                    className="input-soft bg-white/50 border-white/40 focus:bg-white/80"
-                                    required
+                                    className={`input-soft bg-white/50 border-white/40 focus:bg-white/80 ${errors.destination ? 'border-red-500' : ''}`}
                                 />
+                                {errors.destination && (
+                                    <p className="text-xs text-red-500 mt-1">{errors.destination}</p>
+                                )}
                             </div>
                         </div>
 
@@ -200,12 +238,15 @@ export function CardFormModal({ isOpen, onClose, card }: CardFormModalProps) {
                             <Label htmlFor="title" className="text-sm font-medium text-muted-foreground">Título da Rota</Label>
                             <Input
                                 id="title"
+                                name="title"
                                 value={formData.title}
                                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                 placeholder="Ex: SP → Campinas"
-                                className="input-soft bg-white/50 border-white/40 focus:bg-white/80"
-                                required
+                                className={`input-soft bg-white/50 border-white/40 focus:bg-white/80 ${errors.title ? 'border-red-500' : ''}`}
                             />
+                            {errors.title && (
+                                <p className="text-xs text-red-500 mt-1">{errors.title}</p>
+                            )}
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
@@ -213,12 +254,15 @@ export function CardFormModal({ isOpen, onClose, card }: CardFormModalProps) {
                                 <Label htmlFor="value" className="text-sm font-medium text-muted-foreground">Valor</Label>
                                 <Input
                                     id="value"
+                                    name="value"
                                     value={formData.value}
                                     onChange={(e) => setFormData({ ...formData, value: e.target.value })}
                                     placeholder="R$ 2.500"
-                                    className="input-soft bg-white/50 border-white/40 focus:bg-white/80"
-                                    required
+                                    className={`input-soft bg-white/50 border-white/40 focus:bg-white/80 ${errors.value ? 'border-red-500' : ''}`}
                                 />
+                                {errors.value && (
+                                    <p className="text-xs text-red-500 mt-1">{errors.value}</p>
+                                )}
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="date" className="text-sm font-medium text-muted-foreground">Data</Label>

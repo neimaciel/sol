@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import { api } from '@/lib/apiClient'
+import { toast } from '@/lib/toast'
+import { logger } from '@/lib/logger'
 
 export interface Group {
     id: string
@@ -44,7 +46,9 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
                 isLoading: false
             })
         } catch (error) {
-            console.error('Error fetching groups:', error)
+            logger.error('Error fetching groups:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao buscar grupos'
+            toast.error(message)
             set({ isLoading: false, groups: [] })
         }
     },
@@ -61,10 +65,16 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
                     const inviteCode = linkParts[linkParts.length - 1]?.trim()
 
                     if (inviteCode && inviteCode.length === 22 && /^[a-zA-Z0-9]{22}$/.test(inviteCode)) {
-                        const evolutionApiUrl = 'https://api.ampler.me'
-                        const evolutionApiKey = '52f13a23eee6e422dc718d4df667326c21168c2e7b2b777aa8d4b29c038acafb'
+                        const evolutionApiUrl = import.meta.env.VITE_EVOLUTION_API_URL
+                        const evolutionApiKey = import.meta.env.VITE_EVOLUTION_API_KEY
+                        const instanceName = import.meta.env.VITE_EVOLUTION_INSTANCE_NAME
 
-                        const response = await fetch(`${evolutionApiUrl}/group/inviteInfo/SOL?inviteCode=${inviteCode}`, {
+                        if (!evolutionApiUrl || !evolutionApiKey || !instanceName) {
+                            logger.error('❌ Missing Evolution API environment variables')
+                            throw new Error('Missing Evolution API configuration')
+                        }
+
+                        const response = await fetch(`${evolutionApiUrl}/group/inviteInfo/${instanceName}?inviteCode=${inviteCode}`, {
                             method: 'GET',
                             headers: {
                                 'apikey': evolutionApiKey,
@@ -75,16 +85,16 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
                         if (response.ok) {
                             const data = await response.json()
                             whatsappId = data.id || data.jid
-                            console.log('✅ Extracted WhatsApp Group JID:', whatsappId)
+                            logger.log('✅ Extracted WhatsApp Group JID:', whatsappId)
                         } else {
                             const error = await response.json()
-                            console.warn('⚠️ Could not extract WhatsApp ID:', error)
+                            logger.warn('⚠️ Could not extract WhatsApp ID:', error)
                         }
                     } else {
-                        console.warn('⚠️ Invalid invite code format. Expected 22 alphanumeric characters.')
+                        logger.warn('⚠️ Invalid invite code format. Expected 22 alphanumeric characters.')
                     }
                 } catch (extractError) {
-                    console.error('⚠️ Error extracting WhatsApp ID:', extractError)
+                    logger.error('⚠️ Error extracting WhatsApp ID:', extractError)
                 }
             }
 
@@ -100,8 +110,11 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
 
             await api.createGroup(groupData)
             await get().fetchGroups()
+            toast.success('Grupo criado com sucesso!')
         } catch (error) {
-            console.error('Error adding group:', error)
+            logger.error('Error adding group:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao criar grupo'
+            toast.error(message)
             set({ isLoading: false })
         }
     },
@@ -118,10 +131,16 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
                     const inviteCode = linkParts[linkParts.length - 1]?.trim()
 
                     if (inviteCode && inviteCode.length === 22 && /^[a-zA-Z0-9]{22}$/.test(inviteCode)) {
-                        const evolutionApiUrl = 'https://api.ampler.me'
-                        const evolutionApiKey = '52f13a23eee6e422dc718d4df667326c21168c2e7b2b777aa8d4b29c038acafb'
+                        const evolutionApiUrl = import.meta.env.VITE_EVOLUTION_API_URL
+                        const evolutionApiKey = import.meta.env.VITE_EVOLUTION_API_KEY
+                        const instanceName = import.meta.env.VITE_EVOLUTION_INSTANCE_NAME
 
-                        const response = await fetch(`${evolutionApiUrl}/group/inviteInfo/SOL?inviteCode=${inviteCode}`, {
+                        if (!evolutionApiUrl || !evolutionApiKey || !instanceName) {
+                            logger.error('❌ Missing Evolution API environment variables')
+                            throw new Error('Missing Evolution API configuration')
+                        }
+
+                        const response = await fetch(`${evolutionApiUrl}/group/inviteInfo/${instanceName}?inviteCode=${inviteCode}`, {
                             method: 'GET',
                             headers: {
                                 'apikey': evolutionApiKey,
@@ -132,16 +151,16 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
                         if (response.ok) {
                             const data = await response.json()
                             whatsappId = data.id || data.jid
-                            console.log('✅ Extracted WhatsApp Group JID:', whatsappId)
+                            logger.log('✅ Extracted WhatsApp Group JID:', whatsappId)
                         } else {
                             const error = await response.json()
-                            console.warn('⚠️ Could not extract WhatsApp ID:', error)
+                            logger.warn('⚠️ Could not extract WhatsApp ID:', error)
                         }
                     } else {
-                        console.warn('⚠️ Invalid invite code format. Expected 22 alphanumeric characters.')
+                        logger.warn('⚠️ Invalid invite code format. Expected 22 alphanumeric characters.')
                     }
                 } catch (extractError) {
-                    console.error('⚠️ Error extracting WhatsApp ID:', extractError)
+                    logger.error('⚠️ Error extracting WhatsApp ID:', extractError)
                 }
             }
 
@@ -161,8 +180,11 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
 
             await api.updateGroup(id, updateData)
             await get().fetchGroups()
+            toast.success('Grupo atualizado com sucesso!')
         } catch (error) {
-            console.error('Error updating group:', error)
+            logger.error('Error updating group:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao atualizar grupo'
+            toast.error(message)
             set({ isLoading: false })
         }
     },
@@ -171,8 +193,11 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
         try {
             await api.deleteGroup(id)
             await get().fetchGroups()
+            toast.success('Grupo excluído com sucesso!')
         } catch (error) {
-            console.error('Error deleting group:', error)
+            logger.error('Error deleting group:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao excluir grupo'
+            toast.error(message)
             set({ isLoading: false })
         }
     }

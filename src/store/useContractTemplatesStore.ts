@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
+import { toast } from '@/lib/toast'
+import { logger } from '@/lib/logger'
 
 export interface ContractTemplate {
     id: string
@@ -36,7 +38,9 @@ export const useContractTemplatesStore = create<ContractTemplatesState>((set, ge
 
             set({ templates: data as ContractTemplate[], isLoading: false })
         } catch (error) {
-            console.error('Error fetching templates:', error)
+            logger.error('Error fetching templates:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao buscar templates de contrato'
+            toast.error(message)
             set({ isLoading: false })
         }
     },
@@ -51,8 +55,11 @@ export const useContractTemplatesStore = create<ContractTemplatesState>((set, ge
             if (error) throw error
 
             await get().fetchTemplates()
+            toast.success('Template de contrato adicionado com sucesso!')
         } catch (error) {
-            console.error('Error adding template:', error)
+            logger.error('Error adding template:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao adicionar template de contrato'
+            toast.error(message)
             set({ isLoading: false })
         }
     },
@@ -68,8 +75,11 @@ export const useContractTemplatesStore = create<ContractTemplatesState>((set, ge
             if (error) throw error
 
             await get().fetchTemplates()
+            toast.success('Template de contrato atualizado com sucesso!')
         } catch (error) {
-            console.error('Error updating template:', error)
+            logger.error('Error updating template:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao atualizar template de contrato'
+            toast.error(message)
             set({ isLoading: false })
         }
     },
@@ -85,8 +95,11 @@ export const useContractTemplatesStore = create<ContractTemplatesState>((set, ge
             if (error) throw error
 
             await get().fetchTemplates()
+            toast.success('Template de contrato excluído com sucesso!')
         } catch (error) {
-            console.error('Error deleting template:', error)
+            logger.error('Error deleting template:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao excluir template de contrato'
+            toast.error(message)
             set({ isLoading: false })
         }
     }

@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import { api } from '@/lib/apiClient'
+import { toast } from '@/lib/toast'
+import { logger } from '@/lib/logger'
 // import type { LoginResponse } from '@/lib/apiClient'
 
 interface Operator {
@@ -55,12 +57,12 @@ export const useAuthStore = create<AuthState>((set) => ({
                 })
             } catch (error) {
                 // Token is invalid, clear it
-                console.error('Invalid token, clearing...', error)
+                logger.error('Invalid token, clearing...', error)
                 api.clearToken()
                 set({ user: null, loading: false })
             }
         } catch (error) {
-            console.error('Auth initialization error:', error)
+            logger.error('Auth initialization error:', error)
             set({ user: null, loading: false })
         }
     },
@@ -68,19 +70,22 @@ export const useAuthStore = create<AuthState>((set) => ({
         try {
             set({ loading: true })
             const response = await api.login(email, password)
-            
-            set({ 
+
+            set({
                 user: response.operator,
-                loading: false 
+                loading: false
             })
-            
+
+            toast.success('Login realizado com sucesso!')
             return { error: null }
         } catch (error: any) {
-            console.error('Login error:', error)
+            logger.error('Login error:', error)
+            const message = error.message || 'Erro ao fazer login'
+            toast.error(message)
             set({ loading: false })
-            return { 
+            return {
                 error: {
-                    message: error.message || 'Erro ao fazer login'
+                    message
                 }
             }
         }
@@ -96,8 +101,11 @@ export const useAuthStore = create<AuthState>((set) => ({
     signOut: async () => {
         try {
             await api.logout()
+            toast.success('Logout realizado com sucesso!')
         } catch (error) {
-            console.error('Logout error:', error)
+            logger.error('Logout error:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao fazer logout'
+            toast.error(message)
         } finally {
             set({ user: null })
         }

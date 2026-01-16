@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
+import { toast } from '@/lib/toast'
+import { logger } from '@/lib/logger'
 
 export interface LoadModel {
     id: string
@@ -50,7 +52,9 @@ export const useModelsStore = create<ModelsState>((set, get) => ({
                 isLoading: false
             })
         } catch (error) {
-            console.error('Error fetching models:', error)
+            logger.error('Error fetching models:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao buscar modelos'
+            toast.error(message)
             set({ isLoading: false })
         }
     },
@@ -72,8 +76,11 @@ export const useModelsStore = create<ModelsState>((set, get) => ({
             if (error) throw error
 
             await get().fetchModels()
+            toast.success('Modelo adicionado com sucesso!')
         } catch (error) {
-            console.error('Error adding model:', error)
+            logger.error('Error adding model:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao adicionar modelo'
+            toast.error(message)
             set({ isLoading: false })
         }
     },
@@ -88,8 +95,11 @@ export const useModelsStore = create<ModelsState>((set, get) => ({
             if (error) throw error
 
             await get().fetchModels()
+            toast.success('Modelo excluído com sucesso!')
         } catch (error) {
-            console.error('Error deleting model:', error)
+            logger.error('Error deleting model:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao excluir modelo'
+            toast.error(message)
             set({ isLoading: false })
         }
     },
@@ -111,8 +121,11 @@ export const useModelsStore = create<ModelsState>((set, get) => ({
             if (error) throw error
 
             await get().fetchModels()
+            toast.success('Modelo atualizado com sucesso!')
         } catch (error) {
-            console.error('Error updating model:', error)
+            logger.error('Error updating model:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao atualizar modelo'
+            toast.error(message)
             set({ isLoading: false })
         }
     }

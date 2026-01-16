@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useGroupsStore, type Group } from '@/store/useGroupsStore'
+import { validateForm } from '@/lib/validation'
 
 interface GroupFormModalProps {
     isOpen: boolean
@@ -16,6 +17,7 @@ interface GroupFormModalProps {
 export function GroupFormModal({ isOpen, onClose, groupToEdit }: GroupFormModalProps) {
     const { addGroup, updateGroup } = useGroupsStore()
     const [isLoading, setIsLoading] = useState(false)
+    const [errors, setErrors] = useState<Record<string, string>>({})
 
     const [formData, setFormData] = useState<Omit<Group, 'id' | 'membersCount'>>({
         name: '',
@@ -47,6 +49,26 @@ export function GroupFormModal({ isOpen, onClose, groupToEdit }: GroupFormModalP
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+
+        // Validate form
+        const { isValid, errors: validationErrors } = validateForm(formData, [
+            { field: 'name', required: true, minLength: 3, message: 'Nome do grupo é obrigatório (mínimo 3 caracteres)' },
+            { field: 'region', required: true, message: 'Região é obrigatória' },
+            { field: 'description', required: true, minLength: 10, message: 'Descrição é obrigatória (mínimo 10 caracteres)' },
+            {
+                field: 'whatsappLink',
+                pattern: /^https:\/\/chat\.whatsapp\.com\/[a-zA-Z0-9]{22}$/,
+                message: 'Link do WhatsApp inválido (formato: https://chat.whatsapp.com/XXX)'
+            }
+        ])
+
+        if (!isValid) {
+            setErrors(validationErrors)
+            return
+        }
+
+        // Clear errors if validation passed
+        setErrors({})
         setIsLoading(true)
 
         try {
@@ -60,10 +82,16 @@ export function GroupFormModal({ isOpen, onClose, groupToEdit }: GroupFormModalP
                     const inviteCode = linkParts[linkParts.length - 1]?.trim()
 
                     if (inviteCode && inviteCode.length === 22 && /^[a-zA-Z0-9]{22}$/.test(inviteCode)) {
-                        const evolutionApiUrl = 'https://api.ampler.me'
-                        const evolutionApiKey = '52f13a23eee6e422dc718d4df667326c21168c2e7b2b777aa8d4b29c038acafb'
+                        const evolutionApiUrl = import.meta.env.VITE_EVOLUTION_API_URL
+                        const evolutionApiKey = import.meta.env.VITE_EVOLUTION_API_KEY
+                        const instanceName = import.meta.env.VITE_EVOLUTION_INSTANCE_NAME
 
-                        const response = await fetch(`${evolutionApiUrl}/group/inviteInfo/SOL?inviteCode=${inviteCode}`, {
+                        if (!evolutionApiUrl || !evolutionApiKey || !instanceName) {
+                            console.error('❌ Missing Evolution API environment variables')
+                            throw new Error('Missing Evolution API configuration')
+                        }
+
+                        const response = await fetch(`${evolutionApiUrl}/group/inviteInfo/${instanceName}?inviteCode=${inviteCode}`, {
                             method: 'GET',
                             headers: {
                                 'apikey': evolutionApiKey,
@@ -128,12 +156,15 @@ export function GroupFormModal({ isOpen, onClose, groupToEdit }: GroupFormModalP
                         </Label>
                         <Input
                             id="name"
+                            name="name"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             placeholder="Ex: Frota SP - Zona Sul"
-                            className="input-soft bg-white/50 border-white/40 focus:bg-white/80"
-                            required
+                            className={`input-soft bg-white/50 border-white/40 focus:bg-white/80 ${errors.name ? 'border-red-500' : ''}`}
                         />
+                        {errors.name && (
+                            <p className="text-xs text-red-500 mt-1">{errors.name}</p>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -162,11 +193,15 @@ export function GroupFormModal({ isOpen, onClose, groupToEdit }: GroupFormModalP
                             </Label>
                             <Input
                                 id="region"
+                                name="region"
                                 value={formData.region}
                                 onChange={(e) => setFormData({ ...formData, region: e.target.value })}
                                 placeholder="Ex: São Paulo, SP"
-                                className="input-soft bg-white/50 border-white/40 focus:bg-white/80"
+                                className={`input-soft bg-white/50 border-white/40 focus:bg-white/80 ${errors.region ? 'border-red-500' : ''}`}
                             />
+                            {errors.region && (
+                                <p className="text-xs text-red-500 mt-1">{errors.region}</p>
+                            )}
                         </div>
                     </div>
 
@@ -176,11 +211,15 @@ export function GroupFormModal({ isOpen, onClose, groupToEdit }: GroupFormModalP
                         </Label>
                         <Textarea
                             id="description"
+                            name="description"
                             value={formData.description}
                             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })}
                             placeholder="Descreva o propósito deste grupo..."
-                            className="input-soft bg-white/50 border-white/40 focus:bg-white/80 min-h-[100px]"
+                            className={`input-soft bg-white/50 border-white/40 focus:bg-white/80 min-h-[100px] ${errors.description ? 'border-red-500' : ''}`}
                         />
+                        {errors.description && (
+                            <p className="text-xs text-red-500 mt-1">{errors.description}</p>
+                        )}
                     </div>
 
                     <div className="space-y-2">
@@ -189,13 +228,18 @@ export function GroupFormModal({ isOpen, onClose, groupToEdit }: GroupFormModalP
                         </Label>
                         <Input
                             id="whatsappLink"
+                            name="whatsappLink"
                             value={formData.whatsappLink || ''}
                             onChange={(e) => setFormData({ ...formData, whatsappLink: e.target.value })}
                             placeholder="https://chat.whatsapp.com/..."
-                            className="input-soft bg-white/50 border-white/40 focus:bg-white/80"
+                            className={`input-soft bg-white/50 border-white/40 focus:bg-white/80 ${errors.whatsappLink ? 'border-red-500' : ''}`}
                             type="url"
                         />
-                        <p className="text-xs text-muted-foreground/70">Link do grupo de WhatsApp para divulgação de cargas</p>
+                        {errors.whatsappLink ? (
+                            <p className="text-xs text-red-500 mt-1">{errors.whatsappLink}</p>
+                        ) : (
+                            <p className="text-xs text-muted-foreground/70">Link do grupo de WhatsApp para divulgação de cargas</p>
+                        )}
                     </div>
 
                     <DialogFooter>

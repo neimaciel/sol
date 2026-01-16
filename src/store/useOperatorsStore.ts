@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
+import { toast } from '@/lib/toast'
+import { logger } from '@/lib/logger'
 
 export interface Operator {
     id: string
@@ -29,7 +31,8 @@ export const useOperatorsStore = create<OperatorsState>((set) => ({
             .order('name', { ascending: true })
 
         if (error) {
-            console.error('Error fetching operators:', error)
+            logger.error('Error fetching operators:', error)
+            toast.error('Erro ao buscar operadores')
             return
         }
 
@@ -64,7 +67,8 @@ export const useOperatorsStore = create<OperatorsState>((set) => ({
             .select()
 
         if (error) {
-            console.error('Error adding operator:', error)
+            logger.error('Error adding operator:', error)
+            toast.error('Erro ao adicionar operador')
             // Revert optimistic update
             set((state) => ({
                 operators: state.operators.filter((o) => o.id !== tempId),
@@ -76,6 +80,7 @@ export const useOperatorsStore = create<OperatorsState>((set) => ({
                     o.id === tempId ? { ...o, id: data[0].id } : o
                 ),
             }))
+            toast.success('Operador adicionado com sucesso!')
         }
     },
 
@@ -100,7 +105,10 @@ export const useOperatorsStore = create<OperatorsState>((set) => ({
             .eq('id', id)
 
         if (error) {
-            console.error('Error updating operator:', error)
+            logger.error('Error updating operator:', error)
+            toast.error('Erro ao atualizar operador')
+        } else {
+            toast.success('Operador atualizado com sucesso!')
         }
     },
 
@@ -116,7 +124,10 @@ export const useOperatorsStore = create<OperatorsState>((set) => ({
             .eq('id', id)
 
         if (error) {
-            console.error('Error deleting operator:', error)
+            logger.error('Error deleting operator:', error)
+            toast.error('Erro ao excluir operador')
+        } else {
+            toast.success('Operador excluído com sucesso!')
         }
     },
 
@@ -127,7 +138,7 @@ export const useOperatorsStore = create<OperatorsState>((set) => ({
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'operators' },
                 (payload: any) => {
-                    console.log('Real-time operators update:', payload)
+                    logger.log('Real-time operators update:', payload)
                     useOperatorsStore.getState().fetchOperators()
                 }
             )

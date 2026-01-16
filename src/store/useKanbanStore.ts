@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { api } from '@/lib/apiClient'
 import { useCardEventsStore } from './useCardEventsStore'
+import { toast } from '@/lib/toast'
+import { logger } from '@/lib/logger'
 
 export interface KanbanColumn {
     id: string
@@ -94,7 +96,7 @@ export const useKanbanStore = create<KanbanState>((set, get) => ({
             const data = response.loads
 
             if (!data) {
-                console.warn('No loads data received')
+                logger.warn('No loads data received')
                 return
             }
 
@@ -126,7 +128,9 @@ export const useKanbanStore = create<KanbanState>((set, get) => ({
 
             set({ cards: mappedCards })
         } catch (error) {
-            console.error('Error fetching cards:', error)
+            logger.error('Error fetching cards:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao buscar cargas'
+            toast.error(message)
         }
     },
 
@@ -145,9 +149,12 @@ export const useKanbanStore = create<KanbanState>((set, get) => ({
                 // Refresh cards to get the latest data
                 await get().fetchCards()
                 useCardEventsStore.getState().logEvent(response.load.id, 'created', { title: card.title })
+                toast.success('Carga criada com sucesso!')
             }
         } catch (error) {
-            console.error('Error adding card:', error)
+            logger.error('Error adding card:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao criar carga'
+            toast.error(message)
         }
     },
 
@@ -184,7 +191,9 @@ export const useKanbanStore = create<KanbanState>((set, get) => ({
                 useCardEventsStore.getState().logEvent(cardId, 'moved', { to: toColumnId })
             }
         } catch (error) {
-            console.error('Error moving card:', error)
+            logger.error('Error moving card:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao mover carga'
+            toast.error(message)
             // Revert optimistic update on error
             await get().fetchCards()
         }
@@ -225,7 +234,9 @@ export const useKanbanStore = create<KanbanState>((set, get) => ({
                 if (updatedCard.documents_status) useCardEventsStore.getState().logEvent(id, 'documents_updated', { status: updatedCard.documents_status })
             }
         } catch (error) {
-            console.error('Error updating card:', error)
+            logger.error('Error updating card:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao atualizar carga'
+            toast.error(message)
             // Revert optimistic update on error
             await get().fetchCards()
         }
@@ -244,8 +255,12 @@ export const useKanbanStore = create<KanbanState>((set, get) => ({
             if (!response.success) {
                 throw new Error('Failed to delete load')
             }
+
+            toast.success('Carga excluída com sucesso!')
         } catch (error) {
-            console.error('Error deleting card:', error)
+            logger.error('Error deleting card:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao excluir carga'
+            toast.error(message)
             // Revert optimistic update on error
             await get().fetchCards()
         }
@@ -254,8 +269,8 @@ export const useKanbanStore = create<KanbanState>((set, get) => ({
     subscribeToCards: () => {
         // For local development, we'll use polling or manual refresh
         // Real-time subscriptions would require WebSocket implementation
-        console.log('Real-time subscriptions disabled for local API')
-        
+        logger.log('Real-time subscriptions disabled for local API')
+
         // Return empty unsubscribe function
         return () => {
             // No-op
@@ -282,8 +297,11 @@ export const useKanbanStore = create<KanbanState>((set, get) => ({
 
             // Refresh cards to update UI
             await get().fetchCards()
+            toast.success('Motorista atribuído com sucesso!')
         } catch (error) {
-            console.error('Error assigning driver:', error)
+            logger.error('Error assigning driver:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao atribuir motorista'
+            toast.error(message)
             throw error
         }
     },
@@ -316,8 +334,11 @@ export const useKanbanStore = create<KanbanState>((set, get) => ({
 
             // Refresh to ensure sync
             await get().fetchCards()
+            toast.success('Motorista desvinculado com sucesso!')
         } catch (error) {
-            console.error('Error unassigning driver:', error)
+            logger.error('Error unassigning driver:', error)
+            const message = error instanceof Error ? error.message : 'Erro ao desvincular motorista'
+            toast.error(message)
             throw error
         }
     },
@@ -325,13 +346,13 @@ export const useKanbanStore = create<KanbanState>((set, get) => ({
     autoAdvanceCard: async (cardId: string, trigger: string) => {
         const card = get().cards.find(c => c.id === cardId)
         if (!card) {
-            console.warn('Card not found for auto-advance:', cardId)
+            logger.warn('Card not found for auto-advance:', cardId)
             return
         }
 
         // Check if auto-advance is enabled for this card
         if (card.auto_advance === false) {
-            console.log('Auto-advance disabled for card:', cardId)
+            logger.log('Auto-advance disabled for card:', cardId)
             return
         }
 
@@ -385,17 +406,17 @@ export const useKanbanStore = create<KanbanState>((set, get) => ({
         const transition = transitions[currentColumn]
 
         if (!transition) {
-            console.log('No transition defined for column:', currentColumn)
+            logger.log('No transition defined for column:', currentColumn)
             return
         }
 
         if (!transition.condition()) {
-            console.log('Transition condition not met for:', currentColumn, '→', transition.next)
+            logger.log('Transition condition not met for:', currentColumn, '→', transition.next)
             return
         }
 
         // Perform the auto-advance
-        console.log(`🤖 Auto-advancing card ${cardId} from ${currentColumn} to ${transition.next} (trigger: ${trigger})`)
+        logger.log(`🤖 Auto-advancing card ${cardId} from ${currentColumn} to ${transition.next} (trigger: ${trigger})`)
 
         try {
             await get().moveCard(cardId, transition.next)
@@ -410,8 +431,11 @@ export const useKanbanStore = create<KanbanState>((set, get) => ({
                     trigger
                 }
             )
+            toast.success(`Carga avançada automaticamente para ${transition.next}`)
         } catch (error) {
-            console.error('Error during auto-advance:', error)
+            logger.error('Error during auto-advance:', error)
+            const message = error instanceof Error ? error.message : 'Erro no avanço automático'
+            toast.error(message)
         }
     }
 }))

@@ -316,3 +316,93 @@ export function clearValidationErrors() {
   document.querySelectorAll('.error').forEach(el => el.classList.remove('error'))
   document.querySelectorAll('.error-message').forEach(el => el.remove())
 }
+
+/**
+ * SANITIZAÇÃO - Proteção contra XSS e SQL Injection
+ * Bug Fix: P34
+ */
+
+/**
+ * Remove tags HTML e scripts maliciosos
+ */
+export function sanitizeHtml(dirty: string): string {
+  if (!dirty) return ''
+
+  // Remove tags HTML perigosas
+  return dirty
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+    .replace(/<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi, '')
+    .replace(/<embed\b[^<]*>/gi, '')
+    .replace(/<link\b[^<]*>/gi, '')
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+    .replace(/on\w+="[^"]*"/gi, '') // Remove event handlers
+    .replace(/on\w+='[^']*'/gi, '')
+}
+
+/**
+ * Sanitiza texto removendo todos os caracteres HTML
+ */
+export function sanitizeText(text: string): string {
+  if (!text) return ''
+  return text.replace(/<[^>]*>/g, '').trim()
+}
+
+/**
+ * Sanitiza URL para prevenir javascript: e data: attacks
+ */
+export function sanitizeUrl(url: string): string {
+  if (!url) return ''
+
+  try {
+    const parsed = new URL(url)
+    const dangerous = ['javascript:', 'data:', 'vbscript:', 'file:']
+
+    if (dangerous.some(proto => parsed.protocol.toLowerCase().startsWith(proto))) {
+      return ''
+    }
+
+    return parsed.href
+  } catch {
+    return ''
+  }
+}
+
+/**
+ * Escapa SQL para queries dinâmicas
+ * NOTA: Prefira usar parameterized queries!
+ */
+export function escapeSql(value: string): string {
+  if (!value) return ''
+  return value.replace(/'/g, "''").replace(/\\/g, '\\\\')
+}
+
+/**
+ * Sanitiza input geral para formulários
+ */
+export function sanitizeInput(input: string, options: {
+  maxLength?: number
+  allowHtml?: boolean
+  trim?: boolean
+} = {}): string {
+  if (!input) return ''
+
+  let result = input
+
+  // Trim por padrão
+  if (options.trim !== false) {
+    result = result.trim()
+  }
+
+  // Remove HTML se não permitido
+  if (!options.allowHtml) {
+    result = sanitizeText(result)
+  }
+
+  // Limita tamanho
+  if (options.maxLength && result.length > options.maxLength) {
+    result = result.substring(0, options.maxLength)
+  }
+
+  return result
+}

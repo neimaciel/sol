@@ -20,6 +20,7 @@ __pycache__/
 venv/
 .env
 .env.local
+.env.production
 .env.*.local
 
 dist-ssr

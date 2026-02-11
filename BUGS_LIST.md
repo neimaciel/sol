@@ -589,100 +589,135 @@ ALTER TABLE loads
 
 ---
 
-### P23: Evolution API Não Configurada
+### ✅ P23: Evolution API Não Configurada
 **Severidade:** 🟠 ALTO (Funcionalidade)
 **Impacto:** WhatsApp não envia mensagens
-**Localização:** `supabase/functions/groups/index.ts:154-191`
+**Localização:** `supabase/functions/groups/index.ts` e `src/services/whatsapp.ts`
+**Status:** ✅ RESOLVIDO (2026-02-10)
 
 **Problema:**
-```typescript
-const evolutionApiUrl = Deno.env.get('EVOLUTION_API_URL')
-const evolutionApiKey = Deno.env.get('EVOLUTION_API_KEY')
+- API retornava `success: true` quando não estava configurada (mentindo sobre envio)
+- Fallbacks hardcoded ('localhost:8080', 'global-api-key')
+- Instance name hardcoded ('sol-tms', 'sol_logistica')
+- Falta de validação antes de enviar
 
-if (evolutionApiUrl && evolutionApiKey) {
-  // Envia mensagem
-} else {
-  // ❌ Retorna sucesso falso!
-  results.push({
-    groupId,
-    success: true, // ❌ Mente que enviou!
-    message: 'WhatsApp API not configured'
-  })
-}
-```
+**Solução Implementada:**
 
-**Solução:**
-1. Configurar variáveis de ambiente no Supabase:
+1. **Edge Function** (`supabase/functions/groups/index.ts`):
+   - ✅ Valida variáveis de ambiente antes de processar
+   - ✅ Retorna erro 500 se API não configurada (não mente mais)
+   - ✅ Usa `INSTANCE_NAME` de env var
+   - ✅ Logging detalhado de sucesso/erro
+   - ✅ Valida existência do grupo antes de enviar
+   - ✅ Formata número com @g.us para grupos
+
+2. **Frontend Service** (`src/services/whatsapp.ts`):
+   - ✅ Removidos todos os fallbacks hardcoded
+   - ✅ Adicionado método `isConfigured()`
+   - ✅ Suporta grupos (@g.us) e indivíduos (@c.us)
+   - ✅ Formata número automaticamente
+   - ✅ Melhor tratamento de erros
+   - ✅ Validação de resposta da API
+
+**Variáveis Necessárias:**
 ```bash
-supabase secrets set EVOLUTION_API_URL=https://api.evolution.com
-supabase secrets set EVOLUTION_API_KEY=sua-chave
-supabase secrets set INSTANCE_NAME=sol_logistica
+# Supabase (Edge Functions)
+EVOLUTION_API_URL=https://api.evolution.com
+EVOLUTION_API_KEY=sua-chave
+INSTANCE_NAME=sol_logistica
+
+# Frontend (.env)
+VITE_EVOLUTION_API_URL=https://api.evolution.com
+VITE_EVOLUTION_API_KEY=sua-chave
+VITE_INSTANCE_NAME=sol_logistica
 ```
 
-2. Testar conexão:
+**Teste:**
 ```typescript
-// Verificar antes de broadcast
-const testUrl = `${evolutionApiUrl}/instance/connectionState/${instanceName}`
-const testResponse = await fetch(testUrl, {
-  headers: { 'apikey': evolutionApiKey }
-})
-if (!testResponse.ok) {
-  throw new Error('Evolution API não conectada')
+// Check configuration
+if (!whatsappService.isConfigured()) {
+  throw new Error('Configure WhatsApp API')
 }
-```
 
-**Status:** ❌ NÃO CONFIGURADO
+// Send to group
+await whatsappService.sendMessage({
+  number: '120363123456789012',
+  text: 'Olá!',
+  isGroup: true  // Adds @g.us
+})
+```
 
 ---
 
-### P24: Broadcast WhatsApp Usa Endpoint Errado
+### ✅ P24: Broadcast WhatsApp Usa Endpoint Errado
 **Severidade:** 🟠 ALTO (Funcionalidade)
 **Impacto:** Mensagens não chegam aos grupos
-**Localização:** `supabase/functions/groups/index.ts:172-191`
+**Localização:** `supabase/functions/groups/index.ts` e `src/services/whatsapp.ts`
+**Status:** ✅ RESOLVIDO (2026-02-10)
 
 **Problema:**
-```typescript
-// ❌ Tenta enviar para número individual
-const evolutionResponse = await fetch(
-  `${evolutionApiUrl}/message/sendText/${instanceName}`,
-  {
-    method: 'POST',
-    body: JSON.stringify({
-      number: group.whatsapp_id, // ❌ Formato incorreto para grupos
-      text: message
-    })
-  }
-)
-```
+- Número de grupo sem sufixo `@g.us` (formato incorreto)
+- Faltavam headers necessários ('Content-Type', 'apikey')
+- Não validava formato do whatsapp_id
+- Não diferenciava entre grupos e indivíduos
 
-**Solução:**
-```typescript
-// ✅ Formato correto para grupos
-const evolutionResponse = await fetch(
-  `${evolutionApiUrl}/message/sendText/${instanceName}`,
-  {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': evolutionApiKey
-    },
-    body: JSON.stringify({
-      number: `${group.whatsapp_id}@g.us`, // ✅ @g.us para grupos
-      text: message
-    })
-  }
-)
-```
+**Solução Implementada:**
 
-Validar formato do `whatsapp_id`:
-```typescript
-// Deve ser: 120363xxxxx (sem @g.us no banco)
-if (!/^\d{10,15}$/.test(group.whatsapp_id)) {
-  throw new Error('ID de grupo inválido')
-}
-```
+1. **Edge Function** (`supabase/functions/groups/index.ts`):
+   ```typescript
+   // Formata número automaticamente
+   let formattedNumber = group.whatsapp_id.replace(/\D/g, '')
 
-**Status:** ❌ NÃO CORRIGIDO
+   if (!group.whatsapp_id.includes('@g.us')) {
+     formattedNumber = `${formattedNumber}@g.us`
+   }
+
+   // Envia com headers corretos
+   const response = await fetch(`${evolutionApiUrl}/message/sendText/${instanceName}`, {
+     method: 'POST',
+     headers: {
+       'Content-Type': 'application/json',
+       'apikey': evolutionApiKey
+     },
+     body: JSON.stringify({
+       number: formattedNumber,
+       text: message
+     })
+   })
+   ```
+
+2. **Frontend Service** (`src/services/whatsapp.ts`):
+   ```typescript
+   // Formata automaticamente baseado no tipo
+   async sendMessage({ number, text, isGroup = false }) {
+     let formattedNumber = number.replace(/\D/g, '')
+
+     if (isGroup && !number.includes('@g.us')) {
+       formattedNumber = `${formattedNumber}@g.us`
+     } else if (!isGroup && !number.includes('@c.us')) {
+       formattedNumber = `${formattedNumber}@c.us`
+     }
+
+     // Send...
+   }
+   ```
+
+**Validações Adicionadas:**
+- ✅ Remove caracteres não-numéricos
+- ✅ Adiciona sufixo @g.us para grupos
+- ✅ Adiciona sufixo @c.us para indivíduos
+- ✅ Valida existência do grupo antes de enviar
+- ✅ Logging de erros detalhado
+
+**Teste:**
+```typescript
+// Grupo (qualquer formato funciona)
+'120363123456789012' → '120363123456789012@g.us'
+'120363123456789012@g.us' → '120363123456789012@g.us'
+
+// Individual
+'5511999999999' → '5511999999999@c.us'
+```
 
 ---
 

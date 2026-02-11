@@ -150,45 +150,105 @@ serve(async (req) => {
       const body = await req.json()
       const { loadId, groupIds, message } = body
 
-      // Here you would integrate with WhatsApp Evolution API
+      // WhatsApp Evolution API integration
       const evolutionApiUrl = Deno.env.get('EVOLUTION_API_URL')
       const evolutionApiKey = Deno.env.get('EVOLUTION_API_KEY')
+      const instanceName = Deno.env.get('INSTANCE_NAME') || 'sol_logistica'
+
+      // Check if API is configured
+      if (!evolutionApiUrl || !evolutionApiKey) {
+        console.warn('⚠️ [GROUPS] Evolution API not configured. Set EVOLUTION_API_URL and EVOLUTION_API_KEY.')
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'WhatsApp API not configured',
+          message: 'Configure EVOLUTION_API_URL and EVOLUTION_API_KEY environment variables'
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+      }
 
       const results = []
-      
+
       for (const groupId of groupIds) {
         // Get group details
-        const { data: group } = await supabase
+        const { data: group, error: groupError } = await supabase
           .from('groups')
           .select('*')
           .eq('id', groupId)
           .single()
 
-        if (group && group.whatsapp_id) {
-          // Send message via Evolution API (if configured)
-          if (evolutionApiUrl && evolutionApiKey) {
-            try {
-              const response = await fetch(`${evolutionApiUrl}/message/sendText/sol_logistica`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'apikey': evolutionApiKey
-                },
-                body: JSON.stringify({
-                  number: group.whatsapp_id,
-                  text: message
-                })
-              })
-              
-              const result = await response.json()
-              results.push({ groupId, success: response.ok, result })
-            } catch (error) {
-              results.push({ groupId, success: false, error: error.message })
-            }
-          } else {
-            // Mock success for testing
-            results.push({ groupId, success: true, message: 'WhatsApp API not configured' })
+        if (groupError || !group) {
+          results.push({
+            groupId,
+            success: false,
+            error: 'Group not found'
+          })
+          continue
+        }
+
+        if (!group.whatsapp_id) {
+          results.push({
+            groupId,
+            success: false,
+            error: 'Group has no whatsapp_id'
+          })
+          continue
+        }
+
+        // Format number for WhatsApp groups (must end with @g.us)
+        let formattedNumber = group.whatsapp_id.replace(/\D/g, '') // Remove non-digits
+
+        // Check if it's a group (should have @g.us suffix)
+        if (!group.whatsapp_id.includes('@g.us')) {
+          formattedNumber = `${formattedNumber}@g.us`
+        } else {
+          formattedNumber = group.whatsapp_id
+        }
+
+        console.log(`📱 [GROUPS] Sending to ${formattedNumber} (Group: ${group.name})`)
+
+        // Send message via Evolution API
+        try {
+          const response = await fetch(`${evolutionApiUrl}/message/sendText/${instanceName}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': evolutionApiKey
+            },
+            body: JSON.stringify({
+              number: formattedNumber,
+              text: message
+            })
+          })
+
+          if (!response.ok) {
+            const errorText = await response.text()
+            console.error(`❌ [GROUPS] Evolution API error for ${formattedNumber}:`, errorText)
+            results.push({
+              groupId,
+              success: false,
+              error: `Evolution API error: ${response.status} ${response.statusText}`,
+              details: errorText
+            })
+            continue
           }
+
+          const result = await response.json()
+          console.log(`✅ [GROUPS] Message sent to ${formattedNumber}`)
+          results.push({
+            groupId,
+            success: true,
+            result,
+            sentTo: formattedNumber
+          })
+        } catch (error) {
+          console.error(`❌ [GROUPS] Error sending to ${formattedNumber}:`, error)
+          results.push({
+            groupId,
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          })
         }
       }
 

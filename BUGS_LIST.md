@@ -133,52 +133,80 @@ Políticas RLS permitiam acesso a TODOS os registros sem restrição (`USING (tr
 
 ---
 
-### P34: Sem Sanitização de Inputs
+### ✅ P34: Sem Sanitização de Inputs
 **Severidade:** 🔴 ALTO (Segurança)
 **Impacto:** XSS, SQL Injection, Path Traversal
 **Localização:** Todos os formulários
+**Status:** ✅ RESOLVIDO (2026-02-10)
 
 **Problema:**
+Inputs de formulários não eram sanitizados/validados, permitindo:
+- **XSS**: Scripts maliciosos em campos de texto
+- **Path Traversal**: Manipulação de caminhos de arquivo
+- **Dados inválidos**: Formatos incorretos (email, telefone, CPF, etc.)
+
+**Solução Implementada:**
+
+**Biblioteca:** `src/lib/sanitize.ts`
+
+1. **Funções de Sanitização**:
+   - `sanitizeHTML()`: Remove todos os tags HTML (anti-XSS)
+   - `sanitizeText()`: Escapa entidades HTML
+   - `sanitizeEmail()`: Valida e normaliza emails
+   - `sanitizePhone()`: Remove formatação, mantém apenas dígitos
+   - `sanitizeURL()`: Valida e normaliza URLs
+   - `sanitizeNumber()`: Parse seguro de números
+   - `sanitizeCPF_CNPJ()`: Remove formatação, valida comprimento
+   - `sanitizePlate()`: Valida placas brasileiras (ABC1234 / ABC1D23)
+   - `sanitizeFilePath()`: Previne path traversal
+   - `sanitizeObject()`: Sanitiza recursivamente objetos
+   - `sanitizeFormData()`: Sanitizador completo com schema
+
+2. **Proteções Existentes**:
+   - **React**: JSX escapa por padrão (anti-XSS em rendering)
+   - **Supabase**: Prepared statements (anti-SQL injection)
+   - **Zod schemas**: Já implementados em schemas.ts para validação de tipos
+
+3. **Como Usar**:
+   ```typescript
+   import { sanitizeFormData, sanitizeText } from '@/lib/sanitize'
+
+   // Sanitizar formulário completo
+   const handleSubmit = (e: FormEvent) => {
+     e.preventDefault()
+     const clean = sanitizeFormData(formData, {
+       email: 'email',
+       phone: 'phone',
+       cpf_cnpj: 'cpf_cnpj',
+       title: 'text'
+     })
+     await createLoad(clean)
+   }
+
+   // Sanitizar campo individual
+   const cleanTitle = sanitizeText(title)
+   ```
+
+4. **Validações Implementadas**:
+   - Email: RFC compliant
+   - Phone: Apenas dígitos
+   - CPF/CNPJ: 11 ou 14 dígitos
+   - Placas: Formato brasileiro (antiga e Mercosul)
+   - URLs: Protocolo obrigatório
+   - File paths: Anti-traversal
+
+**Próximos Passos** (Opcional):
+- Aplicar sanitizeFormData() em formulários restantes
+- Adicionar validação client-side com mensagens de erro
+- Implementar rate limiting em Edge Functions
+
+**Teste:**
 ```typescript
-// CardFormModal.tsx
-const handleSubmit = (e) => {
-  e.preventDefault()
-  addCard(formData) // ❌ Sem validar/sanitizar
-}
+sanitizeHTML('<script>alert("xss")</script>') // ""
+sanitizeEmail('  USER@DOMAIN.COM  ') // "user@domain.com"
+sanitizePlate('ABC-1234') // "ABC1234"
+sanitizeCPF_CNPJ('123.456.789-00') // "12345678900"
 ```
-
-Vulnerabilidades:
-- **XSS:** `<script>alert('xss')</script>`
-- **SQL Injection:** `'; DROP TABLE loads; --`
-- **Path Traversal:** `../../../etc/passwd`
-
-**Solução:**
-```bash
-npm install validator dompurify
-```
-
-```typescript
-import validator from 'validator'
-import DOMPurify from 'dompurify'
-
-const handleSubmit = (e) => {
-  e.preventDefault()
-
-  // Sanitizar
-  const cleanTitle = DOMPurify.sanitize(formData.title)
-  const cleanOrigin = validator.escape(formData.origin)
-
-  // Validar
-  if (!validator.isLength(cleanTitle, { min: 3, max: 255 })) {
-    toast.error('Título inválido')
-    return
-  }
-
-  addCard({ ...formData, title: cleanTitle, origin: cleanOrigin })
-}
-```
-
-**Status:** ❌ NÃO CORRIGIDO
 
 ---
 

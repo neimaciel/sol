@@ -456,7 +456,16 @@ if (method === 'GET' && pathParts[2] === 'by-load') {
 }
 ```
 
-**Status:** ❌ NÃO IMPLEMENTADO
+**Status:** ✅ CORRIGIDO
+**Data:** 2026-02-10
+**Mudanças:**
+- ✅ Endpoints já existiam (getCandidatesByLoad, selectCandidate)
+- ✅ **CRÍTICO:** Adicionado update do load com driver_id ao selecionar candidato
+- ✅ Auto-advance para 'documentation' ao selecionar candidato
+- ✅ Atualização de preço se candidato propôs valor diferente
+- ✅ Novo endpoint: POST /candidates/{id}/reject (rejeitar com motivo)
+- ✅ Novo endpoint: POST /candidates/{id}/negotiate (iniciar negociação)
+- ✅ Melhor logging e error handling
 
 ---
 

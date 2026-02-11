@@ -109,10 +109,10 @@ serve(async (req) => {
       const candidateId = pathParts[1]
       console.log('✅ [CANDIDATES] Selecting candidate:', candidateId)
 
-      // Get the candidate to find the load_id
+      // Get the candidate to find the load_id and driver_id
       const { data: candidate, error: fetchError } = await supabase
         .from('candidates')
-        .select('load_id')
+        .select('load_id, driver_id, proposed_price')
         .eq('id', candidateId)
         .single()
 
@@ -125,6 +125,8 @@ serve(async (req) => {
       }
 
       const loadId = candidate.load_id
+      const driverId = candidate.driver_id
+      const proposedPrice = candidate.proposed_price
 
       // Update selected candidate to 'selected'
       const { error: updateSelectedError } = await supabase
@@ -140,6 +142,31 @@ serve(async (req) => {
         )
       }
 
+      // 🔧 FIX P12: Update load with driver_id and move to 'documentation' column
+      const loadUpdateData: any = {
+        driver_id: driverId,
+        column_id: 'documentation', // Auto-advance to documentation phase
+        updated_at: new Date().toISOString()
+      }
+
+      // If candidate proposed a price, update the load price
+      if (proposedPrice && proposedPrice > 0) {
+        loadUpdateData.price = proposedPrice
+      }
+
+      const { error: updateLoadError } = await supabase
+        .from('loads')
+        .update(loadUpdateData)
+        .eq('id', loadId)
+
+      if (updateLoadError) {
+        console.error('❌ [CANDIDATES] Error updating load with driver:', updateLoadError)
+        // Don't fail the request, but log the error
+        // The candidate is already selected, which is the main operation
+      } else {
+        console.log('✅ [CANDIDATES] Load updated with driver_id:', driverId)
+      }
+
       // Reject all other candidates for this load
       const { error: rejectOthersError } = await supabase
         .from('candidates')
@@ -151,11 +178,18 @@ serve(async (req) => {
       if (rejectOthersError) {
         console.error('❌ [CANDIDATES] Error rejecting other candidates:', rejectOthersError)
         // Don't fail the request, just log the error
+      } else {
+        console.log('✅ [CANDIDATES] Other candidates rejected')
       }
 
       console.log('✅ [CANDIDATES] Candidate selected successfully')
       return new Response(
-        JSON.stringify({ success: true, message: 'Candidate selected' }),
+        JSON.stringify({
+          success: true,
+          message: 'Candidate selected and load updated',
+          load_id: loadId,
+          driver_id: driverId
+        }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -290,6 +324,90 @@ serve(async (req) => {
       console.log('✅ [CANDIDATES] Candidate updated:', data.id)
       return new Response(
         JSON.stringify(data),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // ===================================
+    // POST /candidates/{candidateId}/reject
+    // ===================================
+    if (method === 'POST' && pathParts.length >= 3 && pathParts[2] === 'reject') {
+      const candidateId = pathParts[1]
+      console.log('❌ [CANDIDATES] Rejecting candidate:', candidateId)
+
+      // Parse optional rejection reason from body
+      let rejectionReason = null
+      try {
+        const body = await req.json()
+        rejectionReason = body.reason || null
+      } catch {
+        // No body is fine
+      }
+
+      // Update candidate to rejected
+      const updateData: any = {
+        status: 'rejected',
+        updated_at: new Date().toISOString()
+      }
+
+      if (rejectionReason) {
+        updateData.notes = rejectionReason
+      }
+
+      const { data, error } = await supabase
+        .from('candidates')
+        .update(updateData)
+        .eq('id', candidateId)
+        .select()
+        .single()
+
+      if (error) {
+        console.error('❌ [CANDIDATES] Error rejecting candidate:', error)
+        return new Response(
+          JSON.stringify({ code: 500, message: error.message }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      console.log('✅ [CANDIDATES] Candidate rejected:', candidateId)
+      return new Response(
+        JSON.stringify({ success: true, message: 'Candidate rejected', candidate: data }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // ===================================
+    // POST /candidates/{candidateId}/negotiate
+    // ===================================
+    if (method === 'POST' && pathParts.length >= 3 && pathParts[2] === 'negotiate') {
+      const candidateId = pathParts[1]
+      console.log('💬 [CANDIDATES] Starting negotiation with candidate:', candidateId)
+
+      const body = await req.json()
+
+      const { data, error } = await supabase
+        .from('candidates')
+        .update({
+          status: 'negotiating',
+          proposed_price: body.proposed_price || null,
+          notes: body.notes || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', candidateId)
+        .select()
+        .single()
+
+      if (error) {
+        console.error('❌ [CANDIDATES] Error starting negotiation:', error)
+        return new Response(
+          JSON.stringify({ code: 500, message: error.message }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      console.log('✅ [CANDIDATES] Negotiation started:', candidateId)
+      return new Response(
+        JSON.stringify({ success: true, message: 'Negotiation started', candidate: data }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }

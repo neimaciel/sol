@@ -23,6 +23,32 @@
     --input: 0 0% 0%;
     --ring: 0 0% 0%;
     --radius: 0rem;
+
+    /* Semantic Status Colors - Light Mode */
+    --status-success-bg: 142 76% 96%;
+    --status-success-border: 142 76% 85%;
+    --status-success-text: 142 76% 30%;
+    --status-success-icon: 142 76% 40%;
+
+    --status-warning-bg: 45 93% 96%;
+    --status-warning-border: 45 93% 85%;
+    --status-warning-text: 45 93% 30%;
+    --status-warning-icon: 45 93% 40%;
+
+    --status-error-bg: 0 84% 96%;
+    --status-error-border: 0 84% 85%;
+    --status-error-text: 0 84% 40%;
+    --status-error-icon: 0 84% 50%;
+
+    --status-info-bg: 217 91% 96%;
+    --status-info-border: 217 91% 85%;
+    --status-info-text: 217 91% 35%;
+    --status-info-icon: 217 91% 45%;
+
+    /* Scrollbar Colors - Light Mode */
+    --scrollbar-track: 214 32% 95%;
+    --scrollbar-thumb: 215 28% 17%;
+    --scrollbar-border: 0 0% 100%;
   }
 
   .dark {
@@ -45,6 +71,32 @@
     --border: 0 0% 100%;
     --input: 0 0% 100%;
     --ring: 0 0% 100%;
+
+    /* Semantic Status Colors - Dark Mode */
+    --status-success-bg: 142 76% 12%;
+    --status-success-border: 142 76% 20%;
+    --status-success-text: 142 76% 75%;
+    --status-success-icon: 142 76% 65%;
+
+    --status-warning-bg: 45 93% 12%;
+    --status-warning-border: 45 93% 20%;
+    --status-warning-text: 45 93% 75%;
+    --status-warning-icon: 45 93% 65%;
+
+    --status-error-bg: 0 84% 12%;
+    --status-error-border: 0 84% 20%;
+    --status-error-text: 0 84% 75%;
+    --status-error-icon: 0 84% 65%;
+
+    --status-info-bg: 217 91% 12%;
+    --status-info-border: 217 91% 20%;
+    --status-info-text: 217 91% 75%;
+    --status-info-icon: 217 91% 65%;
+
+    /* Scrollbar Colors - Dark Mode */
+    --scrollbar-track: 0 0% 12%;
+    --scrollbar-thumb: 0 0% 90%;
+    --scrollbar-border: 0 0% 5%;
   }
 }
 
@@ -85,24 +137,25 @@
   border-color: hsl(var(--border));
 }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar - Theme Adaptive */
 ::-webkit-scrollbar {
   width: 12px;
   height: 12px;
 }
 
 ::-webkit-scrollbar-track {
-  background-color: #f1f5f9;
-  border-left: 2px solid #e2e8f0;
+  background-color: hsl(var(--scrollbar-track));
+  border-left: 2px solid hsl(var(--scrollbar-track));
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #1e293b;
-  border: 2px solid white;
+  background-color: hsl(var(--scrollbar-thumb));
+  border: 2px solid hsl(var(--scrollbar-border));
+  border-radius: 0;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #374151;
+  opacity: 0.8;
 }
 
 /* Custom Utilities */

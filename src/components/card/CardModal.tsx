@@ -21,6 +21,8 @@ import { Label } from '@/components/ui/label'
 import { Users, Plus } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { motion, AnimatePresence } from 'framer-motion'
+import { StatusCard } from '@/components/ui/status-card'
+import { StatusBadge } from '@/components/ui/status-badge'
 
 interface CardModalProps {
     card: KanbanCard | null
@@ -768,7 +770,7 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
                                                 {/* Arrival Confirmation */}
                                                 {card.columnId === 'transit' && (
-                                                    <div className="bg-blue-50 border-2 border-blue-200 p-6 flex items-center justify-between shadow-brutal-sm">
+                                                    <div className="bg-blue-50 dark:bg-blue-950 border-2 border-blue-200 dark:border-blue-800 p-6 flex items-center justify-between shadow-brutal-sm">
                                                         <div>
                                                             <h3 className="text-base font-bold text-blue-900 flex items-center gap-2 uppercase">
                                                                 <Truck className="w-5 h-5" /> Chegada no Destino
@@ -777,7 +779,7 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                         </div>
                                                         <Button
                                                             size="sm"
-                                                            className="bg-blue-600 hover:bg-blue-700 text-white shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all rounded-none font-bold uppercase"
+                                                            className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-50 dark:bg-blue-9500 dark:hover:bg-blue-600 text-white shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all rounded-none font-bold uppercase"
                                                             onClick={async () => {
                                                                 await updateCard(card.id, { arrival_time: new Date().toISOString() })
                                                                 await autoAdvanceCard(card.id, 'arrival_registered')
@@ -829,13 +831,13 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                         {/* Actions Footer */}
                                         <div className="flex justify-end gap-3 pt-6">
                                             {showDeleteConfirm ? (
-                                                <div className="flex items-center gap-3 animate-fade-in bg-red-50 p-2 rounded-none border-2 border-red-100">
+                                                <div className="flex items-center gap-3 animate-fade-in bg-red-50 dark:bg-red-950 p-2 rounded-none border-2 border-red-100">
                                                     <span className="text-xs text-red-600 font-bold uppercase tracking-wide">Confirmar exclusão?</span>
-                                                    <Button size="sm" variant="outline" onClick={() => setShowDeleteConfirm(false)} className="h-8 bg-white border-red-200 text-red-600 hover:bg-red-50">Não</Button>
-                                                    <Button size="sm" className="h-8 bg-red-600 text-white hover:bg-red-700 shadow-md shadow-red-900/20" onClick={handleDelete}>Sim</Button>
+                                                    <Button size="sm" variant="outline" onClick={() => setShowDeleteConfirm(false)} className="h-8 bg-white border-red-200 dark:border-red-800 text-red-600 hover:bg-red-50 dark:bg-red-950">Não</Button>
+                                                    <Button size="sm" className="h-8 bg-red-600 dark:bg-red-50 dark:bg-red-9500 text-white hover:bg-red-700 dark:hover:bg-red-600 shadow-md shadow-red-900/20 dark:shadow-red-800/20" onClick={handleDelete}>Sim</Button>
                                                 </div>
                                             ) : (
-                                                <Button variant="outline" onClick={() => setShowDeleteConfirm(true)} className="text-red-600 hover:bg-red-50 border-red-100 hover:border-red-200 transition-colors">
+                                                <Button variant="outline" onClick={() => setShowDeleteConfirm(true)} className="text-red-600 hover:bg-red-50 dark:bg-red-950 border-red-100 hover:border-red-200 dark:border-red-800 transition-colors">
                                                     Excluir Carga
                                                 </Button>
                                             )}
@@ -1006,14 +1008,14 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                 {['CNH do Motorista', 'CRLV do Veículo', 'Seguro de Carga', 'RNTRC'].map((doc, i) => (
                                                     <div key={i} className="flex items-center justify-between p-4 bg-muted/10 border-2 border-border hover:shadow-brutal-sm transition-all">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="w-8 h-8 bg-green-50 flex items-center justify-center border-2 border-green-200">
-                                                                <Check className="w-4 h-4 text-green-600" />
+                                                            <div className="w-8 h-8 bg-green-50 dark:bg-green-950 flex items-center justify-center border-2 border-green-200 dark:border-green-800">
+                                                                <Check className="w-4 h-4 text-green-700 dark:text-green-400" />
                                                             </div>
                                                             <span className="text-sm font-bold text-foreground uppercase">{doc}</span>
                                                         </div>
                                                         <div className="flex gap-3">
                                                             <Button size="sm" variant="outline" className="h-9 text-xs bg-background hover:bg-accent border-2 border-border rounded-none font-bold uppercase">Visualizar</Button>
-                                                            <Button size="sm" variant="ghost" className="h-9 w-9 p-0 text-green-600 hover:bg-green-50 rounded-none">
+                                                            <Button size="sm" variant="ghost" className="h-9 w-9 p-0 text-green-700 dark:text-green-400 hover:bg-green-50 dark:bg-green-950 rounded-none">
                                                                 <Check className="w-5 h-5" />
                                                             </Button>
                                                         </div>
@@ -1023,7 +1025,7 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                             <div className="mt-8 flex justify-end gap-4">
                                                 <Button
                                                     variant="outline"
-                                                    className="border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 rounded-none font-bold uppercase"
+                                                    className="border-2 border-red-200 dark:border-red-800 text-red-600 hover:bg-red-50 dark:bg-red-950 hover:border-red-300 rounded-none font-bold uppercase"
                                                     onClick={async () => {
                                                         if (confirm('Tem certeza que deseja reprovar a documentação? A carga retornará para o Atendimento.')) {
                                                             await updateCard(card.id, { documents_status: 'rejected' })
@@ -1063,25 +1065,27 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                 Análise de Risco
                                             </h3>
                                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 mb-6 sm:mb-8">
-                                                <div className="p-6 bg-green-50 border-2 border-green-200 text-center shadow-brutal-sm">
-                                                    <p className="text-xs text-green-600 font-bold uppercase tracking-wider mb-2">Motorista</p>
-                                                    <p className="text-xl font-heading font-black text-green-700 uppercase">Baixo Risco</p>
-                                                </div>
-                                                <div className="p-6 bg-green-50 border-2 border-green-200 text-center shadow-brutal-sm">
-                                                    <p className="text-xs text-green-600 font-bold uppercase tracking-wider mb-2">Veículo</p>
-                                                    <p className="text-xl font-heading font-black text-green-700 uppercase">Baixo Risco</p>
-                                                </div>
-                                                <div className="p-6 bg-yellow-50 border-2 border-yellow-200 text-center shadow-brutal-sm">
-                                                    <p className="text-xs text-yellow-600 font-bold uppercase flex items-center justify-center gap-1 tracking-wider mb-2">
-                                                        <AlertTriangle className="w-3 h-3" /> Rota
-                                                    </p>
-                                                    <p className="text-xl font-heading font-black text-yellow-700 uppercase">Médio Risco</p>
-                                                </div>
+                                                <StatusCard
+                                                    status="success"
+                                                    title="Motorista"
+                                                    value="Baixo Risco"
+                                                />
+                                                <StatusCard
+                                                    status="success"
+                                                    title="Veículo"
+                                                    value="Baixo Risco"
+                                                />
+                                                <StatusCard
+                                                    status="warning"
+                                                    title="Rota"
+                                                    value="Médio Risco"
+                                                    icon={<AlertTriangle className="w-4 h-4" />}
+                                                />
                                             </div>
                                             <div className="flex justify-end gap-4">
                                                 <Button
                                                     variant="outline"
-                                                    className="border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 rounded-none font-bold uppercase"
+                                                    className="border-2 border-red-200 dark:border-red-800 text-red-600 hover:bg-red-50 dark:bg-red-950 hover:border-red-300 rounded-none font-bold uppercase"
                                                     onClick={async () => {
                                                         if (confirm('Tem certeza que deseja reprovar a análise de risco? A carga retornará para a Divulgação.')) {
                                                             await updateCard(card.id, { risk_status: 'rejected' })
@@ -1093,7 +1097,7 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                     Reprovar
                                                 </Button>
                                                 <Button
-                                                    className="bg-purple-600 hover:bg-purple-700 text-white shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all font-bold px-6 rounded-none uppercase"
+                                                    className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600 text-white shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all font-bold px-6 rounded-none uppercase"
                                                     onClick={async () => {
                                                         await updateCard(card.id, { risk_status: 'approved' })
                                                         await autoAdvanceCard(card.id, 'risk_approved')
@@ -1154,10 +1158,13 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
                                             {card.contract_url ? (
                                                 <div className="flex flex-col items-center gap-4 animate-fade-in">
-                                                    <div className="flex items-center gap-2 text-green-700 bg-green-100 px-6 py-3 border-2 border-green-200 shadow-brutal-sm">
-                                                        <Check className="w-5 h-5" />
-                                                        <span className="text-sm font-bold uppercase">Contrato Gerado</span>
-                                                    </div>
+                                                    <StatusBadge
+                                                        status="success"
+                                                        size="lg"
+                                                        icon={<Check className="w-5 h-5" />}
+                                                    >
+                                                        Contrato Gerado
+                                                    </StatusBadge>
                                                     <div className="flex gap-3 mt-2">
                                                         <Button variant="outline" onClick={() => window.open(card.contract_url, '_blank')} className="bg-background hover:bg-accent border-2 border-foreground rounded-none font-bold uppercase">
                                                             <FileText className="w-4 h-4 mr-2" /> Baixar PDF
@@ -1286,7 +1293,7 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                                 <h4 className="text-sm font-bold text-foreground mb-2 uppercase">Dados para Pagamento</h4>
                                                                 {payments[card.id].bank_data && payments[card.id].bank_data?.pix_key && (
                                                                     <div className="flex items-center gap-2 p-2 bg-card rounded border text-sm">
-                                                                        <QrCode className="w-4 h-4 text-green-600" />
+                                                                        <QrCode className="w-4 h-4 text-green-700 dark:text-green-400" />
                                                                         <div>
                                                                             <span className="font-medium">PIX: </span>
                                                                             <span className="font-mono">{payments[card.id].bank_data!.pix_key}</span>
@@ -1360,7 +1367,7 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
                                                         {payments[card.id].manual_confirmed_at && (
                                                             <div className="flex items-center gap-3 p-3 border rounded">
-                                                                <Check className="w-4 h-4 text-green-600" />
+                                                                <Check className="w-4 h-4 text-green-700 dark:text-green-400" />
                                                                 <div className="flex-1">
                                                                     <p className="text-sm font-medium">Pagamento confirmado</p>
                                                                     <p className="text-xs text-muted-foreground">
@@ -1377,14 +1384,14 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
                                                         {payments[card.id].receipt_url && (
                                                             <div className="flex items-center gap-3 p-3 border rounded">
-                                                                <Upload className="w-4 h-4 text-blue-600" />
+                                                                <Upload className="w-4 h-4 text-blue-700 dark:text-blue-400" />
                                                                 <div className="flex-1">
                                                                     <p className="text-sm font-medium">Comprovante enviado</p>
                                                                     <a 
                                                                         href={payments[card.id].receipt_url}
                                                                         target="_blank"
                                                                         rel="noopener noreferrer"
-                                                                        className="text-xs text-blue-600 hover:underline"
+                                                                        className="text-xs text-blue-700 dark:text-blue-400 hover:underline"
                                                                     >
                                                                         Ver comprovante
                                                                     </a>

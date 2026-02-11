@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import { api } from '@/lib/apiClient'
 import { useCardEventsStore } from './useCardEventsStore'
 import { toast } from '@/lib/toast'
@@ -70,7 +71,9 @@ interface KanbanState {
     autoAdvanceCard: (cardId: string, trigger: string) => Promise<void>
 }
 
-export const useKanbanStore = create<KanbanState>((set, get) => ({
+export const useKanbanStore = create<KanbanState>()(
+  persist(
+    (set, get) => ({
     cards: [],
     columns: [
         { id: 'registration', title: 'Cadastro' },
@@ -533,7 +536,18 @@ export const useKanbanStore = create<KanbanState>((set, get) => ({
             set({ autoAdvanceLocks: newLocks })
         }
     }
-}))
+}),
+    {
+      name: 'kanban-storage', // LocalStorage key
+      partialize: (state) => ({
+        // Only persist UI preferences, NOT data
+        activeTab: state.activeTab,
+        isCompactMode: state.isCompactMode,
+        // DO NOT persist: cards (from backend), selectedCard, autoAdvanceLocks
+      }),
+    }
+  )
+)
 
 // Expose store to window for testing
 if (typeof window !== 'undefined') {

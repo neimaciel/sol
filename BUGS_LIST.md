@@ -939,24 +939,23 @@ function LoadForm() {
 
 ---
 
-### P6: Stores Sem Persistência
+### ✅ P6: Stores Sem Persistência
 **Severidade:** 🟡 MÉDIO (UX)
 **Impacto:** Estado perdido ao recarregar
-**Localização:** Todos os Zustand stores
+**Localização:** `src/store/useKanbanStore.ts`
+**Status:** ✅ RESOLVIDO (2026-02-10)
 
 **Problema:**
-```typescript
-// useKanbanStore.ts
-export const useKanbanStore = create<KanbanStore>()((set, get) => ({
-  // ❌ Sem persist
-}))
-```
+Ao recarregar a página, preferências do usuário eram perdidas:
+- Tab ativa do dashboard
+- Modo compacto/expandido
 
-**Solução:**
+**Solução Implementada:**
+
 ```typescript
 import { persist } from 'zustand/middleware'
 
-export const useKanbanStore = create<KanbanStore>()(
+export const useKanbanStore = create<KanbanState>()(
   persist(
     (set, get) => ({
       // ... estado
@@ -964,18 +963,38 @@ export const useKanbanStore = create<KanbanStore>()(
     {
       name: 'kanban-storage',
       partialize: (state) => ({
-        // Escolher o que persistir
-        searchTerm: state.searchTerm,
+        // ✅ Persistir apenas preferências de UI
         activeTab: state.activeTab,
         isCompactMode: state.isCompactMode,
-        // Não persistir cards (vem do backend)
+
+        // ❌ NÃO persistir:
+        // - cards (vem do backend)
+        // - selectedCard (estado temporário)
+        // - autoAdvanceLocks (estado temporário)
       })
     }
   )
 )
 ```
 
-**Status:** ❌ NÃO IMPLEMENTADO
+**O que é Persistido:**
+- ✅ `activeTab`: Tab ativa do dashboard
+- ✅ `isCompactMode`: Preferência de visualização
+
+**O que NÃO é Persistido:**
+- ❌ `cards`: Dados vêm do backend
+- ❌ `selectedCard`: Seleção temporária
+- ❌ `autoAdvanceLocks`: Locks temporários
+
+**Benefícios:**
+- 📌 UI persiste entre reloads
+- 🚀 Melhor UX
+- 💾 ~50 bytes no localStorage
+- 🔒 Sem dados sensíveis
+
+**Storage:**
+- Key: `kanban-storage`
+- Location: localStorage
 
 ---
 

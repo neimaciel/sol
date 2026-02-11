@@ -372,7 +372,16 @@ autoAdvanceCard: async (cardId, trigger) => {
 }
 ```
 
-**Status:** ❌ NÃO CORRIGIDO
+**Status:** ✅ CORRIGIDO
+**Data:** 2026-02-10
+**Mudanças:**
+- ✅ Adicionada transição para estado 'completed' (estado final com next: null)
+- ✅ Implementados caminhos de rejeição para 'documentation' → 'initial_service'
+- ✅ Implementados caminhos de rejeição para 'risk' → 'broadcast'
+- ✅ Adicionado lock mechanism (autoAdvanceLocks Set) para prevenir race conditions
+- ✅ Adicionados botões "Reprovar" na UI para documentação e risco
+- ✅ Atualizado tipo de `documents_status` para incluir 'rejected'
+- ✅ Melhorada nomenclatura das colunas no toast de sucesso
 
 ---
 

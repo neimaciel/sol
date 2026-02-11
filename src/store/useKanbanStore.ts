@@ -37,7 +37,7 @@ export interface KanbanCard {
     // Phase 5 Fields
     broadcast_status?: 'pending' | 'sent'
     risk_status?: 'pending' | 'approved' | 'rejected'
-    documents_status?: 'pending' | 'verified'
+    documents_status?: 'pending' | 'verified' | 'rejected'
     contract_url?: string
     checkin_time?: string
     pod_url?: string
@@ -55,6 +55,7 @@ interface KanbanState {
     selectedCard: KanbanCard | null
     activeTab: string
     isCompactMode: boolean
+    autoAdvanceLocks: Set<string> // Track cards being auto-advanced
     fetchCards: () => Promise<void>
     addCard: (card: Omit<KanbanCard, 'id'>) => Promise<void>
     moveCard: (cardId: string, toColumnId: string) => Promise<void>
@@ -86,6 +87,7 @@ export const useKanbanStore = create<KanbanState>((set, get) => ({
     selectedCard: null,
     activeTab: 'info',
     isCompactMode: false,
+    autoAdvanceLocks: new Set<string>(),
     setSelectedCard: (card) => set({ selectedCard: card }),
     setActiveTab: (tab) => set({ activeTab: tab }),
     toggleCompactMode: () => set((state) => ({ isCompactMode: !state.isCompactMode })),
@@ -344,24 +346,39 @@ export const useKanbanStore = create<KanbanState>((set, get) => ({
     },
 
     autoAdvanceCard: async (cardId: string, trigger: string) => {
-        const card = get().cards.find(c => c.id === cardId)
-        if (!card) {
-            logger.warn('Card not found for auto-advance:', cardId)
+        // Race condition prevention: Check if this card is already being auto-advanced
+        const locks = get().autoAdvanceLocks
+        if (locks.has(cardId)) {
+            logger.log('Auto-advance already in progress for card:', cardId)
             return
         }
 
-        // Check if auto-advance is enabled for this card
-        if (card.auto_advance === false) {
-            logger.log('Auto-advance disabled for card:', cardId)
-            return
-        }
+        // Acquire lock
+        locks.add(cardId)
+        set({ autoAdvanceLocks: new Set(locks) })
 
-        const currentColumn = card.columnId
+        try {
+            const card = get().cards.find(c => c.id === cardId)
+            if (!card) {
+                logger.warn('Card not found for auto-advance:', cardId)
+                return
+            }
 
-        // Define transition rules
+            // Check if auto-advance is enabled for this card
+            if (card.auto_advance === false) {
+                logger.log('Auto-advance disabled for card:', cardId)
+                return
+            }
+
+            const currentColumn = card.columnId
+
+        // Define transition rules with rejection paths
         type TransitionRule = {
-            next: string
+            next: string | null  // null = final state
+            nextOnReject?: string  // Rejection path
             condition: () => boolean
+            checkRejection?: () => boolean
+            rejectionMessage?: string
         }
 
         const transitions: Record<string, TransitionRule> = {
@@ -379,11 +396,17 @@ export const useKanbanStore = create<KanbanState>((set, get) => ({
             },
             'documentation': {
                 next: 'risk',
-                condition: () => card.documents_status === 'verified'
+                nextOnReject: 'initial_service', // Return to service if docs rejected
+                condition: () => card.documents_status === 'verified',
+                checkRejection: () => card.documents_status === 'rejected',
+                rejectionMessage: '❌ Documentação rejeitada. Retornando para Atendimento.'
             },
             'risk': {
                 next: 'contract',
-                condition: () => card.risk_status === 'approved'
+                nextOnReject: 'broadcast', // Return to broadcast if risk rejected
+                condition: () => card.risk_status === 'approved',
+                checkRejection: () => card.risk_status === 'rejected',
+                rejectionMessage: '⚠️ Análise de risco rejeitada. Retornando para Divulgação.'
             },
             'contract': {
                 next: 'loading',
@@ -400,42 +423,112 @@ export const useKanbanStore = create<KanbanState>((set, get) => ({
             'unloading': {
                 next: 'completed',
                 condition: () => !!card.pod_url
+            },
+            'completed': {
+                next: null, // Final state - no further transitions
+                condition: () => true
             }
         }
 
-        const transition = transitions[currentColumn]
+            const transition = transitions[currentColumn]
 
-        if (!transition) {
-            logger.log('No transition defined for column:', currentColumn)
-            return
-        }
+            if (!transition) {
+                logger.log('No transition defined for column:', currentColumn)
+                return
+            }
 
-        if (!transition.condition()) {
-            logger.log('Transition condition not met for:', currentColumn, '→', transition.next)
-            return
-        }
-
-        // Perform the auto-advance
-        logger.log(`🤖 Auto-advancing card ${cardId} from ${currentColumn} to ${transition.next} (trigger: ${trigger})`)
-
-        try {
-            await get().moveCard(cardId, transition.next)
-
-            // Log auto-advance event
-            useCardEventsStore.getState().logEvent(
-                cardId,
-                'auto_advanced',
-                {
-                    from: currentColumn,
-                    to: transition.next,
-                    trigger
+            // Check for rejection first
+            if (transition.checkRejection && transition.checkRejection()) {
+                if (!transition.nextOnReject) {
+                    logger.warn('Rejection detected but no rejection path defined for:', currentColumn)
+                    return
                 }
-            )
-            toast.success(`Carga avançada automaticamente para ${transition.next}`)
-        } catch (error) {
-            logger.error('Error during auto-advance:', error)
-            const message = error instanceof Error ? error.message : 'Erro no avanço automático'
-            toast.error(message)
+
+                logger.log(`🚫 Rejection detected for card ${cardId} in ${currentColumn}, moving to ${transition.nextOnReject}`)
+
+                try {
+                    await get().moveCard(cardId, transition.nextOnReject)
+
+                    // Log rejection event
+                    useCardEventsStore.getState().logEvent(
+                        cardId,
+                        'rejected',
+                        {
+                            from: currentColumn,
+                            to: transition.nextOnReject,
+                            trigger,
+                            reason: transition.rejectionMessage || 'Rejected'
+                        }
+                    )
+
+                    if (transition.rejectionMessage) {
+                        toast.warning(transition.rejectionMessage)
+                    }
+                } catch (error) {
+                    logger.error('Error during rejection handling:', error)
+                    const message = error instanceof Error ? error.message : 'Erro ao processar rejeição'
+                    toast.error(message)
+                }
+
+                return
+            }
+
+            // Check if it's a final state
+            if (transition.next === null) {
+                logger.log('Card is in final state:', currentColumn)
+                toast.info('Carga já está no estado final')
+                return
+            }
+
+            // Check if condition is met for advancement
+            if (!transition.condition()) {
+                logger.log('Transition condition not met for:', currentColumn, '→', transition.next)
+                return
+            }
+
+            // Perform the auto-advance
+            logger.log(`🤖 Auto-advancing card ${cardId} from ${currentColumn} to ${transition.next} (trigger: ${trigger})`)
+
+            try {
+                await get().moveCard(cardId, transition.next)
+
+                // Log auto-advance event
+                useCardEventsStore.getState().logEvent(
+                    cardId,
+                    'auto_advanced',
+                    {
+                        from: currentColumn,
+                        to: transition.next,
+                        trigger
+                    }
+                )
+
+                // Get friendly column names
+                const columnNames: Record<string, string> = {
+                    'registration': 'Cadastro',
+                    'broadcast': 'Divulgação',
+                    'initial_service': 'Atendimento',
+                    'documentation': 'Documentação',
+                    'risk': 'Risco',
+                    'contract': 'Contrato',
+                    'loading': 'Carregamento',
+                    'transit': 'Em Trânsito',
+                    'unloading': 'Descarga',
+                    'completed': 'Finalizado'
+                }
+
+                const nextColumnName = columnNames[transition.next] || transition.next
+                toast.success(`✅ Carga avançada automaticamente para ${nextColumnName}`)
+            } catch (error) {
+                logger.error('Error during auto-advance:', error)
+                const message = error instanceof Error ? error.message : 'Erro no avanço automático'
+                toast.error(message)
+            }
+        } finally {
+            // Release lock
+            const locks = get().autoAdvanceLocks
+            locks.delete(cardId)
+            set({ autoAdvanceLocks: new Set(locks) })
         }
     }
 }))

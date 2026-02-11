@@ -1020,7 +1020,20 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                     </div>
                                                 ))}
                                             </div>
-                                            <div className="mt-8 flex justify-end">
+                                            <div className="mt-8 flex justify-end gap-4">
+                                                <Button
+                                                    variant="outline"
+                                                    className="border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 rounded-none font-bold uppercase"
+                                                    onClick={async () => {
+                                                        if (confirm('Tem certeza que deseja reprovar a documentação? A carga retornará para o Atendimento.')) {
+                                                            await updateCard(card.id, { documents_status: 'rejected' })
+                                                            await autoAdvanceCard(card.id, 'documents_rejected')
+                                                        }
+                                                    }}
+                                                    disabled={card.documents_status === 'verified'}
+                                                >
+                                                    Reprovar
+                                                </Button>
                                                 <Button
                                                     className="bg-primary hover:bg-primary/90 text-white shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all font-bold px-6 h-10 rounded-none uppercase"
                                                     onClick={async () => {
@@ -1066,7 +1079,19 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
                                                 </div>
                                             </div>
                                             <div className="flex justify-end gap-4">
-                                                <Button variant="outline" className="border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 rounded-none font-bold uppercase">Reprovar</Button>
+                                                <Button
+                                                    variant="outline"
+                                                    className="border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 rounded-none font-bold uppercase"
+                                                    onClick={async () => {
+                                                        if (confirm('Tem certeza que deseja reprovar a análise de risco? A carga retornará para a Divulgação.')) {
+                                                            await updateCard(card.id, { risk_status: 'rejected' })
+                                                            await autoAdvanceCard(card.id, 'risk_rejected')
+                                                        }
+                                                    }}
+                                                    disabled={card.risk_status === 'approved'}
+                                                >
+                                                    Reprovar
+                                                </Button>
                                                 <Button
                                                     className="bg-purple-600 hover:bg-purple-700 text-white shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all font-bold px-6 rounded-none uppercase"
                                                     onClick={async () => {

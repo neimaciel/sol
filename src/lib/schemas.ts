@@ -100,9 +100,7 @@ export const cardSchema = z.object({
     .nonnegative('Preço deve ser positivo')
     .optional(),
 
-  priority: z.enum(['high', 'normal'], {
-    errorMap: () => ({ message: 'Prioridade deve ser "high" ou "normal"' })
-  }).default('normal'),
+  priority: z.enum(['high', 'normal']).default('normal'),
 
   vehicle_type: z.string()
     .max(100, 'Tipo de veículo muito longo')
@@ -155,9 +153,7 @@ export const driverSchema = z.object({
     .toUpperCase()
     .optional(),
 
-  status: z.enum(['active', 'inactive', 'vacation'], {
-    errorMap: () => ({ message: 'Status inválido' })
-  }).default('active'),
+  status: z.enum(['active', 'inactive', 'vacation']).default('active'),
 })
 
 export type DriverFormData = z.infer<typeof driverSchema>
@@ -219,9 +215,7 @@ export const operatorSchema = z.object({
     .regex(/[0-9]/, 'Senha deve conter números')
     .optional(),
 
-  role: z.enum(['admin', 'operator', 'viewer'], {
-    errorMap: () => ({ message: 'Role inválido' })
-  }).default('operator'),
+  role: z.enum(['admin', 'operator', 'viewer']).default('operator'),
 
   phone: phoneValidator.optional(),
 })

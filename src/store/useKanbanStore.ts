@@ -353,9 +353,10 @@ export const useKanbanStore = create<KanbanState>((set, get) => ({
             return
         }
 
-        // Acquire lock
-        locks.add(cardId)
-        set({ autoAdvanceLocks: new Set(locks) })
+        // Acquire lock (create new Set to maintain immutability)
+        const newLocks = new Set(locks)
+        newLocks.add(cardId)
+        set({ autoAdvanceLocks: newLocks })
 
         try {
             const card = get().cards.find(c => c.id === cardId)
@@ -525,10 +526,11 @@ export const useKanbanStore = create<KanbanState>((set, get) => ({
                 toast.error(message)
             }
         } finally {
-            // Release lock
+            // Release lock (create new Set to maintain immutability)
             const locks = get().autoAdvanceLocks
-            locks.delete(cardId)
-            set({ autoAdvanceLocks: new Set(locks) })
+            const newLocks = new Set(locks)
+            newLocks.delete(cardId)
+            set({ autoAdvanceLocks: newLocks })
         }
     }
 }))

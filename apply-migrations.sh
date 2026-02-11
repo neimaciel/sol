@@ -13,9 +13,22 @@ NC='\033[0m'
 
 echo -e "${GREEN}🚀 Aplicando Migrations no Supabase${NC}\n"
 
-# Configurações
-SUPABASE_URL="https://ekimcihxrnigghnappjv.supabase.co"
-SUPABASE_SERVICE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVraW1jaWh4cm5pZ2dobmFwcGp2Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NjgwMTM2OCwiZXhwIjoyMDgyMzc3MzY4fQ.krPxL5WPgrppk3qYn9lLD95QHA3dR29MalihbXv3kHY"
+# Configurações - Load from environment variables
+SUPABASE_URL="${SUPABASE_URL:-}"
+SUPABASE_SERVICE_KEY="${SUPABASE_SERVICE_KEY:-}"
+
+# Validate required environment variables
+if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_KEY" ]; then
+    echo -e "${RED}❌ Error: Missing required environment variables${NC}"
+    echo "Please set SUPABASE_URL and SUPABASE_SERVICE_KEY"
+    echo ""
+    echo "Usage:"
+    echo "  export SUPABASE_URL='your-supabase-url'"
+    echo "  export SUPABASE_SERVICE_KEY='your-service-role-key'"
+    echo "  bash apply-migrations.sh"
+    echo ""
+    exit 1
+fi
 
 # Função para executar SQL
 execute_sql() {

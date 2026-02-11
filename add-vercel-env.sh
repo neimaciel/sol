@@ -27,9 +27,34 @@ fi
 PROJECT_NAME="sol"
 TEAM_ID="" # Deixe vazio se for conta pessoal
 
-# Variáveis de ambiente
-VITE_SUPABASE_URL="https://ekimcihxrnigghnappjv.supabase.co"
-VITE_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVraW1jaWh4cm5pZ2dobmFwcGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4MDEzNjgsImV4cCI6MjA4MjM3NzM2OH0.0Ig35iloZLzSUQnvmj9oVSQ2mYmSeWjpdaRudEU5qOo"
+# Load environment variables from .env.local if it exists
+if [ -f ".env.local" ]; then
+    echo -e "${GREEN}📄 Carregando variáveis de .env.local${NC}"
+    export $(grep -v '^#' .env.local | xargs)
+elif [ -f ".env.production" ]; then
+    echo -e "${GREEN}📄 Carregando variáveis de .env.production${NC}"
+    export $(grep -v '^#' .env.production | xargs)
+fi
+
+# Variáveis de ambiente - read from environment or fail
+VITE_SUPABASE_URL="${VITE_SUPABASE_URL:-}"
+VITE_SUPABASE_ANON_KEY="${VITE_SUPABASE_ANON_KEY:-}"
+
+# Validate required variables
+if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
+    echo -e "${RED}❌ Erro: Variáveis VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY não definidas${NC}"
+    echo ""
+    echo "Como configurar:"
+    echo "1. Crie um arquivo .env.local com:"
+    echo "   VITE_SUPABASE_URL=sua-url"
+    echo "   VITE_SUPABASE_ANON_KEY=sua-chave"
+    echo ""
+    echo "2. Ou defina as variáveis de ambiente:"
+    echo "   export VITE_SUPABASE_URL='sua-url'"
+    echo "   export VITE_SUPABASE_ANON_KEY='sua-chave'"
+    echo ""
+    exit 1
+fi
 
 # Função para adicionar variável de ambiente
 add_env_var() {

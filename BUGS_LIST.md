@@ -19,39 +19,57 @@
 
 ## 🔴 CRÍTICO - Bloqueadores de Produção
 
-### P9, P19, P33: Credenciais Hardcoded no Código
+### ✅ P9, P19, P33: Credenciais Hardcoded no Código
 **Severidade:** 🔴 CRÍTICO (Segurança)
 **Impacto:** Exposição de credenciais do Supabase
-**Localização:**
-- `vite.config.ts` linhas 22-23
-- `.env.production` (arquivo completo)
+**Localização:** Múltiplos arquivos (scripts, código-fonte)
+**Status:** ✅ RESOLVIDO (2026-02-10)
 
 **Problema:**
-```typescript
-// vite.config.ts
-define: {
-  'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(
-    process.env.VITE_SUPABASE_URL ||
-    'https://ekimcihxrnigghnappjv.supabase.co' // ❌ EXPOSTO!
-  ),
-  'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(
-    process.env.VITE_SUPABASE_ANON_KEY ||
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' // ❌ EXPOSTO!
-  ),
-}
+Credenciais do Supabase (URL, ANON_KEY, SERVICE_KEY) estavam hardcoded em 18 arquivos:
+- Scripts: apply-migrations.sh, add-vercel-env.sh, setup_vercel_env.sh
+- Código JS: create_db.js, insert_load.js, copy_data_to_loads.js
+- Código TS/TSX: useOperatorStore.ts, CardModal.tsx, DriverProfile.tsx, DriverPortal.tsx, AgentAdmin.tsx
+
+**Solução Implementada:**
+
+1. **Scripts Shell**:
+   - `apply-migrations.sh`: Agora lê de variáveis de ambiente com validação
+   - `add-vercel-env.sh`: Carrega de .env.local (não versionado)
+   - `setup_vercel_env.sh`: Carrega de .env.local com fallbacks
+
+2. **Scripts JavaScript**:
+   - `create_db.js`: Usa `dotenv` e `process.env.SUPABASE_SERVICE_ROLE_KEY`
+   - `insert_load.js`: Usa `dotenv` e `process.env.SUPABASE_SERVICE_ROLE_KEY`
+   - `copy_data_to_loads.js`: Usa `dotenv` e valida variáveis
+
+3. **Código TypeScript/TSX**:
+   - `useOperatorStore.ts`: Usa `import.meta.env.VITE_SUPABASE_ANON_KEY`
+   - `CardModal.tsx`: Usa `import.meta.env.VITE_SUPABASE_URL`
+   - `DriverProfile.tsx`: Usa `import.meta.env.VITE_SUPABASE_URL`
+   - `DriverPortal.tsx`: Usa `import.meta.env.VITE_SUPABASE_URL` (2 ocorrências)
+   - `AgentAdmin.tsx`: Usa `import.meta.env.VITE_SUPABASE_URL`
+
+4. **Arquivos de Configuração**:
+   - `.env.production`: JÁ no `.gitignore` (linha 23)
+   - `.env.production`: NÃO está versionado no Git ✅
+   - `vite.config.ts`: JÁ estava correto (sem fallbacks)
+
+**⚠️ AÇÃO NECESSÁRIA** (Manual):
+1. ❗ **CRÍTICO**: Regenerar TODAS as chaves do Supabase:
+   - Anon Key
+   - Service Role Key
+   - JWT Secret
+2. Atualizar variáveis no Vercel com novas chaves
+3. Atualizar .env.local com novas chaves
+
+**Teste:**
+```bash
+# Scripts agora exigem variáveis de ambiente:
+export SUPABASE_URL="sua-url"
+export SUPABASE_SERVICE_KEY="sua-chave"
+bash apply-migrations.sh
 ```
-
-**Solução:**
-1. Remover fallbacks do `vite.config.ts`
-2. Adicionar `.env.production` ao `.gitignore`
-3. Remover `.env.production` do histórico Git:
-   ```bash
-   git filter-branch --index-filter 'git rm --cached --ignore-unmatch .env.production' HEAD
-   ```
-4. Regenerar TODAS as chaves do Supabase
-5. Configurar variáveis apenas no Vercel
-
-**Status:** ❌ NÃO CORRIGIDO
 
 ---
 

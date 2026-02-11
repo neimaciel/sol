@@ -54,8 +54,8 @@ export const useOperatorStore = create<OperatorState>()(
                 set({ loading: true, error: null })
                 try {
                     // Supabase Edge Function Authentication - v2.0
-                    const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVraW1jaWh4cm5pZ2dobmFwcGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4MDEzNjgsImV4cCI6MjA4MjM3NzM2OH0.0Ig35iloZLzSUQnvmj9oVSQ2mYmSeWjpdaRudEU5qOo'
-                    const API_URL = 'https://ekimcihxrnigghnappjv.supabase.co/functions/v1/operators/auth/login'
+                    const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
+                    const API_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/operators/auth/login`
 
                     const response = await fetch(API_URL, {
                         method: 'POST',

@@ -37,7 +37,7 @@ export default function DriverProfile() {
     const navigate = useNavigate()
     const [profile, setProfile] = useState<DriverProfileData | null>(null)
     const [isLoading, setIsLoading] = useState(true)
-    const apiUrl = 'https://ekimcihxrnigghnappjv.supabase.co/functions/v1'
+    const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`
 
     useEffect(() => {
         const fetchProfile = async () => {

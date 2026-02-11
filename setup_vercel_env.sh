@@ -1,16 +1,47 @@
 #!/bin/bash
 
-# Define variables - Projeto SOL (ekimcihxrnigghnappjv)
-VITE_SUPABASE_URL="https://ekimcihxrnigghnappjv.supabase.co"
-VITE_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVraW1jaWh4cm5pZ2dobmFwcGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4MDEzNjgsImV4cCI6MjA4MjM3NzM2OH0.0Ig35iloZLzSUQnvmj9oVSQ2mYmSeWjpdaRudEU5qOo"
-SUPABASE_URL="https://ekimcihxrnigghnappjv.supabase.co"
-SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVraW1jaWh4cm5pZ2dobmFwcGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4MDEzNjgsImV4cCI6MjA4MjM3NzM2OH0.0Ig35iloZLzSUQnvmj9oVSQ2mYmSeWjpdaRudEU5qOo"
-SUPABASE_SERVICE_ROLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVraW1jaWh4cm5pZ2dobmFwcGp2Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NjgwMTM2OCwiZXhwIjoyMDgyMzc3MzY4fQ.krPxL5WPgrppk3qYn9lLD95QHA3dR29MalihbXv3kHY"
-DATABASE_URL="postgresql+asyncpg://postgres:[YOUR_PASSWORD]@db.ekimcihxrnigghnappjv.supabase.co:5432/postgres"
-GEMINI_API_KEY="AIzaSyC8NNyfxI-AQsuBn8lc4dH-magdQfWD6Tk"
-EVOLUTION_API_URL="https://api.ampler.me"
-EVOLUTION_API_KEY="52f13a23eee6e422dc718d4df667326c21168c2e7b2b777aa8d4b29c038acafb"
-INSTANCE_NAME="sol_logistica"
+# Load environment variables from .env.local or .env.production
+if [ -f ".env.local" ]; then
+    echo "📄 Carregando variáveis de .env.local"
+    export $(grep -v '^#' .env.local | xargs)
+elif [ -f ".env.production" ]; then
+    echo "📄 Carregando variáveis de .env.production"
+    export $(grep -v '^#' .env.production | xargs)
+else
+    echo "❌ Erro: Nenhum arquivo .env.local ou .env.production encontrado"
+    echo ""
+    echo "Crie um arquivo .env.local com as seguintes variáveis:"
+    echo "  VITE_SUPABASE_URL=..."
+    echo "  VITE_SUPABASE_ANON_KEY=..."
+    echo "  SUPABASE_SERVICE_ROLE_KEY=..."
+    echo "  GEMINI_API_KEY=..."
+    echo "  EVOLUTION_API_URL=..."
+    echo "  EVOLUTION_API_KEY=..."
+    echo "  INSTANCE_NAME=..."
+    echo "  DATABASE_URL=..."
+    exit 1
+fi
+
+# Read variables from environment (set by export above or by user)
+VITE_SUPABASE_URL="${VITE_SUPABASE_URL:-}"
+VITE_SUPABASE_ANON_KEY="${VITE_SUPABASE_ANON_KEY:-}"
+SUPABASE_URL="${SUPABASE_URL:-$VITE_SUPABASE_URL}"
+SUPABASE_KEY="${SUPABASE_KEY:-$VITE_SUPABASE_ANON_KEY}"
+SUPABASE_SERVICE_ROLE_KEY="${SUPABASE_SERVICE_ROLE_KEY:-}"
+DATABASE_URL="${DATABASE_URL:-}"
+GEMINI_API_KEY="${GEMINI_API_KEY:-}"
+EVOLUTION_API_URL="${EVOLUTION_API_URL:-}"
+EVOLUTION_API_KEY="${EVOLUTION_API_KEY:-}"
+INSTANCE_NAME="${INSTANCE_NAME:-sol_logistica}"
+
+# Validate required variables
+if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
+    echo "❌ Erro: Variáveis obrigatórias não definidas"
+    echo "Certifique-se de que .env.local contém:"
+    echo "  VITE_SUPABASE_URL"
+    echo "  VITE_SUPABASE_ANON_KEY"
+    exit 1
+fi
 
 # Function to add env var
 add_env() {

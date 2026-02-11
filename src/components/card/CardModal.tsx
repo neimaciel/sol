@@ -497,7 +497,7 @@ export function CardModal({ card, isOpen, onClose, defaultTab = 'info' }: CardMo
 
                                                                 setIsBroadcasting(true)
                                                                 try {
-                                                                    const apiUrl = 'https://ekimcihxrnigghnappjv.supabase.co/functions/v1'
+                                                                    const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`
                                                                     const sentGroups = [...(card.sent_groups || [])]
                                                                     let successCount = 0
 

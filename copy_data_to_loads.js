@@ -1,11 +1,13 @@
 import { createClient } from '@supabase/supabase-js'
 import fs from 'fs'
+import 'dotenv/config'
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://ekimcihxrnigghnappjv.supabase.co'
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || ''
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_KEY
 
-if (!supabaseKey) {
-  console.error('❌ VITE_SUPABASE_ANON_KEY não configurada')
+if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ Error: Missing required environment variables')
+  console.error('Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env.local')
   process.exit(1)
 }
 

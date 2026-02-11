@@ -612,25 +612,44 @@ if (!/^\d{10,15}$/.test(group.whatsapp_id)) {
 
 ---
 
-### P22: Auth SignUp Não Implementado
+### ✅ P22: Auth SignUp Não Implementado
 **Severidade:** 🟠 ALTO (UX)
 **Impacto:** Não consegue criar novos operadores pela UI
 **Localização:** `src/store/useAuthStore.ts:93-100`
+**Status:** ✅ RESOLVIDO (2026-02-10)
 
 **Problema:**
-```typescript
-signUp: async (email: string, password: string, name: string) => {
-  // Mock signUp for now, as it's not implemented in the API
-  return {
-    error: {
-      message: 'SignUp não implementado. Use as credenciais existentes.'
-    }
-  }
-}
-```
+SignUp estava implementado como mock, retornando erro "SignUp não implementado".
 
-**Solução:**
-Implementar no Edge Function:
+**Solução Implementada:**
+
+1. **Edge Function** (`supabase/functions/operators/index.ts`):
+   - Adicionado endpoint POST `/auth/signup`
+   - Cria usuário no Supabase Auth
+   - Cria registro na tabela `operators` com permissões padrão
+   - Auto-login após criação bem-sucedida
+   - Rollback do auth user se falhar criar operador
+
+2. **API Client** (`src/lib/apiClient.ts`):
+   - Adicionado método `signup(email, password, name, role)`
+   - Salva token e usuário no localStorage
+
+3. **Auth Store** (`src/store/useAuthStore.ts`):
+   - Implementado signUp real usando api.signup()
+   - Toast de sucesso e navegação automática
+
+4. **UI** (`src/pages/Login.tsx`):
+   - Campo de "Nome Completo" adicionado no modo cadastro
+   - Validação de nome mínimo 3 caracteres
+   - Navegação automática após signup bem-sucedido
+
+**Teste:**
+1. Acessar /login e clicar em "Solicitar novo acesso"
+2. Preencher nome, email e senha
+3. Sistema cria conta e faz login automaticamente
+
+~~**Solução:**
+Implementar no Edge Function:~~
 ```typescript
 // supabase/functions/operators/index.ts
 

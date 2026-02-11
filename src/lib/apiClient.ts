@@ -77,6 +77,64 @@ class APIClient {
     return response.json()
   }
 
+  async signup(email: string, password: string, name: string, role: string = 'operator'): Promise<LoginResponse> {
+    const url = `${SUPABASE_URL}/functions/v1/operators/auth/signup`
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'apikey': SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify({ email, password, name, role })
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || errorData.message || 'SignUp failed')
+    }
+
+    const data = await response.json()
+
+    logger.log('🔐 SignUp response:', data)
+
+    if (!data.success) {
+      throw new Error(data.message || 'SignUp failed')
+    }
+
+    if (!data.access_token) {
+      logger.error('❌ No access_token in response!', data)
+      throw new Error('No access token returned from server')
+    }
+
+    const result: LoginResponse = {
+      operator: {
+        id: data.operator.id,
+        email: data.operator.email,
+        name: data.operator.name,
+        role: data.operator.role,
+        permissions: data.operator.permissions || {
+          can_manage_drivers: false,
+          can_manage_loads: false,
+          can_confirm_payments: false,
+          can_manage_operators: false,
+          can_access_reports: false,
+          can_manage_contracts: false,
+        }
+      },
+      session_token: data.access_token,
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+    }
+
+    logger.log('💾 Saving token to localStorage:', result.session_token.substring(0, 50) + '...')
+    localStorage.setItem('auth_token', result.session_token)
+    localStorage.setItem('auth_user', JSON.stringify(result.operator))
+
+    logger.log('✅ Token saved. SignUp successful!')
+    return result
+  }
+
   async login(email: string, password: string): Promise<LoginResponse> {
     const url = `${SUPABASE_URL}/functions/v1/operators/auth/login`
 

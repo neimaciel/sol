@@ -23,6 +23,110 @@ serve(async (req) => {
 
     console.log('Request:', method, url.pathname)
 
+    // SignUp endpoint: POST /auth/signup - NO JWT REQUIRED
+    if (method === 'POST' && url.pathname.includes('/auth/signup')) {
+      console.log('SignUp route matched!')
+      const { email, password, name, role = 'operator' } = await req.json()
+
+      // Validate required fields
+      if (!email || !password || !name) {
+        return new Response(JSON.stringify({
+          error: 'Email, password e nome são obrigatórios'
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        })
+      }
+
+      // Create user in Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+      })
+
+      if (authError) {
+        console.error('Auth signup error:', authError)
+        return new Response(JSON.stringify({ error: authError.message }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        })
+      }
+
+      if (!authData.user) {
+        return new Response(JSON.stringify({ error: 'Falha ao criar usuário' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500,
+        })
+      }
+
+      // Create operator record in database
+      const { data: operator, error: operatorError } = await supabase
+        .from('operators')
+        .insert([{
+          id: authData.user.id,
+          email: email,
+          name: name,
+          role: role,
+          permissions: {
+            can_manage_drivers: role === 'admin',
+            can_manage_loads: true,
+            can_confirm_payments: role === 'admin',
+            can_manage_operators: role === 'admin',
+            can_access_reports: true,
+            can_manage_contracts: true,
+          }
+        }])
+        .select()
+        .single()
+
+      if (operatorError) {
+        console.error('Operator creation error:', operatorError)
+        // If operator creation fails, try to delete the auth user
+        await supabase.auth.admin.deleteUser(authData.user.id)
+        return new Response(JSON.stringify({
+          error: 'Falha ao criar registro de operador: ' + operatorError.message
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500,
+        })
+      }
+
+      // Auto-sign in the user to get session
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (signInError) {
+        return new Response(JSON.stringify({
+          success: true,
+          message: 'Conta criada com sucesso! Faça login para continuar.',
+          operator: operator,
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 201,
+        })
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'Conta criada e login realizado com sucesso',
+        access_token: signInData.session?.access_token,
+        refresh_token: signInData.session?.refresh_token,
+        user: signInData.user,
+        operator: {
+          id: operator.id,
+          email: operator.email,
+          name: operator.name,
+          role: operator.role,
+          permissions: operator.permissions,
+        }
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 201,
+      })
+    }
+
     // Login endpoint: POST /auth/login - NO JWT REQUIRED
     if (method === 'POST' && url.pathname.includes('/auth/login')) {
       console.log('Login route matched!')
@@ -66,6 +170,7 @@ serve(async (req) => {
           email: operator.email,
           name: operator.name,
           role: operator.role,
+          permissions: operator.permissions,
         }
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

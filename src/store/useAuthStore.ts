@@ -90,11 +90,27 @@ export const useAuthStore = create<AuthState>((set) => ({
             }
         }
     },
-    signUp: async (_email: string, _password: string, _name: string) => {
-        // Mock signUp for now, as it's not implemented in the API
-        return { 
-            error: {
-                message: 'SignUp não implementado. Use as credenciais existentes.'
+    signUp: async (email: string, password: string, name: string) => {
+        try {
+            set({ loading: true })
+            const response = await api.signup(email, password, name)
+
+            set({
+                user: response.operator,
+                loading: false
+            })
+
+            toast.success('Conta criada e login realizado com sucesso!')
+            return { error: null }
+        } catch (error: any) {
+            logger.error('SignUp error:', error)
+            const message = error.message || 'Erro ao criar conta'
+            toast.error(message)
+            set({ loading: false })
+            return {
+                error: {
+                    message
+                }
             }
         }
     },

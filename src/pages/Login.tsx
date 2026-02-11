@@ -10,6 +10,7 @@ export default function Login() {
     const [isLogin, setIsLogin] = useState(true)
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [name, setName] = useState('')
     const [isLoading, setIsLoading] = useState(false)
     const { signIn, signUp } = useAuthStore()
     const navigate = useNavigate()
@@ -26,25 +27,28 @@ export default function Login() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsLoading(true)
-        
 
         if (isLogin) {
             const { error } = await signIn(email, password)
             if (error) {
-                alert('Erro ao fazer login: ' + error.message)
                 setIsLoading(false)
             } else {
                 navigate('/')
                 setIsLoading(false)
             }
         } else {
-            const { error } = await signUp(email, password, 'User')
+            // Validate name field for signup
+            if (!name || name.trim().length < 3) {
+                alert('Por favor, informe seu nome completo (mínimo 3 caracteres)')
+                setIsLoading(false)
+                return
+            }
+
+            const { error } = await signUp(email, password, name)
             if (error) {
-                alert('Erro ao criar conta: ' + error.message)
                 setIsLoading(false)
             } else {
-                alert('Conta criada com sucesso! Verifique seu email ou faça login.')
-                setIsLogin(true)
+                navigate('/')
                 setIsLoading(false)
             }
         }
@@ -130,6 +134,20 @@ export default function Login() {
 
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div className="space-y-4">
+                                {!isLogin && (
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Nome Completo</label>
+                                        <Input
+                                            type="text"
+                                            placeholder="João da Silva"
+                                            value={name}
+                                            onChange={(e) => setName(e.target.value)}
+                                            className="h-12 bg-muted/30 border-2 border-border focus:border-primary focus:ring-0 rounded-none font-mono text-sm transition-colors"
+                                            required
+                                            minLength={3}
+                                        />
+                                    </div>
+                                )}
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Email Corporativo</label>
                                     <Input
@@ -150,7 +168,11 @@ export default function Login() {
                                         onChange={(e) => setPassword(e.target.value)}
                                         className="h-12 bg-muted/30 border-2 border-border focus:border-primary focus:ring-0 rounded-none font-mono text-sm transition-colors"
                                         required
+                                        minLength={6}
                                     />
+                                    {!isLogin && (
+                                        <p className="text-xs text-muted-foreground font-mono">Mínimo 6 caracteres</p>
+                                    )}
                                 </div>
                             </div>
 

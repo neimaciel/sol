@@ -73,35 +73,63 @@ bash apply-migrations.sh
 
 ---
 
-### P21: RLS (Row Level Security) Muito Permissivo
+### ✅ P21: RLS (Row Level Security) Muito Permissivo
 **Severidade:** 🔴 CRÍTICO (Segurança)
 **Impacto:** Vazamento de dados entre empresas/operadores
-**Localização:** `supabase/migrations/20250114000001_kanban_complete_schema.sql`
+**Localização:** Todas as tabelas principais
+**Status:** ✅ RESOLVIDO (2026-02-10)
 
 **Problema:**
-```sql
--- Permite SELECT em TODOS os registros
-CREATE POLICY "Allow authenticated users to select load_models"
-ON load_models FOR SELECT
-TO authenticated
-USING (true); -- ❌ Sem restrição!
-```
+Políticas RLS permitiam acesso a TODOS os registros sem restrição (`USING (true)`), causando:
+- Vazamento de dados entre operadores
+- Falta de segregação por empresa/operador
+- Violação do princípio de menor privilégio
 
-**Solução:**
-Implementar políticas RLS adequadas:
-```sql
--- Exemplo: Restringir por operador
-CREATE POLICY "operators_see_own_loads"
-ON loads FOR SELECT
-TO authenticated
-USING (
-  operator_id = auth.uid()
-  OR
-  auth.jwt() -> 'user_metadata' ->> 'role' = 'admin'
-);
-```
+**Solução Implementada:**
 
-**Status:** ❌ NÃO CORRIGIDO
+**Migration:** `20260210140000_fix_rls_policies.sql`
+
+1. **Funções Helper**:
+   - `auth.user_id()`: Extrai user ID do JWT
+   - `is_admin()`: Verifica se usuário é admin
+   - `has_permission(name)`: Verifica permissões específicas
+
+2. **Políticas RLS por Tabela**:
+
+   **LOADS** (Cargas):
+   - SELECT: Apenas cargas do próprio operador OU admin
+   - INSERT: Requer permissão 'editar' e define operator_id
+   - UPDATE: Apenas próprias cargas OU admin
+   - DELETE: Apenas admins
+
+   **DRIVERS** (Motoristas):
+   - SELECT: Todos (necessário para atribuir a cargas)
+   - INSERT/UPDATE: Requer permissão 'editar' OU admin
+   - DELETE: Apenas admins
+
+   **OPERATORS** (Operadores):
+   - SELECT: Apenas próprio perfil OU admin vê todos
+   - INSERT: Apenas admins
+   - UPDATE: Próprio perfil OU admin
+   - DELETE: Apenas admins
+
+   **PAYMENTS** (Pagamentos):
+   - Todas operações: Apenas para cargas do próprio operador OU admin
+
+   **CANDIDATES** (Candidatos):
+   - Todas operações: Apenas para cargas do próprio operador OU admin
+
+   **GROUPS & LOAD_MODELS**:
+   - SELECT: Todos
+   - Outras operações: Requer permissão 'editar' OU admin
+
+3. **Migração de Dados**:
+   - Cargas sem `operator_id` foram atribuídas ao primeiro admin
+
+**Teste:**
+1. Login como operador normal → vê apenas suas cargas
+2. Login como admin → vê todas as cargas
+3. Tentar acessar carga de outro operador → bloqueado
 
 ---
 

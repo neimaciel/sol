@@ -60,6 +60,7 @@ execute_sql() {
 migrations=(
     "supabase/migrations/20260210150000_add_missing_loads_columns.sql|Colunas Faltantes em Loads"
     "supabase/migrations/20260210150100_fix_payments_schema.sql|Schema Payments Completo"
+    "supabase/migrations/20260210140000_fix_rls_policies.sql|Corrigir Políticas RLS (P21)"
 )
 
 # Aplicar cada migration

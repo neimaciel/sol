@@ -165,7 +165,10 @@ FROM information_schema.columns
 WHERE table_name = 'payments';
 ```
 
-**Status:** ⚠️ NÃO CONFIRMADO
+**Status:** ✅ CORRIGIDO
+**Data:** 2026-02-10
+**Migration:** `20260210150100_fix_payments_schema.sql`
+**Adicionado:** 15 novas colunas + funções helper + triggers + RLS policies
 
 ---
 
@@ -461,6 +464,10 @@ if (method === 'GET' && pathParts[2] === 'by-load') {
 **Severidade:** 🟠 ALTO (Funcionalidade)
 **Impacto:** Condições não funcionam, auto-advance falha
 **Localização:** `supabase/functions/loads/index.ts:155-300`
+
+**Status:** ✅ CORRIGIDO
+**Data:** 2026-02-10
+**Migration:** `20260210150000_add_missing_loads_columns.sql`
 
 **Problema:**
 ```typescript

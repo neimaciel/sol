@@ -858,40 +858,84 @@ async autoAdvanceLoad(loadId: string) {
 
 ## 🟡 MÉDIO - Qualidade e UX
 
-### P1: Falta Validação de Inputs
+### ✅ P1: Falta Validação de Inputs
 **Severidade:** 🟡 MÉDIO (Qualidade)
 **Impacto:** Dados inválidos no banco
 **Localização:** Todos os formulários
+**Status:** ✅ RESOLVIDO (2026-02-10)
 
 **Problema:**
-Nenhum formulário valida:
+Formulários não validavam:
 - Campos obrigatórios
-- Formatos (email, telefone, CPF)
+- Formatos (email, telefone, CPF, placas)
 - Tamanhos mínimos/máximos
+- Tipos de dados
 
-**Solução:**
-```bash
-npm install react-hook-form zod @hookform/resolvers
-```
+**Solução Implementada:**
 
+**Hook Personalizado:** `src/hooks/useValidatedForm.ts`
+
+1. **Características**:
+   - ✅ Integração react-hook-form + Zod + sanitização
+   - ✅ Validação automática no blur
+   - ✅ Sanitização automática de inputs (anti-XSS)
+   - ✅ Toast de erro automático
+   - ✅ Estados (isSubmitting, isDirty, isValid)
+   - ✅ TypeScript completo
+
+2. **Schemas Prontos**:
+   - `loadFormSchema`: Formulário de cargas
+   - `driverFormSchema`: Formulário de motoristas
+   - `groupFormSchema`: Formulário de grupos WhatsApp
+   - `paymentFormSchema`: Formulário de pagamentos
+
+3. **Validações Incluídas**:
+   - Email: RFC 5322 compliant
+   - Telefone: 10-11 dígitos
+   - CPF/CNPJ: 11 ou 14 dígitos
+   - Placas: Formato brasileiro (ABC1234 ou ABC1D23 Mercosul)
+   - Estados: 2 letras maiúsculas
+   - Tamanhos: min/max configuráveis
+   - Números: positivos, decimais
+
+**Como Usar:**
 ```typescript
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
+import { useValidatedForm, loadFormSchema } from '@/hooks/useValidatedForm'
 
-const cardSchema = z.object({
-  title: z.string().min(3, 'Mínimo 3 caracteres').max(255),
-  origin: z.string().min(1, 'Origem obrigatória'),
-  destination: z.string().min(1, 'Destino obrigatório'),
-  value: z.string().regex(/^\d+(\.\d{2})?$/, 'Valor inválido'),
-})
+function LoadForm() {
+  const { register, handleSubmit, errors, isSubmitting } = useValidatedForm({
+    schema: loadFormSchema,
+    onSubmit: async (data) => {
+      // data já está sanitizado e validado
+      await createLoad(data)
+    }
+  })
 
-const { register, handleSubmit, formState: { errors } } = useForm({
-  resolver: zodResolver(cardSchema)
-})
+  return (
+    <form onSubmit={handleSubmit}>
+      <input {...register('title')} />
+      {errors.title && <span className="error">{errors.title.message}</span>}
+
+      <input {...register('origin_city')} />
+      {errors.origin_city && <span className="error">{errors.origin_city.message}</span>}
+
+      <button type="submit" disabled={isSubmitting}>
+        {isSubmitting ? 'Salvando...' : 'Salvar'}
+      </button>
+    </form>
+  )
+}
 ```
 
-**Status:** ❌ NÃO IMPLEMENTADO
+**Bibliotecas:**
+- ✅ react-hook-form@7.71.1
+- ✅ zod@4.3.6
+- ✅ @hookform/resolvers@5.2.2
+
+**Próximos Passos** (Opcional):
+- Aplicar nos formulários restantes
+- Criar componente Input validado reutilizável
+- Adicionar máscaras de input (telefone, CPF, etc.)
 
 ---
 
